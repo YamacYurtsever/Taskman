@@ -31,13 +31,6 @@ After completing each milestone item:
 | `taskman move "list" "name" "new_list"`                  | Move a task to another list                      |
 | `taskman delete ("group" \| "list" ["name"])`                         | Delete group (ungroup), list, or task    |
 
-##### Lists & Groups
-
-| Command                              | Description                                                |
-| ------------------------------------ | ---------------------------------------------------------- |
-| `taskman group "list"+ "group_name"` | Assign one or more lists to a group (creates group if new) |
-| `taskman ungroup "list"+`            | Remove one or more lists from their group                  |
-
 ##### Viewing
 
 | Command                                  | Description                                             |
@@ -122,7 +115,7 @@ After completing each milestone item:
 
 - [x] Project setup
 - [x] Task commands: `add`, `done`, `undo`, `edit`, `move`, `delete`
-- [x] List & group commands: `group`, `ungroup`
+- [x] List & group commands: `move "list" "group"`, `move "list" ""`
 - [x] Viewing commands: `task ls`
 - [x] Shell functions: `tls`, `tlsd`, `tlsw`
 - [x] Completion sound and visual feedback on `task done`
@@ -160,8 +153,7 @@ After completing each milestone item:
 - [ ] Delete list
 - [ ] Rename group (CLI: `taskman edit "group" "new_name"`)
 - [ ] Delete group
-- [ ] Assign list to group / ungroup (`taskman group`, `taskman ungroup`)
-- [ ] Move list to group (`taskman move "list" "group"`)
+- [ ] Assign list to group / ungroup (`taskman move "list" "group"` / `taskman move "list" ""`)
 
 ###### Daysheet Actions
 - [x] Add log entry
