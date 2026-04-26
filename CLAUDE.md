@@ -166,7 +166,7 @@ After completing each milestone item:
 - [x] Delete entry
 - [ ] Edit log entry (`taskman log edit`)
 
-##### Milestone 5 — Task Descriptions
+##### Milestone 4 — Task Descriptions
 
 - [ ] Add `description` field to task schema (`db.json`)
 - [ ] CLI: `taskman update` supports setting/clearing description
@@ -174,3 +174,11 @@ After completing each milestone item:
 - [ ] Web: expand task row to show/edit description inline
 - [ ] Web: description visible in focused list view
 - [ ] Web: add description field to quick-add modal
+
+##### Milestone 5 — iCloud Sync
+
+- [ ] Config file (`~/.taskman/config.json`) with configurable `db_path`
+- [ ] Default `db_path` to `~/Library/Mobile Documents/com~apple~CloudDocs/taskman/db.json` when iCloud Drive is detected
+- [ ] CLI flag / env var to override `db_path` at runtime
+- [ ] Graceful handling of iCloud file availability (file temporarily unavailable during sync)
+- [ ] Document iCloud setup in README

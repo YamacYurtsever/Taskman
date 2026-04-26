@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:           #f5f0e8;
-  --surface:      #faf7f2;
-  --surface-2:    #ede8de;
-  --border:       #ddd6c8;
-  --text:         #2c2620;
-  --muted:        #7a6e62;
-  --faint:        #b0a496;
-  --accent:       oklch(52% 0.14 50);
-  --accent-bg:    oklch(52% 0.14 50 / 0.1);
-  --green:        oklch(48% 0.14 148);
-  --green-bg:     oklch(48% 0.14 148 / 0.1);
-  --red:          oklch(50% 0.17 22);
-  --amber:        oklch(60% 0.14 75);
+  --bg:           #0e1016;
+  --surface:      #161a24;
+  --surface-2:    #1c2030;
+  --border:       #252c3a;
+  --text:         #dde3f0;
+  --muted:        #8a95ac;
+  --faint:        #4a5268;
+  --accent:       oklch(68% 0.16 248);
+  --accent-bg:    oklch(68% 0.16 248 / 0.12);
+  --green:        oklch(72% 0.15 148);
+  --green-bg:     oklch(72% 0.15 148 / 0.12);
+  --red:          oklch(65% 0.17 22);
+  --amber:        oklch(78% 0.14 75);
   --sidebar-w:    240px;
   --topbar-h:     56px;
-  --r:            10px;
-  --r-sm:         6px;
+  --r:            8px;
+  --r-sm:         5px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -227,7 +227,6 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .card-header {
@@ -237,7 +236,6 @@ body {
   padding: 11px 14px 9px;
   cursor: pointer;
   transition: background 0.13s;
-  background: var(--surface);
 }
 .card-header:hover { background: var(--surface-2); }
 
@@ -272,7 +270,7 @@ body {
   width: 120px;
   font-family: inherit;
   font-size: 0.77rem;
-  color-scheme: light;
+  color-scheme: dark;
   color: var(--muted);
 }
 .card-add-btn {
@@ -449,7 +447,7 @@ body {
   font-size: 0.8rem;
   outline: none;
   width: 130px;
-  color-scheme: light;
+  color-scheme: dark;
 }
 .focused-add-btn {
   background: none;
@@ -609,7 +607,6 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
 }
 .log-form select,
 .log-form input[type=text] {
@@ -623,7 +620,7 @@ body {
   outline: none;
   transition: border-color 0.13s;
 }
-.log-form select { flex-shrink: 0; max-width: 130px; }
+.log-form select { flex-shrink: 0; }
 .log-form input[type=text] { flex: 1; }
 .log-form select:focus,
 .log-form input:focus { border-color: var(--accent); }
@@ -635,7 +632,7 @@ body {
   border-radius: var(--r-sm);
   font: inherit;
   font-size: 0.87rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   flex-shrink: 0;
   transition: opacity 0.13s;
@@ -647,8 +644,8 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -663,7 +660,7 @@ body {
   border-radius: var(--r);
   padding: 20px;
   width: 420px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
 }
 .modal-title {
   font-size: 0.87rem;
@@ -690,7 +687,7 @@ body {
   font-size: 0.9rem;
   outline: none;
   transition: border-color 0.13s;
-  color-scheme: light;
+  color-scheme: dark;
 }
 .modal-field input:focus,
 .modal-field select:focus { border-color: var(--accent); }
@@ -715,8 +712,8 @@ body {
 .modal-actions .submit {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0f0e0c;
-  font-weight: 600;
+  color: #fff;
+  font-weight: 500;
 }
 .modal-actions .submit:hover { opacity: 0.85; background: var(--accent); }
 
@@ -738,7 +735,6 @@ body {
   pointer-events: none;
   max-width: 300px;
   z-index: 200;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 #toast.show { opacity: 1; transform: translateY(0); }
 #toast.error { border-color: var(--red); color: var(--red); }
