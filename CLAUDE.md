@@ -56,14 +56,12 @@ After completing each milestone item:
 
 ##### Shell Functions
 
-| Function                  | Expands to                |
-| ------------------------- | ------------------------- |
-| `ta`                      | `taskman add`             |
-| `td`                      | `taskman done`            |
-| `tls ["list" \| "group"]` | `taskman ls`              |
-| `tld ["list" \| "group"]` | `taskman ls --today`      |
-| `tlw ["list" \| "group"]` | `taskman ls --week`       |
-| `tds [date]`              | `taskman daysheet [date]` |
+| Function                   | Expands to                |
+| -------------------------- | ------------------------- |
+| `tls ["list" \| "group"]`  | `taskman ls`              |
+| `tlsd ["list" \| "group"]` | `taskman ls --today`      |
+| `tlsw ["list" \| "group"]` | `taskman ls --week`       |
+| `tds [date]`               | `taskman daysheet [date]` |
 
 ---
 
@@ -121,7 +119,7 @@ After completing each milestone item:
 - [x] Task commands: `add`, `done`, `undo`, `edit`, `move`, `del`
 - [x] List & group commands: `group`, `ungroup`
 - [x] Viewing commands: `task ls`
-- [x] Shell functions: `ta`, `td`, `tls`, `tld`, `tlw`
+- [x] Shell functions: `tls`, `tlsd`, `tlsw`
 - [x] Completion sound and visual feedback on `task done`
 
 ##### Milestone 2 - Day Sheets
