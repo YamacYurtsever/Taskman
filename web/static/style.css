@@ -120,6 +120,21 @@ main { padding: 24px; max-width: 1400px; }
 .task.done .name { color: var(--dim); text-decoration: line-through; }
 .empty { color: var(--dim); font-style: italic; padding: 4px 0; }
 
+.done-toggle {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 0;
+  margin-top: 4px;
+  width: 100%;
+  text-align: left;
+}
+.done-toggle:hover { color: var(--text); }
+.done-section { margin-top: 2px; }
+
 .add-task {
   display: flex;
   gap: 4px;

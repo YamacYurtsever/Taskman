@@ -3,6 +3,7 @@ const state = {
   data: null,
   daysheet: null,
   daysheetDate: new Date().toISOString().slice(0, 10),
+  showDone: new Set(),
 };
 
 const main = document.getElementById('main');
@@ -50,7 +51,6 @@ async function api(method, path, body) {
 async function refresh() {
   if (state.view === 'daysheet') {
     state.daysheet = await api('GET', `/api/daysheet?date=${state.daysheetDate}`);
-    // also need lists for the form
     if (!state.data) state.data = await api('GET', '/api/state');
   } else {
     state.data = await api('GET', '/api/state');
@@ -68,12 +68,8 @@ async function action(path, body, successMsg) {
   }
 }
 
-function filterTasks(tasks, listId, mode, today) {
+function filterPending(tasks, listId, mode, today) {
   const todayD = new Date(today);
-  if (mode === 'done') {
-    return tasks.filter(t => t.listId === listId && t.done)
-                .sort((a, b) => b.done.localeCompare(a.done));
-  }
   const pending = tasks.filter(t => t.listId === listId && !t.done);
   if (mode === 'today') {
     return pending.filter(t => t.due && new Date(t.due) <= todayD)
@@ -87,6 +83,11 @@ function filterTasks(tasks, listId, mode, today) {
   const dated = pending.filter(t => t.due).sort((a, b) => a.due.localeCompare(b.due));
   const dateless = pending.filter(t => !t.due);
   return [...dated, ...dateless];
+}
+
+function filterDone(tasks, listId) {
+  return tasks.filter(t => t.listId === listId && t.done)
+              .sort((a, b) => b.done.localeCompare(a.done));
 }
 
 function formatDue(due, today) {
@@ -118,27 +119,46 @@ function renderTask(task, listName, today) {
   );
 }
 
-function renderList(list, tasks, today, mode) {
-  const children = [
-    el('h3', {}, list.name, el('span', { class: 'count' }, String(tasks.length))),
-    tasks.length
-      ? tasks.map(t => renderTask(t, list.name, today))
-      : el('div', { class: 'empty' }, 'no tasks'),
-  ];
-  if (mode !== 'done') {
-    const addInput = el('input', { type: 'text', placeholder: 'add task…' });
-    const dueInput = el('input', { type: 'date' });
-    const submit = () => {
-      const name = addInput.value.trim();
-      if (!name) return;
-      action('/api/add', { list: list.name, name, due: dueInput.value || null });
-      addInput.value = '';
-      dueInput.value = '';
-    };
-    children.push(el('div', { class: 'add-task' }, addInput, dueInput,
-      el('button', { on: { click: submit } }, '+')));
+function renderList(list, allTasks, today, mode) {
+  const pending = filterPending(allTasks, list.id, mode, today);
+  const done = filterDone(allTasks, list.id);
+
+  const doneSection = el('div', { class: 'done-section' });
+  const toggleBtn = el('button', { class: 'done-toggle' });
+
+  const expanded = state.showDone.has(list.id);
+  function applyExpanded(open) {
+    toggleBtn.textContent = open ? 'hide done' : `show done (${done.length})`;
+    doneSection.replaceChildren(...(open ? done.map(t => renderTask(t, list.name, today)) : []));
   }
-  return el('div', { class: 'list' }, ...children);
+  applyExpanded(expanded);
+
+  toggleBtn.addEventListener('click', () => {
+    const next = !state.showDone.has(list.id);
+    next ? state.showDone.add(list.id) : state.showDone.delete(list.id);
+    applyExpanded(next);
+  });
+
+  const addInput = el('input', { type: 'text', placeholder: 'add task…' });
+  const dueInput = el('input', { type: 'date' });
+  const submit = () => {
+    const name = addInput.value.trim();
+    if (!name) return;
+    action('/api/add', { list: list.name, name, due: dueInput.value || null });
+    addInput.value = '';
+    dueInput.value = '';
+  };
+
+  return el('div', { class: 'list' },
+    el('h3', {}, list.name, el('span', { class: 'count' }, String(pending.length))),
+    pending.length
+      ? pending.map(t => renderTask(t, list.name, today))
+      : el('div', { class: 'empty' }, 'no tasks'),
+    el('div', { class: 'add-task' }, addInput, dueInput,
+      el('button', { on: { click: submit } }, '+')),
+    done.length ? toggleBtn : null,
+    doneSection,
+  );
 }
 
 function renderListsView(mode) {
@@ -148,6 +168,7 @@ function renderListsView(mode) {
 
   if (!lists.length) {
     main.append(el('div', { class: 'empty' }, 'no lists yet — add a task to get started'));
+    return;
   }
 
   const seen = new Set();
@@ -156,7 +177,7 @@ function renderListsView(mode) {
     if (!groupLists.length) continue;
     main.append(el('div', { class: 'group-title' }, g.name));
     main.append(el('div', { class: 'lists' },
-      groupLists.map(l => renderList(l, filterTasks(tasks, l.id, mode, today), today, mode))));
+      groupLists.map(l => renderList(l, tasks, today, mode))));
     groupLists.forEach(l => seen.add(l.id));
   }
   const ungrouped = lists.filter(l => !seen.has(l.id));
@@ -165,7 +186,7 @@ function renderListsView(mode) {
       main.append(el('div', { class: 'group-title' }, 'ungrouped'));
     }
     main.append(el('div', { class: 'lists' },
-      ungrouped.map(l => renderList(l, filterTasks(tasks, l.id, mode, today), today, mode))));
+      ungrouped.map(l => renderList(l, tasks, today, mode))));
   }
 }
 
@@ -210,12 +231,7 @@ function renderDaysheet() {
   const lists = state.data?.lists || [];
   if (!lists.length) return;
 
-  const listOptions = (extra = []) => [
-    ...lists.map(l => el('option', { value: l.name }, l.name)),
-    ...extra,
-  ];
-
-  const logList = el('select', {}, listOptions());
+  const logList = el('select', {}, lists.map(l => el('option', { value: l.name }, l.name)));
   const logText = el('input', { type: 'text', placeholder: 'log entry…' });
   const logSubmit = () => {
     if (!logText.value.trim()) return;
@@ -223,7 +239,7 @@ function renderDaysheet() {
     logText.value = '';
   };
 
-  const contList = el('select', {}, listOptions());
+  const contList = el('select', {}, lists.map(l => el('option', { value: l.name }, l.name)));
   const contTask = el('input', { type: 'text', placeholder: 'task name…' });
   const contSubmit = () => {
     if (!contTask.value.trim()) return;
