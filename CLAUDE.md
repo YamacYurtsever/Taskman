@@ -121,7 +121,7 @@ After completing each milestone item:
 - [x] List & group commands: `group`, `ungroup`
 - [x] Viewing commands: `task ls`
 - [x] Shell functions: `ta`, `td`, `tls`, `tld`, `tlw`
-- [ ] Completion sound and visual feedback on `task done`
+- [x] Completion sound and visual feedback on `task done`
 
 ##### Milestone 2 - Day Sheets
 

@@ -1,6 +1,16 @@
+import subprocess
 import sys
 from datetime import date, datetime
 from taskman import db
+
+_SOUND = "/System/Library/Sounds/Glass.aiff"
+
+
+def _play_sound():
+    try:
+        subprocess.Popen(["afplay", _SOUND], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        pass
 
 
 def _err(msg):
@@ -78,7 +88,8 @@ def cmd_done(args):
 
     task["done"] = date.today().isoformat()
     db.save(data)
-    print(f"✓ [{list_name}] {task_name}")
+    print(f"\033[32m✓ [{list_name}] {task_name}\033[0m")
+    _play_sound()
 
 
 def cmd_undone(args):
