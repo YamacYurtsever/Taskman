@@ -42,6 +42,7 @@ After completing each milestone item:
 | `taskman ls ["list" \| "group"]`         | All pending tasks, optionally filtered by list or group |
 | `taskman ls ["list" \| "group"] --today` | Overdue + due today                                     |
 | `taskman ls ["list" \| "group"] --week`  | Overdue + due within 7 days                             |
+| `taskman ls ["list" \| "group"] --done`  | Completed tasks, most recent first                      |
 
 ##### Day Sheets
 

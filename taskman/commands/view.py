@@ -19,10 +19,11 @@ def _pad(s, width):
     return s + ' ' * max(0, width - _vlen(s))
 
 
-def _red(s):  return f'\033[31m{s}\033[0m'
-def _blue(s): return f'\033[34m{s}\033[0m'
-def _bold(s): return f'\033[1m{s}\033[0m'
-def _dim(s):  return f'\033[2m{s}\033[0m'
+def _red(s):   return f'\033[31m{s}\033[0m'
+def _blue(s):  return f'\033[34m{s}\033[0m'
+def _green(s): return f'\033[32m{s}\033[0m'
+def _bold(s):  return f'\033[1m{s}\033[0m'
+def _dim(s):   return f'\033[2m{s}\033[0m'
 
 
 def _format_due(due_str, today):
@@ -39,6 +40,13 @@ def _format_due(due_str, today):
 
 
 def filter_tasks(tasks, list_id, mode, today):
+    if mode == 'done':
+        return sorted(
+            [t for t in tasks if t['listId'] == list_id and t['done']],
+            key=lambda t: t['done'],
+            reverse=True,
+        )
+
     pending = [t for t in tasks if t['listId'] == list_id and not t['done']]
 
     if mode == 'today':
@@ -58,7 +66,7 @@ def filter_tasks(tasks, list_id, mode, today):
     return dated + dateless
 
 
-def _render_column(list_name, tasks, col_width, today):
+def _render_column(list_name, tasks, col_width, today, mode='all'):
     lines = [
         _pad(_bold(list_name), col_width),
         '─' * col_width,
@@ -71,9 +79,12 @@ def _render_column(list_name, tasks, col_width, today):
     for task in tasks:
         name_lines = textwrap.wrap(task['name'], col_width - 2) or ['']
         for i, part in enumerate(name_lines):
-            prefix = '· ' if i == 0 else '  '
-            lines.append(_pad(prefix + part, col_width))
-        if task['due']:
+            prefix = '✓ ' if mode == 'done' and i == 0 else ('· ' if i == 0 else '  ')
+            text = _dim(prefix + part) if mode == 'done' else prefix + part
+            lines.append(_pad(text, col_width))
+        if mode == 'done' and task['done']:
+            lines.append(_pad('  ' + _green(task['done']), col_width))
+        elif task['due']:
             lines.append(_pad('  ' + _format_due(task['due'], today), col_width))
 
     return lines
@@ -88,14 +99,14 @@ def _cols_per_row(n):
     return 1, term_w
 
 
-def _render_section(pairs, col_width, today, gap):
+def _render_section(pairs, today, mode):
     n = len(pairs)
     cols_per_row, col_width = _cols_per_row(n)
     gap = ' ' * COL_GAP
 
     for row_start in range(0, n, cols_per_row):
         row = pairs[row_start:row_start + cols_per_row]
-        columns = [_render_column(lst['name'], tasks, col_width, today) for lst, tasks in row]
+        columns = [_render_column(lst['name'], tasks, col_width, today, mode) for lst, tasks in row]
 
         max_lines = max(len(c) for c in columns)
         for col in columns:
@@ -115,6 +126,8 @@ def cmd_ls(args):
             mode = 'today'
         elif arg == '--week':
             mode = 'week'
+        elif arg == '--done':
+            mode = 'done'
         else:
             filter_name = arg
 
@@ -138,18 +151,13 @@ def cmd_ls(args):
             return
 
         pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in show_lists]
-        _render_section(pairs, 0, today, '')
+        _render_section(pairs, today, mode)
         return
 
     if not all_lists:
         print('no lists found')
         return
 
-    # Group sections
-    term_w = shutil.get_terminal_size((80, 24)).columns
-    gap = ' ' * COL_GAP
-
-    grouped_ids = {g['id']: g for g in data['groups']}
     seen = set()
 
     for group in data['groups']:
@@ -158,10 +166,10 @@ def cmd_ls(args):
             continue
         print(_bold(group['name']))
         pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in group_lists]
-        _render_section(pairs, 0, today, gap)
+        _render_section(pairs, today, mode)
         seen.update(l['id'] for l in group_lists)
 
     ungrouped = [l for l in all_lists if l['id'] not in seen]
     if ungrouped:
         pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in ungrouped]
-        _render_section(pairs, 0, today, gap)
+        _render_section(pairs, today, mode)
