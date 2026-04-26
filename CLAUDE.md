@@ -127,6 +127,13 @@ After completing each milestone item:
 - [x] Daysheet commands `log`, `continue`, `daysheet`
 - [x] Shell function: `tds [date]`
 
-##### Milestone 3 - TUI
+##### Milestone 3 — Web Frontend
 
-##### Milestone 3 - GUI
+- [x] Flask server (`web/server.py`) with REST endpoints wrapping existing command functions
+- [x] Serve static frontend from `web/static/`
+- [x] View: all lists/groups with pending tasks (mirrors `taskman ls`)
+- [x] View: today and week filtered views (mirrors `--today`, `--week`)
+- [x] View: daysheet for today (mirrors `taskman daysheet`)
+- [x] Actions: add, done, undo, delete tasks inline
+- [x] Actions: log and continue from the daysheet view
+- [x] Live updates without full page reload
