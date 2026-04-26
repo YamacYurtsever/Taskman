@@ -233,6 +233,39 @@ class TasksTest(unittest.TestCase):
         list_names = [l["name"] for l in saved["lists"]]
         self.assertIn("Personal", list_names)
 
+    def test_del_list_removes_empty_group(self):
+        group = {"id": "group-1", "name": "MyGroup"}
+        lst = {**LIST_1, "groupId": "group-1"}
+        data = {
+            "groups": [group],
+            "lists": [lst, LIST_2],
+            "tasks": [],
+            "daysheet": [],
+        }
+        saved = {}
+        with patch("taskman.db.load", return_value=data), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_delete(["Work"])
+
+        self.assertEqual(len(saved["groups"]), 0)
+
+    def test_del_list_keeps_group_if_other_lists_remain(self):
+        group = {"id": "group-1", "name": "MyGroup"}
+        lst1 = {**LIST_1, "groupId": "group-1"}
+        lst2 = {**LIST_2, "groupId": "group-1"}
+        data = {
+            "groups": [group],
+            "lists": [lst1, lst2],
+            "tasks": [],
+            "daysheet": [],
+        }
+        saved = {}
+        with patch("taskman.db.load", return_value=data), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_delete(["Work"])
+
+        self.assertEqual(len(saved["groups"]), 1)
+
     def test_del_unknown_list_errors(self):
         db = make_db()
         with patch("taskman.db.load", return_value=db), \

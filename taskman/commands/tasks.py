@@ -174,9 +174,12 @@ def cmd_delete(args):
         _err(f"list '{list_name}' not found")
 
     if len(args) == 1:
+        group_id = lst["groupId"]
         data["tasks"] = [t for t in data["tasks"] if t["listId"] != lst["id"]]
         data["daysheet"] = [e for e in data["daysheet"] if e["listId"] != lst["id"]]
         data["lists"] = [l for l in data["lists"] if l["id"] != lst["id"]]
+        if group_id and not any(l["groupId"] == group_id for l in data["lists"]):
+            data["groups"] = [g for g in data["groups"] if g["id"] != group_id]
         db.save(data)
         print(f"- [{list_name}]")
     else:
