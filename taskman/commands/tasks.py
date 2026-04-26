@@ -139,41 +139,71 @@ def cmd_update(args):
     print(f"~ [{list_name}] {new_name}{due_str}")
 
 
+def _get_or_create_group(data, name):
+    group = _find_group(data, name)
+    if not group:
+        group = {"id": db.new_id(), "name": name}
+        data["groups"].append(group)
+    return group
+
+
 def cmd_move(args):
-    if len(args) < 3:
-        _err('usage: taskman move "list" "name" "new_list"')
-    list_name, task_name, new_list_name = args[0], args[1], args[2]
+    if len(args) < 2:
+        _err('usage: taskman move "list" "group" | taskman move "list" "name" "new_list"')
+    list_name = args[0]
 
     data = db.load()
-    lst = _find_list(data, list_name)
-    if not lst:
-        _err(f"list '{list_name}' not found")
 
-    task = _find_task(data, lst["id"], task_name)
-    if not task:
-        _err(f"task '{task_name}' not found in '{list_name}'")
+    if len(args) == 2:
+        group_name = args[1]
+        lst = _find_list(data, list_name)
+        if not lst:
+            _err(f"list '{list_name}' not found")
+        group = _get_or_create_group(data, group_name)
+        lst["groupId"] = group["id"]
+        db.save(data)
+        print(f"→ [{list_name}] → group '{group_name}'")
+    else:
+        task_name, new_list_name = args[1], args[2]
+        lst = _find_list(data, list_name)
+        if not lst:
+            _err(f"list '{list_name}' not found")
+        task = _find_task(data, lst["id"], task_name)
+        if not task:
+            _err(f"task '{task_name}' not found in '{list_name}'")
+        new_lst = _get_or_create_list(data, new_list_name)
+        if _find_task(data, new_lst["id"], task_name):
+            _err(f"task '{task_name}' already exists in '{new_list_name}'")
+        task["listId"] = new_lst["id"]
+        db.save(data)
+        print(f"→ {task_name}  [{list_name}] → [{new_list_name}]")
 
-    new_lst = _get_or_create_list(data, new_list_name)
 
-    if _find_task(data, new_lst["id"], task_name):
-        _err(f"task '{task_name}' already exists in '{new_list_name}'")
-
-    task["listId"] = new_lst["id"]
-    db.save(data)
-    print(f"→ {task_name}  [{list_name}] → [{new_list_name}]")
+def _find_group(data, name):
+    return next((g for g in data["groups"] if g["name"] == name), None)
 
 
 def cmd_delete(args):
     if len(args) < 1:
         _err('usage: taskman delete "list" ["name"]')
-    list_name = args[0]
+    name = args[0]
 
     data = db.load()
-    lst = _find_list(data, list_name)
-    if not lst:
-        _err(f"list '{list_name}' not found")
 
     if len(args) == 1:
+        group = _find_group(data, name)
+        if group:
+            for l in data["lists"]:
+                if l["groupId"] == group["id"]:
+                    l["groupId"] = None
+            data["groups"] = [g for g in data["groups"] if g["id"] != group["id"]]
+            db.save(data)
+            print(f"- group '{name}'")
+            return
+
+        lst = _find_list(data, name)
+        if not lst:
+            _err(f"'{name}' not found")
         group_id = lst["groupId"]
         data["tasks"] = [t for t in data["tasks"] if t["listId"] != lst["id"]]
         data["daysheet"] = [e for e in data["daysheet"] if e["listId"] != lst["id"]]
@@ -181,13 +211,15 @@ def cmd_delete(args):
         if group_id and not any(l["groupId"] == group_id for l in data["lists"]):
             data["groups"] = [g for g in data["groups"] if g["id"] != group_id]
         db.save(data)
-        print(f"- [{list_name}]")
+        print(f"- [{name}]")
     else:
+        lst = _find_list(data, name)
+        if not lst:
+            _err(f"list '{name}' not found")
         task_name = args[1]
         task = _find_task(data, lst["id"], task_name)
         if not task:
-            _err(f"task '{task_name}' not found in '{list_name}'")
-
+            _err(f"task '{task_name}' not found in '{name}'")
         data["tasks"] = [t for t in data["tasks"] if t["id"] != task["id"]]
         db.save(data)
-        print(f"- [{list_name}] {task_name}")
+        print(f"- [{name}] {task_name}")

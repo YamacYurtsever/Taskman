@@ -194,6 +194,43 @@ class TasksTest(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 cmd_move(["Work", "Ghost", "Personal"])
 
+    def test_move_list_to_group(self):
+        group = {"id": "group-1", "name": "MyGroup"}
+        data = {
+            "groups": [group],
+            "lists": [LIST_1, LIST_2],
+            "tasks": [],
+            "daysheet": [],
+        }
+        saved = {}
+        with patch("taskman.db.load", return_value=data), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+             patch("taskman.db.new_id", return_value="new-id"):
+            cmd_move(["Work", "MyGroup"])
+
+        work = next(l for l in saved["lists"] if l["name"] == "Work")
+        self.assertEqual(work["groupId"], "group-1")
+
+    def test_move_list_autocreates_group(self):
+        db = make_db(lists=[LIST_1, LIST_2])
+        saved = {}
+        with patch("taskman.db.load", return_value=db), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+             patch("taskman.db.new_id", return_value="new-id"):
+            cmd_move(["Work", "BrandNewGroup"])
+
+        self.assertEqual(len(saved["groups"]), 1)
+        self.assertEqual(saved["groups"][0]["name"], "BrandNewGroup")
+        work = next(l for l in saved["lists"] if l["name"] == "Work")
+        self.assertEqual(work["groupId"], "new-id")
+
+    def test_move_list_unknown_list_errors(self):
+        db = make_db()
+        with patch("taskman.db.load", return_value=db), \
+             patch("taskman.db.save"):
+            with self.assertRaises(SystemExit):
+                cmd_move(["NoSuchList", "MyGroup"])
+
     # --- del ---
 
     def test_del_removes_task(self):
@@ -232,6 +269,41 @@ class TasksTest(unittest.TestCase):
 
         list_names = [l["name"] for l in saved["lists"]]
         self.assertIn("Personal", list_names)
+
+    def test_del_group_ungroups_lists(self):
+        group = {"id": "group-1", "name": "MyGroup"}
+        lst = {**LIST_1, "groupId": "group-1"}
+        data = {
+            "groups": [group],
+            "lists": [lst, LIST_2],
+            "tasks": [],
+            "daysheet": [],
+        }
+        saved = {}
+        with patch("taskman.db.load", return_value=data), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_delete(["MyGroup"])
+
+        self.assertEqual(len(saved["groups"]), 0)
+        self.assertIsNone(saved["lists"][0]["groupId"])
+        self.assertEqual(len(saved["lists"]), 2)
+
+    def test_del_group_prefers_group_over_list_same_name(self):
+        group = {"id": "group-1", "name": "Work"}
+        lst_grouped = {**LIST_1, "groupId": "group-1"}
+        data = {
+            "groups": [group],
+            "lists": [lst_grouped, LIST_2],
+            "tasks": [],
+            "daysheet": [],
+        }
+        saved = {}
+        with patch("taskman.db.load", return_value=data), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_delete(["Work"])
+
+        self.assertEqual(len(saved["groups"]), 0)
+        self.assertEqual(len(saved["lists"]), 2)
 
     def test_del_list_removes_empty_group(self):
         group = {"id": "group-1", "name": "MyGroup"}
