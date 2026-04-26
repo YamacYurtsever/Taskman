@@ -118,7 +118,7 @@ After completing each milestone item:
 
 - [x] Project setup
 - [x] Task commands: `add`, `done`, `undone`, `edit`, `move`, `del`
-- [ ] List & group commands: `group`, `ungroup`
+- [x] List & group commands: `group`, `ungroup`
 - [ ] Viewing commands: `task ls`
 - [ ] Shell functions: `ta`, `td`, `tls`, `tld`, `tlw`
 - [ ] Completion sound and visual feedback on `task done`
