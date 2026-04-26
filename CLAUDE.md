@@ -4,6 +4,17 @@ A minimal terminal task manager built for personal daily use. Tasks are organize
 
 ---
 
+### Claude Workflow
+
+After completing each milestone item:
+
+- Add unit tests for any new commands or logic
+- Run `python -m pytest tests/ -v` and confirm all pass
+- Check off the item in the milestones section
+- Run `git add . && git commit -m "<description>"`
+
+---
+
 ### Commands
 
 ##### Tasks
@@ -105,8 +116,8 @@ A minimal terminal task manager built for personal daily use. Tasks are organize
 
 ##### Milestone 1 — Core
 
-- [ ] Project setup
-- [ ] Task commands: `add`, `done`, `undone`, `edit`, `move`, `del`
+- [x] Project setup
+- [x] Task commands: `add`, `done`, `undone`, `edit`, `move`, `del`
 - [ ] List & group commands: `group`, `ungroup`
 - [ ] Viewing commands: `task ls`
 - [ ] Shell functions: `ta`, `td`, `tls`, `tld`, `tlw`
