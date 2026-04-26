@@ -109,7 +109,7 @@ body {
   background: transparent;
   color: var(--muted);
   font: inherit;
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
   cursor: pointer;
   text-align: left;
   transition: color var(--animation-d), background var(--animation-d);
