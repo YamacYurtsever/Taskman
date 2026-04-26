@@ -1,0 +1,120 @@
+# Taskman
+
+A minimal terminal task manager built for personal daily use. Tasks are organized into lists, and lists can be optionally grouped. Each task has a name, a parent list, and an optional due date. The primary workflow is adding tasks to lists, viewing what's due today or this week (with overdue tasks always surfaced), and marking things done. Data is stored in a flat JSON file at `~/.taskman/db.json`.
+
+---
+
+### Commands
+
+##### Tasks
+
+| Command                                                  | Description                                      |
+| -------------------------------------------------------- | ------------------------------------------------ |
+| `taskman add "list" "name" [date]`                       | Add a task to a list, optionally with a due date |
+| `taskman done "list" "name"`                             | Mark a task as completed                         |
+| `taskman undone "list" "name"`                           | Mark a completed task as pending                 |
+| `taskman update "list" "old_name" "new_name" [new_date]` | Rename a task and/or update its due date         |
+| `taskman move "list" "name" "new_list"`                  | Move a task to a different list                  |
+| `taskman del "list" "name"`                              | Delete a task                                    |
+
+##### Lists & Groups
+
+| Command                              | Description                                                |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `taskman group "list"+ "group_name"` | Assign one or more lists to a group (creates group if new) |
+| `taskman ungroup "list"+`            | Remove one or more lists from their group                  |
+
+##### Viewing
+
+| Command                                  | Description                                             |
+| ---------------------------------------- | ------------------------------------------------------- |
+| `taskman ls ["list" \| "group"]`         | All pending tasks, optionally filtered by list or group |
+| `taskman ls ["list" \| "group"] --today` | Overdue + due today                                     |
+| `taskman ls ["list" \| "group"] --week`  | Overdue + due within 7 days                             |
+
+##### Day Sheets
+
+| Command                                     | Description                                                  |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| `taskman log "list" "text"`                 | Freeform entry into a list's day sheet                       |
+| `taskman continue "list" "task"`            | Logs continued task under a list                             |
+| `taskman log edit "list" "text" "new_text"` | Edits daysheet entry                                         |
+| `taskman log del "list" "text"`             | Deletes daysheet entry                                       |
+| `taskman daysheet [date]`                   | View a day's sheet (default today)                           |
+
+##### Shell Functions
+
+| Function                  | Expands to                |
+| ------------------------- | ------------------------- |
+| `ta`                      | `taskman add`             |
+| `td`                      | `taskman done`            |
+| `tls ["list" \| "group"]` | `taskman ls`              |
+| `tld ["list" \| "group"]` | `taskman ls --today`      |
+| `tlw ["list" \| "group"]` | `taskman ls --week`       |
+| `tds [date]`              | `taskman daysheet [date]` |
+
+---
+
+### Database Schema
+
+```json
+{
+  "groups": [
+    {
+      "id": "uuid",
+      "name": "UNSW"
+    }
+  ],
+  "lists": [
+    {
+      "id": "uuid",
+      "name": "COMP3131",
+      "groupId": "uuid | null"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "uuid",
+      "name": "Finish Assignment 5",
+      "listId": "uuid",
+      "due": "2026-04-30 | null",
+      "done": "2026-04-26 | null"
+    }
+  ],
+  "daysheet": [
+    {
+      "id": "uuid",
+      "date": "2026-04-26",
+      "listId": "uuid",
+      "type": "log | continue",
+      "text": "Talked with Baba"
+    }
+  ]
+}
+```
+
+---
+
+### Tech Stack
+
+- Python
+
+---
+
+### Milestones
+
+##### Milestone 1 — Core
+
+- [ ] Project setup
+- [ ] Task commands: `add`, `done`, `undone`, `edit`, `move`, `del`
+- [ ] List & group commands: `group`, `ungroup`
+- [ ] Viewing commands: `task ls`
+- [ ] Shell functions: `ta`, `td`, `tls`, `tld`, `tlw`
+- [ ] Completion sound and visual feedback on `task done`
+
+##### Milestone 2 - Day Sheets
+
+- [ ] Daysheet commands `log`, `continue`, `daysheet`
+- [ ] Shell function: `tds [date]`
+
+##### Milestone 3 - TUI
