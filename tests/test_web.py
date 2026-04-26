@@ -178,7 +178,7 @@ class WebTest(unittest.TestCase):
     def test_index_serves_html(self):
         res = self.client.get("/")
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b"taskman", res.data)
+        self.assertIn(b"Taskman", res.data)
 
 
 if __name__ == "__main__":

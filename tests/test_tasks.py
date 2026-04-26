@@ -15,7 +15,7 @@ TASK_DONE = {"id": "task-2", "name": "Done task", "listId": "list-1", "due": Non
 def make_db(*tasks, lists=None):
     return {
         "groups": [],
-        "lists": list(lists or [LIST_1, LIST_2]),
+        "lists": [copy.deepcopy(l) for l in (lists or [LIST_1, LIST_2])],
         "tasks": [copy.deepcopy(t) for t in tasks],
         "daysheet": [],
     }
@@ -175,6 +175,39 @@ class TasksTest(unittest.TestCase):
              patch("taskman.db.save"):
             with self.assertRaises(SystemExit):
                 cmd_edit(["Work", "Ghost", "New name"])
+
+    def test_edit_renames_list(self):
+        db = make_db(TASK_1)
+        saved = {}
+        with patch("taskman.db.load", return_value=db), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_edit(["Work", "Career"])
+
+        list_names = [l["name"] for l in saved["lists"]]
+        self.assertIn("Career", list_names)
+        self.assertNotIn("Work", list_names)
+
+    def test_edit_renames_group(self):
+        group = {"id": "group-1", "name": "MyGroup"}
+        data = {
+            "groups": [group],
+            "lists": [LIST_1, LIST_2],
+            "tasks": [],
+            "daysheet": [],
+        }
+        saved = {}
+        with patch("taskman.db.load", return_value=data), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_edit(["MyGroup", "NewGroup"])
+
+        self.assertEqual(saved["groups"][0]["name"], "NewGroup")
+
+    def test_edit_rename_list_unknown_errors(self):
+        db = make_db()
+        with patch("taskman.db.load", return_value=db), \
+             patch("taskman.db.save"):
+            with self.assertRaises(SystemExit):
+                cmd_edit(["NoSuchList", "NewName"])
 
     # --- move ---
 

@@ -134,12 +134,30 @@ def cmd_undo(args):
 
 
 def cmd_edit(args):
-    if len(args) < 3:
-        _err('usage: taskman edit "list" "old_name" "new_name" [new_date]')
-    list_name, old_name, new_name = args[0], args[1], args[2]
-    new_due = _parse_date(args[3]) if len(args) >= 4 else ...  # ... = not provided
+    if len(args) < 2:
+        _err('usage: taskman edit "list" "new_name" | taskman edit "list" "old_task" "new_task" [new_date]')
 
     data = db.load()
+
+    if len(args) == 2:
+        target, new_name = args[0], args[1]
+        group = _find_group(data, target)
+        if group:
+            group["name"] = new_name
+            db.save(data)
+            print(f"~ group '{target}' → '{new_name}'")
+            return
+        lst = _find_list(data, target)
+        if not lst:
+            _err(f"'{target}' not found")
+        lst["name"] = new_name
+        db.save(data)
+        print(f"~ [{target}] → [{new_name}]")
+        return
+
+    list_name, old_name, new_name = args[0], args[1], args[2]
+    new_due = _parse_date(args[3]) if len(args) >= 4 else ...
+
     lst = _find_list(data, list_name)
     if not lst:
         _err(f"list '{list_name}' not found")

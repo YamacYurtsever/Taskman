@@ -26,6 +26,10 @@ def _bold(s):  return f'\033[1m{s}\033[0m'
 def _dim(s):   return f'\033[2m{s}\033[0m'
 
 
+def _sort(items, key=lambda x: x['name']):
+    return sorted(items, key=lambda x: ('\xff', x['name']) if re.match(r'^others?$', x['name'], re.I) else ('', x['name']))
+
+
 def _format_due(due_str, today):
     due = date.fromisoformat(due_str)
     delta = (due - today).days
@@ -138,7 +142,7 @@ def cmd_ls(args):
     if filter_name:
         group = next((g for g in data['groups'] if g['name'] == filter_name), None)
         if group:
-            show_lists = [l for l in all_lists if l['groupId'] == group['id']]
+            show_lists = _sort([l for l in all_lists if l['groupId'] == group['id']])
         else:
             lst = next((l for l in all_lists if l['name'] == filter_name), None)
             if not lst:
@@ -162,8 +166,8 @@ def cmd_ls(args):
 
     seen = set()
 
-    for group in sorted(data['groups'], key=lambda g: g['name']):
-        group_lists = sorted([l for l in all_lists if l['groupId'] == group['id']], key=lambda l: l['name'])
+    for group in _sort(data['groups']):
+        group_lists = _sort([l for l in all_lists if l['groupId'] == group['id']])
         if not group_lists:
             continue
         pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in group_lists]
@@ -173,7 +177,7 @@ def cmd_ls(args):
             _render_section(pairs, today, mode)
         seen.update(l['id'] for l in group_lists)
 
-    ungrouped = sorted([l for l in all_lists if l['id'] not in seen], key=lambda l: l['name'])
+    ungrouped = _sort([l for l in all_lists if l['id'] not in seen])
     if ungrouped:
         pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in ungrouped]
         pairs = [(lst, tasks) for lst, tasks in pairs if tasks]

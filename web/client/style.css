@@ -8,8 +8,8 @@
   --text:         #2c2620;
   --muted:        #7a6e62;
   --faint:        #b0a496;
-  --accent:       oklch(52% 0.14 50);
-  --accent-bg:    oklch(52% 0.14 50 / 0.1);
+  --accent:       oklch(48% 0.16 248);
+  --accent-bg:    oklch(48% 0.16 248 / 0.1);
   --green:        oklch(48% 0.14 148);
   --green-bg:     oklch(48% 0.14 148 / 0.1);
   --red:          oklch(50% 0.17 22);
@@ -162,7 +162,7 @@ body {
   transition: color 0.13s, background 0.13s;
 }
 .filter-pill:hover { color: var(--text); }
-.filter-pill.active { background: var(--surface); color: var(--text); }
+.filter-pill.active { background: var(--accent-bg); color: var(--accent); }
 
 .new-list-btn {
   width: 100%;
@@ -212,6 +212,8 @@ body {
   margin: 24px 0 10px;
 }
 .section-label:first-child { margin-top: 0; }
+.section-label-link { cursor: pointer; }
+.section-label-link:hover { color: var(--accent); }
 
 .cards-grid {
   display: grid;
@@ -347,17 +349,17 @@ body {
   justify-content: center;
   transition: border-color 0.13s, background 0.13s;
 }
-.task-check:hover { border-color: var(--green); }
+.task-check:hover { border-color: var(--accent); }
 .task-row.done .task-check {
-  border-color: var(--green);
-  background: var(--green);
+  border-color: var(--accent);
+  background: var(--accent);
 }
 .task-check-svg { display: none; }
 .task-row.done .task-check-svg { display: block; }
 
 .task-name {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.83rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.87rem;
   line-height: 1.4;
   word-break: break-word;
 }
@@ -575,7 +577,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Nunito', sans-serif;
   font-size: 0.93rem;
   color: var(--text);
   line-height: 1.5;

@@ -7,6 +7,7 @@ Usage:
   taskman add "list" "name" [date]
   taskman done "list" "name"
   taskman undo "list" "name"
+  taskman edit ("list"|"group") "new_name"
   taskman edit "list" "old_name" "new_name" [new_date]
   taskman move "list" "name" "new_list"
   taskman delete "list" ["name"]

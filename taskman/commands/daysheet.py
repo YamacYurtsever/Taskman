@@ -1,6 +1,11 @@
+import re
 import sys
 from datetime import date, datetime
 from taskman import db
+
+
+def _sort_name(name):
+    return ('\xff', name) if re.match(r'^others?$', name, re.I) else ('', name)
 
 
 def _err(msg):
@@ -114,6 +119,10 @@ def cmd_continue(args):
            if e["listId"] == lst["id"] and e["type"] == "done"
            and e["text"] == task_name and _entry_date(e) == today):
         _err(f"'{task_name}' was already finished today")
+    if any(e for e in data["daysheet"]
+           if e["listId"] == lst["id"] and e["type"] == "continue"
+           and e["text"] == task_name and _entry_date(e) == today):
+        _err(f"'{task_name}' was already continued today")
 
     data["daysheet"].append({
         "id": db.new_id(),
@@ -162,7 +171,7 @@ def cmd_daysheet(args):
             by_section[sid] = {"name": section_name, "entries": []}
         by_section[sid]["entries"].append(e)
 
-    section_order.sort(key=lambda sid: by_section[sid]["name"])
+    section_order.sort(key=lambda sid: _sort_name(by_section[sid]["name"]))
 
     print(f"Day Sheet · {target}\n")
     for sid in section_order:

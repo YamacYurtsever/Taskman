@@ -24,6 +24,7 @@ After completing each milestone item:
 | `taskman add "list" ["name"] [date]`                     | Add a task to a list, or just create the list    |
 | `taskman done "list" "name"`                             | Mark a task as completed                         |
 | `taskman undo "list" "name"`                             | Mark a completed task as pending                 |
+| `taskman edit ("list"\|"group") "new_name"`          | Rename a list or group                           |
 | `taskman edit "list" "name" "new_name" [new_date]`   | Rename a task and/or update its due date         |
 | `taskman move ("list" "group" \| "list" "name" "new_list")`                  | Move a list to a group or a task to a list                  |
 | `taskman delete ("group" \| "list" ["name"])`                         | Delete group (ungroup), list, or task    |
@@ -153,9 +154,9 @@ After completing each milestone item:
 
 ###### List & Group Actions
 - [x] Create list (sidebar + New List)
-- [ ] Rename list
+- [ ] Rename list (CLI: `taskman edit "list" "new_name"`)
 - [ ] Delete list
-- [ ] Rename group
+- [ ] Rename group (CLI: `taskman edit "group" "new_name"`)
 - [ ] Delete group
 - [ ] Assign list to group / ungroup (`taskman group`, `taskman ungroup`)
 - [ ] Move list to group (`taskman move "list" "group"`)
@@ -175,7 +176,14 @@ After completing each milestone item:
 - [ ] Web: description visible in focused list view
 - [ ] Web: add description field to quick-add modal
 
-##### Milestone 5 — iCloud Sync
+##### Milestone 5 — Backups
+
+- [ ] On each `db.save()`, write/overwrite a snapshot to `~/.taskman/backups/db.YYYY-MM-DD.json` (always reflects the latest state for that day)
+- [ ] Keep only the last 10 snapshots (days with writes), pruning older ones automatically
+- [ ] `taskman backup` command to force a snapshot immediately (useful before bulk changes)
+- [ ] `taskman restore [date]` command to restore from a snapshot (lists available dates if none given)
+
+##### Milestone 6 — iCloud Sync
 
 - [ ] Config file (`~/.taskman/config.json`) with configurable `db_path`
 - [ ] Default `db_path` to `~/Library/Mobile Documents/com~apple~CloudDocs/taskman/db.json` when iCloud Drive is detected

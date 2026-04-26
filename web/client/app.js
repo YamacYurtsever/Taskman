@@ -249,7 +249,7 @@ function taskRow(task, listName) {
     },
   },
     el('svg', { class: 'task-check-svg', width: '9', height: '9', viewBox: '0 0 16 16',
-      fill: 'none', stroke: '#0e1016', 'stroke-width': '2.5',
+      fill: 'none', stroke: '#fff', 'stroke-width': '2.5',
       'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
       el('path', { d: 'M3 8.5l3 3L13 5' })),
   );
@@ -342,7 +342,7 @@ function renderCardsView() {
   if (state.selectedGroup) {
     const g = groups.find(x => x.id === state.selectedGroup);
     if (!g) { state.selectedGroup = null; renderCardsView(); return; }
-    const gl = lists.filter(l => l.groupId === g.id);
+    const gl = sortByName(lists.filter(l => l.groupId === g.id));
     const cards = gl.map(renderCard).filter(Boolean);
     main.append(el('div', { class: 'section-label' }, g.name));
     if (cards.length) {
@@ -354,18 +354,20 @@ function renderCardsView() {
   }
 
   const seen = new Set();
-  for (const g of groups) {
-    const gl = lists.filter(l => l.groupId === g.id);
+  for (const g of sortByName(groups)) {
+    const gl = sortByName(lists.filter(l => l.groupId === g.id));
     if (!gl.length) continue;
     const cards = gl.map(renderCard).filter(Boolean);
     if (cards.length) {
-      main.append(el('div', { class: 'section-label' }, g.name));
+      main.append(el('div', { class: 'section-label section-label-link',
+        on: { click: () => { state.selectedGroup = g.id; state.selectedList = null; render(); renderSidebar(); } },
+      }, g.name));
       main.append(el('div', { class: 'cards-grid' }, ...cards));
     }
     gl.forEach(l => seen.add(l.id));
   }
 
-  const ungrp = lists.filter(l => !seen.has(l.id));
+  const ungrp = sortByName(lists.filter(l => !seen.has(l.id)));
   if (ungrp.length) {
     const cards = ungrp.map(renderCard).filter(Boolean);
     if (cards.length) {
