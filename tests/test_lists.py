@@ -93,6 +93,27 @@ class UngroupTest(unittest.TestCase):
 
         self.assertTrue(all(l["groupId"] is None for l in saved["lists"]))
 
+    def test_ungroup_removes_empty_group(self):
+        lst = {**LIST_1, "groupId": "group-1"}
+        db = make_db(lst, groups=[GROUP_1])
+        saved = {}
+        with patch("taskman.db.load", return_value=db), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_ungroup(["Work"])
+
+        self.assertEqual(len(saved["groups"]), 0)
+
+    def test_ungroup_keeps_group_if_other_lists_remain(self):
+        lst1 = {**LIST_1, "groupId": "group-1"}
+        lst2 = {**LIST_2, "groupId": "group-1"}
+        db = make_db(lst1, lst2, groups=[GROUP_1])
+        saved = {}
+        with patch("taskman.db.load", return_value=db), \
+             patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
+            cmd_ungroup(["Work"])
+
+        self.assertEqual(len(saved["groups"]), 1)
+
     def test_ungroup_unknown_list_errors(self):
         db = make_db()
         with patch("taskman.db.load", return_value=db), \

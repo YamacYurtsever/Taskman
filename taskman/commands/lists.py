@@ -48,14 +48,20 @@ def cmd_ungroup(args):
 
     data = db.load()
 
+    affected_group_ids = set()
     for name in args:
         lst = _find_list(data, name)
         if not lst:
             _err(f"list '{name}' not found")
         if not lst["groupId"]:
             _err(f"list '{name}' is not in a group")
+        affected_group_ids.add(lst["groupId"])
         lst["groupId"] = None
 
+    data["groups"] = [
+        g for g in data["groups"]
+        if g["id"] not in affected_group_ids or any(l["groupId"] == g["id"] for l in data["lists"])
+    ]
     db.save(data)
     lists_str = ", ".join(args)
     print(f"[{lists_str}] ungrouped")
