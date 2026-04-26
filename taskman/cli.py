@@ -7,7 +7,7 @@ Usage:
   taskman add "list" "name" [date]
   taskman done "list" "name"
   taskman undo "list" "name"
-  taskman update "list" "old_name" "new_name" [new_date]
+  taskman edit "list" "old_name" "new_name" [new_date]
   taskman move "list" "name" "new_list"
   taskman delete "list" ["name"]
   taskman group "list"+ "group_name"
@@ -40,9 +40,9 @@ def main():
     elif cmd == "undo":
         from taskman.commands.tasks import cmd_undo
         cmd_undo(args[1:])
-    elif cmd == "update":
-        from taskman.commands.tasks import cmd_update
-        cmd_update(args[1:])
+    elif cmd == "edit":
+        from taskman.commands.tasks import cmd_edit
+        cmd_edit(args[1:])
     elif cmd == "move":
         from taskman.commands.tasks import cmd_move
         cmd_move(args[1:])

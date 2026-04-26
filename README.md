@@ -20,7 +20,7 @@ pip install -e .
 taskman add "list" "name" [date]          # Add a task (date: YYYY-MM-DD)
 taskman done "list" "name"                # Mark done
 taskman undo "list" "name"                # Mark pending
-taskman update "list" "name" "new_name" [new_date]
+taskman edit "list" "name" "new_name" [new_date]
 taskman move "list" "name" "new_list"     # Move task to another list
 taskman delete "list" "name"              # Delete a task
 ```

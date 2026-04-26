@@ -11,6 +11,7 @@ const state = {
   daysheet: null,
   daysheetDate: todayStr(),
   showDone: new Set(),
+  expandedCards: new Set(),
 };
 
 function todayStr() {
@@ -172,7 +173,7 @@ function renderSidebar() {
     const active = state.view === 'tasks' && state.selectedList === list.id;
     const btn = el('button', {
       class: 'list-nav-item nav-sub' + (active ? ' active' : ''),
-      style: indent ? 'padding-left:28px' : 'padding-left:18px',
+      style: indent ? 'padding-left:28px' : '',
       on: { click: () => { state.selectedList = list.id; state.selectedGroup = null; state.view = 'tasks'; render(); renderSidebar(); } },
     }, list.name, count ? el('span', { class: 'lni-count' }, count) : null);
     return btn;
@@ -255,31 +256,23 @@ function taskRow(task, listName) {
 
   const dueEl = due ? el('span', { class: 'task-due' + (due.cls ? ' ' + due.cls : '') }, due.label) : null;
 
-  const actions = el('div', { class: 'task-actions' });
-  if (!task.done) {
-    actions.append(
-      el('button', { class: 'task-btn', title: 'Log continue',
+  const continueOrUndo = task.done
+    ? null
+    : el('button', { class: 'task-btn', title: 'Log continue',
         on: { click: () => act('/api/continue', { list: listName, task: task.name }) } },
-        icon(IC.continue, 15)),
-    );
-  } else {
-    actions.append(
-      el('button', { class: 'task-btn', title: 'Undo',
-        on: { click: () => act('/api/undo', { list: listName, name: task.name }) } },
-        icon(IC.undo)),
-    );
-  }
-  actions.append(
-    el('button', { class: 'task-btn del', title: 'Delete',
-      on: { click: () => { if (confirm(`Delete "${task.name}"?`)) act('/api/delete', { list: listName, name: task.name }); } } },
-      icon(IC.delete)),
-  );
+        icon(IC.continue, 11));
+
+  const deleteBtn = el('button', { class: 'task-btn del', title: 'Delete',
+    on: { click: () => { if (confirm(`Delete "${task.name}"?`)) act('/api/delete', { list: listName, name: task.name }); } } },
+    icon(IC.delete, 11));
 
   return el('div', { class: 'task-row' + (task.done ? ' done' : '') },
-    checkEl,
-    el('span', { class: 'task-name' }, task.name),
-    dueEl,
-    actions,
+    el('div', { class: 'task-left' }, checkEl, continueOrUndo),
+    el('div', { class: 'task-body' },
+      el('span', { class: 'task-name' }, task.name),
+      dueEl,
+    ),
+    el('div', { class: 'task-actions' }, deleteBtn),
   );
 }
 
@@ -300,13 +293,29 @@ function inlineAdd(listName, onAdd) {
 
 // ── Cards view (all lists) ────────────────────────────────────
 
+const CARD_LIMIT = 10;
+
 function renderCard(list) {
   const pending = pendingFor(list.id);
   if (!pending.length) return null;
 
+  const expanded = state.expandedCards.has(list.id);
+  const overflow = pending.length > CARD_LIMIT;
+  const visible = overflow && !expanded ? pending.slice(0, CARD_LIMIT) : pending;
+
   const body = el('div', { class: 'card-body' },
-    ...pending.map(t => taskRow(t, list.name)),
+    ...visible.map(t => taskRow(t, list.name)),
   );
+
+  const toggleBtn = overflow ? el('button', { class: 'card-overflow-toggle',
+    on: { click: () => {
+      expanded ? state.expandedCards.delete(list.id) : state.expandedCards.add(list.id);
+      render();
+    }},
+  },
+    icon(expanded ? IC.chevL : IC.chevR, 10),
+    expanded ? ` hide ${pending.length - CARD_LIMIT}` : ` ${pending.length - CARD_LIMIT} more`,
+  ) : null;
 
   const { nameIn, dueIn, submit } = inlineAdd(list.name, (l, n, d) => act('/api/add', { list: l, name: n, due: d }));
 
@@ -317,6 +326,7 @@ function renderCard(list) {
       el('span', { class: 'card-count' }, pending.length),
     ),
     body,
+    toggleBtn,
     el('div', { class: 'card-add' },
       nameIn, dueIn,
       el('button', { class: 'card-add-btn', on: { click: submit } }, icon(IC.plus, 14)),
@@ -477,9 +487,10 @@ function renderDaysheetView() {
             const delBtn = el('button', { class: 'timeline-del', title: 'Delete',
               on: { click: () => act('/api/daysheet/delete', { id: e.id }) } },
               icon(IC.delete, 11));
+            const prefix = e.type === 'done' ? 'Finished ' : e.type === 'continue' ? 'Continued ' : '';
             return el('div', { class: 'timeline-entry' },
               el('span', { class: 'timeline-time' }, e.datetime.slice(11, 16)),
-              el('span', { class: 'timeline-text' }, e.text, listTag),
+              el('span', { class: 'timeline-text' }, prefix + e.text, listTag),
               delBtn,
             );
           }),

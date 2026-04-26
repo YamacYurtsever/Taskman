@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch
 
 from taskman.commands.tasks import (
-    cmd_add, cmd_delete, cmd_done, cmd_move, cmd_undo, cmd_update,
+    cmd_add, cmd_delete, cmd_done, cmd_edit, cmd_move, cmd_undo,
 )
 
 LIST_1 = {"id": "list-1", "name": "Work", "groupId": None}
@@ -139,42 +139,42 @@ class TasksTest(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 cmd_undo(["Work", "Write report"])
 
-    # --- update ---
+    # --- edit ---
 
-    def test_update_renames(self):
+    def test_edit_renames(self):
         db = make_db(TASK_1)
         saved = {}
         with patch("taskman.db.load", return_value=db), \
              patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_update(["Work", "Write report", "Write final report"])
+            cmd_edit(["Work", "Write report", "Write final report"])
 
         self.assertEqual(saved["tasks"][0]["name"], "Write final report")
 
-    def test_update_changes_due(self):
+    def test_edit_changes_due(self):
         db = make_db(TASK_1)
         saved = {}
         with patch("taskman.db.load", return_value=db), \
              patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_update(["Work", "Write report", "Write report", "2026-06-01"])
+            cmd_edit(["Work", "Write report", "Write report", "2026-06-01"])
 
         self.assertEqual(saved["tasks"][0]["due"], "2026-06-01")
 
-    def test_update_omitting_date_preserves_due(self):
+    def test_edit_omitting_date_preserves_due(self):
         task = {**TASK_1, "due": "2026-05-01"}
         db = make_db(task)
         saved = {}
         with patch("taskman.db.load", return_value=db), \
              patch("taskman.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_update(["Work", "Write report", "Renamed"])
+            cmd_edit(["Work", "Write report", "Renamed"])
 
         self.assertEqual(saved["tasks"][0]["due"], "2026-05-01")
 
-    def test_update_unknown_task_errors(self):
+    def test_edit_unknown_task_errors(self):
         db = make_db()
         with patch("taskman.db.load", return_value=db), \
              patch("taskman.db.save"):
             with self.assertRaises(SystemExit):
-                cmd_update(["Work", "Ghost", "New name"])
+                cmd_edit(["Work", "Ghost", "New name"])
 
     # --- move ---
 

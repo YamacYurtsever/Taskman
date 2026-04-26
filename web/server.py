@@ -10,7 +10,7 @@ from taskman import db
 from taskman.commands.daysheet import cmd_continue, cmd_log
 from taskman.commands.tasks import cmd_add, cmd_delete, cmd_done, cmd_undo
 
-STATIC_DIR = Path(__file__).parent / "static"
+STATIC_DIR = Path(__file__).parent / "client"
 _ANSI_RE = re.compile(r"\033\[[0-9;]*m")
 
 
@@ -34,7 +34,7 @@ def create_app():
     def index():
         return send_from_directory(STATIC_DIR, "index.html")
 
-    @app.get("/static/<path:name>")
+    @app.get("/client/<path:name>")
     def static_files(name):
         return send_from_directory(STATIC_DIR, name)
 

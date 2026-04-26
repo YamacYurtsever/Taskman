@@ -24,7 +24,7 @@ After completing each milestone item:
 | `taskman add "list" ["name"] [date]`                     | Add a task to a list, or just create the list    |
 | `taskman done "list" "name"`                             | Mark a task as completed                         |
 | `taskman undo "list" "name"`                             | Mark a completed task as pending                 |
-| `taskman update "list" "name" "new_name" [new_date]` | Rename a task and/or update its due date         |
+| `taskman edit "list" "name" "new_name" [new_date]`   | Rename a task and/or update its due date         |
 | `taskman move ("list" "group" \| "list" "name" "new_list")`                  | Move a list to a group or a task to a list                  |
 | `taskman delete ("group" \| "list" ["name"])`                         | Delete group (ungroup), list, or task    |
 
@@ -107,7 +107,9 @@ After completing each milestone item:
 
 ### Tech Stack
 
-- Python
+- **Backend:** Python, Flask
+- **Frontend:** Vanilla HTML / CSS / JavaScript (no build step)
+- **Storage:** JSON flat file (`~/.taskman/db.json`)
 
 ---
 
@@ -129,11 +131,46 @@ After completing each milestone item:
 
 ##### Milestone 3 — Web Frontend
 
-- [x] Flask server (`web/server.py`) with REST endpoints wrapping existing command functions
-- [x] Serve static frontend from `web/static/`
-- [x] View: all lists/groups with pending tasks (mirrors `taskman ls`)
-- [x] View: day and week filtered views (mirrors `--day`, `--week`)
-- [x] View: daysheet for today (mirrors `taskman daysheet`)
-- [x] Actions: add, done, undo, delete tasks inline
-- [x] Actions: log and continue from the daysheet view
+###### Infrastructure
+- [x] Flask server (`web/server.py`) with REST endpoints wrapping CLI command functions
+- [x] Serve static frontend from `web/client/`
 - [x] Live updates without full page reload
+
+###### Views
+- [x] Cards view: all lists/groups with pending tasks, 4-column responsive grid
+- [x] Focused view: single list with pending + completed tasks
+- [x] Daysheet view: day sheet with date navigation
+- [x] Filter pills: All / Week / Day
+- [x] Sidebar: Daysheet + Tasks nav, groups, lists, alphabetical with Others last
+
+###### Task Actions
+- [x] Add task (inline per card, inline in focused view, quick-add modal Cmd+K)
+- [x] Mark done / undo (checkbox)
+- [x] Delete task
+- [x] Continue task (logs to daysheet)
+- [ ] Rename task / update due date (`taskman edit`)
+- [ ] Move task to another list (`taskman move "list" "name" "new_list"`)
+
+###### List & Group Actions
+- [x] Create list (sidebar + New List)
+- [ ] Rename list
+- [ ] Delete list
+- [ ] Rename group
+- [ ] Delete group
+- [ ] Assign list to group / ungroup (`taskman group`, `taskman ungroup`)
+- [ ] Move list to group (`taskman move "list" "group"`)
+
+###### Daysheet Actions
+- [x] Add log entry
+- [x] Continue task (from task cards)
+- [x] Delete entry
+- [ ] Edit log entry (`taskman log edit`)
+
+##### Milestone 5 — Task Descriptions
+
+- [ ] Add `description` field to task schema (`db.json`)
+- [ ] CLI: `taskman update` supports setting/clearing description
+- [ ] Terminal: show description in `taskman ls` focused view
+- [ ] Web: expand task row to show/edit description inline
+- [ ] Web: description visible in focused list view
+- [ ] Web: add description field to quick-add modal

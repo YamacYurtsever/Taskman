@@ -133,9 +133,9 @@ def cmd_undo(args):
     print(f"○ [{list_name}] {task_name}")
 
 
-def cmd_update(args):
+def cmd_edit(args):
     if len(args) < 3:
-        _err('usage: taskman update "list" "old_name" "new_name" [new_date]')
+        _err('usage: taskman edit "list" "old_name" "new_name" [new_date]')
     list_name, old_name, new_name = args[0], args[1], args[2]
     new_due = _parse_date(args[3]) if len(args) >= 4 else ...  # ... = not provided
 
