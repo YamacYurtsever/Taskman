@@ -88,6 +88,24 @@ def _cols_per_row(n):
     return 1, term_w
 
 
+def _render_section(pairs, col_width, today, gap):
+    n = len(pairs)
+    cols_per_row, col_width = _cols_per_row(n)
+    gap = ' ' * COL_GAP
+
+    for row_start in range(0, n, cols_per_row):
+        row = pairs[row_start:row_start + cols_per_row]
+        columns = [_render_column(lst['name'], tasks, col_width, today) for lst, tasks in row]
+
+        max_lines = max(len(c) for c in columns)
+        for col in columns:
+            col += [' ' * col_width] * (max_lines - len(col))
+
+        for parts in zip(*columns):
+            print(gap.join(parts))
+        print()
+
+
 def cmd_ls(args):
     mode = 'all'
     filter_name = None
@@ -114,30 +132,36 @@ def cmd_ls(args):
                 print(f"taskman: '{filter_name}' is not a list or group", file=sys.stderr)
                 sys.exit(1)
             show_lists = [lst]
-    else:
-        show_lists = all_lists
 
-    if not show_lists:
+        if not show_lists:
+            print('no lists found')
+            return
+
+        pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in show_lists]
+        _render_section(pairs, 0, today, '')
+        return
+
+    if not all_lists:
         print('no lists found')
         return
 
-    pairs = [
-        (lst, filter_tasks(data['tasks'], lst['id'], mode, today))
-        for lst in show_lists
-    ]
-
-    n = len(pairs)
-    cols_per_row, col_width = _cols_per_row(n)
+    # Group sections
+    term_w = shutil.get_terminal_size((80, 24)).columns
     gap = ' ' * COL_GAP
 
-    for row_start in range(0, n, cols_per_row):
-        row = pairs[row_start:row_start + cols_per_row]
-        columns = [_render_column(lst['name'], tasks, col_width, today) for lst, tasks in row]
+    grouped_ids = {g['id']: g for g in data['groups']}
+    seen = set()
 
-        max_lines = max(len(c) for c in columns)
-        for col in columns:
-            col += [' ' * col_width] * (max_lines - len(col))
+    for group in data['groups']:
+        group_lists = [l for l in all_lists if l['groupId'] == group['id']]
+        if not group_lists:
+            continue
+        print(_bold(group['name']))
+        pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in group_lists]
+        _render_section(pairs, 0, today, gap)
+        seen.update(l['id'] for l in group_lists)
 
-        for parts in zip(*columns):
-            print(gap.join(parts))
-        print()
+    ungrouped = [l for l in all_lists if l['id'] not in seen]
+    if ungrouped:
+        pairs = [(lst, filter_tasks(data['tasks'], lst['id'], mode, today)) for lst in ungrouped]
+        _render_section(pairs, 0, today, gap)
