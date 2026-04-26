@@ -89,6 +89,11 @@ def create_app():
             args.append(body["due"])
         return _action(cmd_add, args)
 
+    @app.post("/api/add-list")
+    def api_add_list():
+        body = request.get_json(force=True) or {}
+        return _action(cmd_add, [body.get("list", "")])
+
     @app.post("/api/done")
     def api_done():
         body = request.get_json(force=True) or {}

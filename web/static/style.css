@@ -161,23 +161,35 @@ body {
 .filter-pill:hover { color: var(--text); }
 .filter-pill.active { background: var(--surface); color: var(--text); }
 
-.quick-add-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 13px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
+.new-list-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px dashed var(--border);
   border-radius: var(--r-sm);
+  color: var(--faint);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.13s, border-color 0.13s;
+}
+.new-list-btn:hover { color: var(--muted); border-color: var(--muted); }
+
+.new-list-input { margin-top: 6px; }
+.new-list-input.hidden { display: none; }
+.new-list-input input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  color: var(--text);
   font: inherit;
   font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  letter-spacing: -0.01em;
-  transition: opacity 0.13s;
+  padding: 5px 9px;
+  outline: none;
 }
-.quick-add-btn:hover { opacity: 0.85; }
 
 #main {
   flex: 1;

@@ -208,6 +208,29 @@ function renderSidebar() {
 
   const ungrouped = sortByName(lists.filter(l => !seen.has(l.id)));
   ungrouped.forEach(l => nav.append(listBtn(l, false)));
+
+  // New List button + inline input
+  const inputRow = el('div', { class: 'new-list-input hidden' });
+  const input = el('input', { type: 'text', placeholder: 'List name…', autocomplete: 'off' });
+  const submit = async () => {
+    const name = input.value.trim();
+    if (!name) return;
+    input.value = '';
+    inputRow.classList.add('hidden');
+    await act('/api/add-list', { list: name });
+  };
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submit();
+    if (e.key === 'Escape') { input.value = ''; inputRow.classList.add('hidden'); }
+  });
+  input.addEventListener('blur', () => { if (!input.value.trim()) inputRow.classList.add('hidden'); });
+  inputRow.append(input);
+  nav.append(inputRow);
+
+  nav.append(el('button', {
+    class: 'new-list-btn',
+    on: { click: () => { inputRow.classList.remove('hidden'); input.focus(); } },
+  }, '+ New List'));
 }
 
 // ── Task row ──────────────────────────────────────────────────
@@ -538,9 +561,6 @@ function render() {
 }
 
 // ── Wiring ────────────────────────────────────────────────────
-
-// Quick-add
-document.getElementById('quick-add-btn').addEventListener('click', openQuickAdd);
 
 const qaOverlay = document.getElementById('quick-add-modal');
 qaOverlay.addEventListener('click', e => { if (e.target === qaOverlay) closeQuickAdd(); });
