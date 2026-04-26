@@ -128,3 +128,5 @@ After completing each milestone item:
 - [ ] Shell function: `tds [date]`
 
 ##### Milestone 3 - TUI
+
+##### Milestone 3 - GUI
