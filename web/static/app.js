@@ -167,6 +167,18 @@ function renderListsView(mode) {
   const { groups, lists, tasks, today } = state.data;
   main.replaceChildren();
 
+  const filterBar = el('div', { class: 'filter-bar' },
+    ...['all', 'week', 'today'].map(f => {
+      const btn = el('button', { class: f === mode ? 'active' : '' }, f[0].toUpperCase() + f.slice(1));
+      btn.addEventListener('click', () => {
+        state.taskFilter = f;
+        render();
+      });
+      return btn;
+    }),
+  );
+  main.append(filterBar);
+
   if (!lists.length) {
     main.append(el('div', { class: 'empty' }, 'no lists yet — add a task to get started'));
     return;
@@ -262,10 +274,7 @@ function renderDaysheet() {
   ));
 }
 
-const taskFilterEl = document.getElementById('task-filter');
-
 function render() {
-  taskFilterEl.style.display = state.view === 'tasks' ? '' : 'none';
   if (state.view === 'daysheet') renderDaysheet();
   else renderListsView(state.taskFilter);
 }
@@ -276,15 +285,6 @@ document.querySelectorAll('#tabs button').forEach(btn => {
     btn.classList.add('active');
     state.view = btn.dataset.view;
     refresh();
-  });
-});
-
-taskFilterEl.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    taskFilterEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.taskFilter = btn.dataset.filter;
-    render();
   });
 });
 
