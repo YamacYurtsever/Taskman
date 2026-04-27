@@ -190,6 +190,81 @@ class WebTest(unittest.TestCase):
         res = self.client.post("/api/daysheet/delete", json={"id": "nonexistent"})
         self.assertEqual(res.status_code, 400)
 
+    # --- POST /api/rename-list / delete-list ---
+
+    def test_rename_list(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/rename-list", json={"list": "Work", "newName": "Job"})
+        self.assertEqual(res.status_code, 200)
+        names = [l["name"] for l in self.saved["lists"]]
+        self.assertIn("Job", names)
+        self.assertNotIn("Work", names)
+
+    def test_rename_list_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/rename-list", json={"list": "Ghost", "newName": "X"})
+        self.assertEqual(res.status_code, 400)
+
+    def test_rename_list_empty_name_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/rename-list", json={"list": "Work", "newName": ""})
+        self.assertEqual(res.status_code, 400)
+
+    def test_delete_list(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/delete-list", json={"list": "Work"})
+        self.assertEqual(res.status_code, 200)
+        names = [l["name"] for l in self.saved["lists"]]
+        self.assertNotIn("Work", names)
+        task_list_ids = [t["listId"] for t in self.saved["tasks"]]
+        self.assertNotIn("list-1", task_list_ids)
+
+    def test_delete_list_removes_empty_group(self):
+        data = make_db()
+        data["lists"] = [copy.deepcopy(LIST_1)]  # only list in group-1
+        self._patch_all(data)
+        res = self.client.post("/api/delete-list", json={"list": "Work"})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(self.saved["groups"], [])
+
+    def test_delete_list_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/delete-list", json={"list": "Ghost"})
+        self.assertEqual(res.status_code, 400)
+
+    # --- POST /api/rename-group / delete-group ---
+
+    def test_rename_group(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/rename-group", json={"group": "UNSW", "newName": "Uni"})
+        self.assertEqual(res.status_code, 200)
+        names = [g["name"] for g in self.saved["groups"]]
+        self.assertIn("Uni", names)
+        self.assertNotIn("UNSW", names)
+
+    def test_rename_group_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/rename-group", json={"group": "Ghost", "newName": "X"})
+        self.assertEqual(res.status_code, 400)
+
+    def test_rename_group_empty_name_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/rename-group", json={"group": "UNSW", "newName": ""})
+        self.assertEqual(res.status_code, 400)
+
+    def test_delete_group_ungroups_lists(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/delete-group", json={"group": "UNSW"})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(self.saved["groups"], [])
+        lst = next(l for l in self.saved["lists"] if l["id"] == "list-1")
+        self.assertIsNone(lst["groupId"])
+
+    def test_delete_group_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/delete-group", json={"group": "Ghost"})
+        self.assertEqual(res.status_code, 400)
+
     # --- POST /api/edit ---
 
     def test_edit_task_rename(self):

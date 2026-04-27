@@ -119,11 +119,71 @@ body {
 }
 
 .list-nav-item .lni-count {
-  margin-left: auto;
   font-size: 0.7rem;
   color: var(--faint);
   flex-shrink: 0;
-  padding-left: var(--sp-sm);
+}
+
+.lni-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.lni-actions {
+  display: none;
+  gap: 2px;
+}
+
+.list-nav-item:hover .lni-actions {
+  display: flex;
+}
+
+.list-nav-item:hover .lni-count {
+  display: none;
+}
+
+.lni-action {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--animation-d), background var(--animation-d);
+}
+
+.lni-action:hover {
+  color: var(--muted);
+  background: var(--surface-hover);
+}
+
+.lni-action.lni-del:hover {
+  color: var(--red);
+  background: var(--red-light);
+}
+
+.lni-rename-row {
+  cursor: default;
+}
+
+.lni-rename-row input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--text);
+  font: inherit;
+  font-size: inherit;
+  outline: none;
+  padding: 1px 0;
 }
 
 .list-nav-item.active .lni-count {

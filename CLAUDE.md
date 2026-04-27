@@ -164,10 +164,10 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 
 ###### List & Group Actions
 - [x] Create list (sidebar + New List)
-- [ ] Rename list (CLI: `taskman edit "list" "new_name"`)
-- [ ] Delete list
-- [ ] Rename group (CLI: `taskman edit "group" "new_name"`)
-- [ ] Delete group
+- [x] Rename list (CLI: `taskman edit "list" "new_name"`)
+- [x] Delete list
+- [x] Rename group (CLI: `taskman edit "group" "new_name"`)
+- [x] Delete group
 - [ ] Assign list to group / ungroup (`taskman move "list" "group"` / `taskman move "list" ""`)
 
 ###### Daysheet Actions

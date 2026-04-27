@@ -97,6 +97,10 @@ const API = {
   daysheet:       '/api/daysheet',
   add:            '/api/add',
   addList:        '/api/add-list',
+  renameList:     '/api/rename-list',
+  deleteList:     '/api/delete-list',
+  renameGroup:    '/api/rename-group',
+  deleteGroup:    '/api/delete-group',
   done:           '/api/done',
   undo:           '/api/undo',
   delete:         '/api/delete',
@@ -217,10 +221,43 @@ function renderSidebar() {
   function listBtn(list) {
     const count = pendingFor(list.id).length;
     const active = state.view === 'tasks' && state.selectedList === list.id;
-    return el('button', {
+    let item;
+
+    const renameBtn = el('button', { class: 'lni-action', title: 'Rename',
+      on: { click: e => {
+        e.stopPropagation();
+        const input = el('input', { type: 'text', value: list.name, autocomplete: 'off' });
+        const save = async () => {
+          const newName = input.value.trim();
+          if (!newName || newName === list.name) { refresh(); return; }
+          await act(API.renameList, { list: list.name, newName });
+        };
+        input.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter') save();
+          if (ev.key === 'Escape') refresh();
+        });
+        item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-rename-row' }, input));
+        input.focus(); input.select();
+      }}
+    }, icon(IC.edit, 10));
+
+    const deleteBtn = el('button', { class: 'lni-action lni-del', title: 'Delete',
+      on: { click: e => {
+        e.stopPropagation();
+        if (confirm(`Delete list "${list.name}" and all its tasks?`)) act(API.deleteList, { list: list.name });
+      }}
+    }, icon(IC.delete, 10));
+
+    item = el('button', {
       class: 'list-nav-item nav-list' + (active ? ' active' : ''),
       on: { click: () => { state.selectedList = list.id; state.selectedGroup = null; state.view = 'tasks'; render(); renderSidebar(); } },
-    }, list.name, count ? el('span', { class: 'lni-count' }, count) : null);
+    }, list.name,
+      el('div', { class: 'lni-right' },
+        el('div', { class: 'lni-actions' }, renameBtn, deleteBtn),
+        count ? el('span', { class: 'lni-count' }, count) : null,
+      ),
+    );
+    return item;
   }
 
   // Top-level: Calendar
@@ -251,10 +288,37 @@ function renderSidebar() {
     const gl = sortByName(lists.filter(l => l.groupId === g.id));
     if (!gl.length) continue;
     const grpActive = state.view === 'tasks' && state.selectedGroup === g.id;
-    const groupHeader = el('button', {
+    let groupHeader;
+
+    const grpRenameBtn = el('button', { class: 'lni-action', title: 'Rename',
+      on: { click: e => {
+        e.stopPropagation();
+        const input = el('input', { type: 'text', value: g.name, autocomplete: 'off' });
+        const save = async () => {
+          const newName = input.value.trim();
+          if (!newName || newName === g.name) { refresh(); return; }
+          await act(API.renameGroup, { group: g.name, newName });
+        };
+        input.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter') save();
+          if (ev.key === 'Escape') refresh();
+        });
+        groupHeader.replaceWith(el('div', { class: 'list-nav-item nav-group-header lni-rename-row' }, input));
+        input.focus(); input.select();
+      }}
+    }, icon(IC.edit, 10));
+
+    const grpDeleteBtn = el('button', { class: 'lni-action lni-del', title: 'Delete group',
+      on: { click: e => {
+        e.stopPropagation();
+        if (confirm(`Delete group "${g.name}"? Lists will be ungrouped.`)) act(API.deleteGroup, { group: g.name });
+      }}
+    }, icon(IC.delete, 10));
+
+    groupHeader = el('button', {
       class: 'list-nav-item nav-group-header' + (grpActive ? ' active' : ''),
       on: { click: () => { state.selectedGroup = g.id; state.selectedList = null; state.view = 'tasks'; render(); renderSidebar(); } },
-    }, g.name);
+    }, g.name, el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, grpRenameBtn, grpDeleteBtn)));
     const groupLists = el('div', { class: 'nav-group-lists' }, ...gl.map(listBtn));
     tasksSectionBody.append(el('div', { class: 'nav-group' }, groupHeader, groupLists));
     gl.forEach(l => seen.add(l.id));
