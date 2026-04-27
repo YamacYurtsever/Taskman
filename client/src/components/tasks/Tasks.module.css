@@ -109,7 +109,7 @@
 }
 
 .taskRow:hover {
-  border-color: var(--accent);
+  border-color: var(--text-3);
 }
 
 .taskBody {
