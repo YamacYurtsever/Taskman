@@ -1,5 +1,17 @@
 /* ── Cards view ── */
 
+.cardsView {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.cardsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
 .sectionLabel {
   font-size: var(--fs-lg);
   font-weight: 600;
@@ -388,4 +400,20 @@
 
 .inlineAddBtn:hover {
   color: var(--accent);
+}
+
+@media (max-width: 780px) {
+  .focusedView {
+    max-width: none;
+  }
+
+  .focusedView .taskEditBody {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-sm);
+  }
+
+  .focusedView .taskEditDue {
+    width: 100%;
+  }
 }

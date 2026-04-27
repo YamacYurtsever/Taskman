@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { TaskCard } from '../components/tasks/TaskCard';
 import type { CardsViewProps } from '../components/tasks/Tasks.shared';
@@ -47,14 +47,16 @@ export const CardsView = ({
 
     const cards = renderCards(sortByName(data.lists.filter(list => list.groupId === group.id)));
     return (
-      <>
-        <div className={styles.sectionLabel}>{group.name}</div>
-        {cards.length ? <div className={styles.cardsGrid}>{cards}</div> : <div className="empty">{MSG.noTasks}</div>}
-      </>
+      <div className={styles.cardsView}>
+        <div className={styles.cardsSection}>
+          <div className={styles.sectionLabel}>{group.name}</div>
+          {cards.length ? <div className={styles.cardsGrid}>{cards}</div> : <div className="empty">{MSG.noTasks}</div>}
+        </div>
+      </div>
     );
   }
 
-  const sections: ReactNode[] = [];
+  const sections: ReactElement[] = [];
   const seen = new Set<string>();
 
   for (const group of sortByName(data.groups)) {
@@ -63,17 +65,16 @@ export const CardsView = ({
 
     if (cards.length) {
       sections.push(
-        <div
-          key={`${group.id}-label`}
-          className={cx(styles.sectionLabel, styles.sectionLabelLink)}
-          onClick={() => selectGroup(group.id)}
-        >
-          {group.name}
-        </div>,
-      );
-      sections.push(
-        <div key={group.id} className={styles.cardsGrid}>
-          {cards}
+        <div key={group.id} className={styles.cardsSection}>
+          <div
+            className={cx(styles.sectionLabel, styles.sectionLabelLink)}
+            onClick={() => selectGroup(group.id)}
+          >
+            {group.name}
+          </div>
+          <div className={styles.cardsGrid}>
+            {cards}
+          </div>
         </div>,
       );
     }
@@ -86,20 +87,15 @@ export const CardsView = ({
 
   if (ungroupedCards.length) {
     const hasGroups = data.groups.some(group => data.lists.some(list => list.groupId === group.id));
-    if (hasGroups) {
-      sections.push(
-        <div key="others-label" className={styles.sectionLabel}>
-          {MSG.others}
-        </div>,
-      );
-    }
-
     sections.push(
-      <div key="others" className={styles.cardsGrid}>
-        {ungroupedCards}
+      <div key="others" className={styles.cardsSection}>
+        {hasGroups && <div className={styles.sectionLabel}>{MSG.others}</div>}
+        <div className={styles.cardsGrid}>
+          {ungroupedCards}
+        </div>
       </div>,
     );
   }
 
-  return <>{sections.length ? sections : <div className="empty">{MSG.noTasks}</div>}</>;
+  return sections.length ? <div className={styles.cardsView}>{sections}</div> : <div className="empty">{MSG.noTasks}</div>;
 };

@@ -148,8 +148,10 @@ taskman/
 - [x] Cards view: all lists/groups with pending tasks, 4-column responsive grid
 - [x] Focused view: single list with pending + completed tasks
 - [x] Daysheet view: day sheet with date navigation
+- [x] Focused view and daysheet fill full width on mobile
 - [x] Filter pills: All / Week / Day
 - [x] Sidebar: Calendar + Daysheet + Tasks nav, groups, lists, alphabetical with Others last
+- [x] Sidebar collapses to a full-page overlay from a burger icon on mobile
 - [x] Add / mark done / undo / delete / rename / move tasks
 - [x] Create / rename / delete lists and groups
 - [x] Move list to group / ungroup
@@ -164,6 +166,7 @@ taskman/
 - [x] Google Calendar iframe embedded (week view by default)
 - [x] Multi-calendar support via `~/.taskman/config.json`
 - [x] Per-calendar color override via embed `color` param
+- [x] Calendar iframe scales to viewport width and switches to agenda view on mobile
 - [x] iframe kept in DOM — switching views shows/hides it instantly
 
 ###### Calendar Config (`~/.taskman/config.json`)
@@ -180,22 +183,16 @@ taskman/
 
 Google Calendar embed colors: `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` Wisteria · `#039BE5` Peacock · `#3F51B5` Blueberry · `#7986CB` Lavender · `#8E24AA` Grape · `#F6BF26` Banana · `#F4511E` Tangerine · `#0B8043` Basil · `#D50000` Tomato · `#616161` Graphite
 
-##### Milestone 4 — Responsiveness
+##### Milestone 4 — Task Descriptions
 
-- [ ] Sidebar collapses to a full-page overlay from a burger icon
-- [ ] Focused view and daysheet fill full width on mobile
-- [ ] Calendar iframe scales to viewport width, day view on mobile
-
-##### Milestone 5 — Task Descriptions
-
-- [ ] Add `description` field to task schema (backward-compatible)
+- [ ] Add `description` field to task schema (backward-compatible - fill previous ones)
 - [ ] API endpoint to read/write a task description
 - [ ] Small icon on task rows when a description exists
 - [ ] Task detail panel: name, list, due date at top; editable textarea below; debounced save; Escape closes
 - [ ] Opens as side panel when wide enough, replaces main content on mobile
 - [ ] Raw URLs in descriptions rendered as clickable links
 
-##### Milestone 6 — Authentication
+##### Milestone 5 — Authentication
 
 - [ ] User/account model supporting local single-user and future hosted deployment
 - [ ] Web auth flow: login, logout, session handling
@@ -206,7 +203,7 @@ Google Calendar embed colors: `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` 
 - [ ] Account/settings UI for managing connected providers and calendar selection
 - [ ] Persistence boundaries ready for a deployed database
 
-##### Milestone 7 — Deploy
+##### Milestone 6 — Deploy
 
 - [ ] Gunicorn as the production WSGI server instead of Flask dev server
 - [ ] Dockerfile — single container running Gunicorn, serving both the API and built frontend static files

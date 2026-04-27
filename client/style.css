@@ -19,6 +19,7 @@
 
   /* Layout */
   --sidebar-w:    250px;
+  --bp-mobile:    780px;
   --topbar-h:     70px;
   --card-max-w:   250px;
   --focused-w:    500px;

@@ -181,3 +181,9 @@
 .logFormBtn:hover {
   color: var(--accent);
 }
+
+@media (max-width: 780px) {
+  .daysheetView {
+    max-width: none;
+  }
+}

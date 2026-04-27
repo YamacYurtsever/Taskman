@@ -6,6 +6,14 @@
   overflow: hidden;
 }
 
+.sidebarBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(18, 18, 18, 0.28);
+  border: 0;
+}
+
 .main {
   flex: 1;
   display: flex;
@@ -31,4 +39,10 @@
 /* Dark mode hack for embedded calendar */
 :global([data-theme="dark"]) .calendarFrame {
   filter: invert(1) hue-rotate(180deg);
+}
+
+@media (max-width: 780px) {
+  .main {
+    padding: var(--sp);
+  }
 }

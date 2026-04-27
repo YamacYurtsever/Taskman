@@ -9,6 +9,21 @@
   border-right: var(--border-w) solid var(--border);
 }
 
+.mobileSidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  width: min(88vw, var(--sidebar-w));
+  max-width: 320px;
+  transform: translateX(-100%);
+  transition: transform var(--animation-d) ease;
+  box-shadow: 12px 0 30px rgba(0, 0, 0, 0.12);
+}
+
+.mobileSidebarOpen {
+  transform: translateX(0);
+}
+
 .sidebarLogo {
   height: var(--topbar-h);
   padding: var(--sp);
@@ -219,4 +234,14 @@
 
 .newListInput.navItem:hover {
   background: transparent;
+}
+
+@media (max-width: 780px) {
+  .sidebar {
+    display: none;
+  }
+
+  .mobileSidebar {
+    display: flex;
+  }
 }

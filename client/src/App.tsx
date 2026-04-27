@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Navigate,
@@ -14,6 +14,7 @@ import styles from './App.module.css';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { Topbar } from './components/Topbar';
 import { useAppData } from './hooks/useAppData';
+import { useIsMobile } from './hooks/useIsMobile';
 import type { StateResponse, TaskFilter } from './lib/types';
 import { CalendarView } from './views/CalendarView';
 import { CardsView } from './views/CardsView';
@@ -66,17 +67,52 @@ const ListRoute = ({ data, filter, act }: RouteProps) => {
 
 const App = () => {
   const [filter, setFilter] = useState<TaskFilter>('all');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data, calendarUrl, act, refresh } = useAppData();
+  const isMobile = useIsMobile();
 
   const { pathname } = useLocation();
   const showingCalendar = pathname === '/calendar' && calendarUrl;
+  const activeCalendarUrl = isMobile
+    ? calendarUrl.replace('mode=WEEK', 'mode=AGENDA')
+    : calendarUrl;
+
+  useEffect(() => {
+    if (!isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   return (
     <>
-      <Sidebar data={data} filter={filter} act={act} refresh={refresh} />
+      <Sidebar
+        data={data}
+        filter={filter}
+        act={act}
+        refresh={refresh}
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      {isMobile && sidebarOpen && (
+        <button
+          aria-label="Close navigation"
+          className={styles.sidebarBackdrop}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className={styles.content}>
 
-        <Topbar filter={filter} setFilter={setFilter} />
+        <Topbar
+          filter={filter}
+          setFilter={setFilter}
+          showMenuButton={isMobile}
+          onMenuClick={() => setSidebarOpen(true)}
+        />
         <main className={styles.main}>
 
           <div hidden={!!showingCalendar}>
@@ -107,7 +143,7 @@ const App = () => {
             <iframe
               hidden={!showingCalendar}
               className={styles.calendarFrame}
-              src={calendarUrl}
+              src={activeCalendarUrl}
               title="Calendar"
             />
           )}

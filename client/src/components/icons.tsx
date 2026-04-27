@@ -69,6 +69,12 @@ const MoveIcon = (props: IconProps) => (
   </Icon>
 );
 
+const MenuIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 4h10M3 8h10M3 12h10" />
+  </Icon>
+);
+
 export {
   CheckIcon,
   DeleteIcon,
@@ -78,4 +84,5 @@ export {
   PlusIcon,
   EditIcon,
   MoveIcon,
+  MenuIcon,
 };

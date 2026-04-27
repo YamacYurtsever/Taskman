@@ -13,6 +13,9 @@ type SidebarProps = {
   filter: TaskFilter;
   act: Action;
   refresh: () => Promise<void>;
+  isMobile: boolean;
+  isOpen: boolean;
+  onClose: () => void;
 };
 
 const navItems = [
@@ -22,7 +25,7 @@ const navItems = [
 
 const listPath = '/list/';
 
-const Sidebar = ({ data, filter, act, refresh }: SidebarProps) => {
+const Sidebar = ({ data, filter, act, refresh, isMobile, isOpen, onClose }: SidebarProps) => {
   const [editState, setEditState] = useState<EditState>(null);
 
   const navigate = useNavigate();
@@ -40,9 +43,20 @@ const Sidebar = ({ data, filter, act, refresh }: SidebarProps) => {
 
   const addList = () => setEditState({ type: 'new-list' });
   const cancelNewList = () => setEditState(null);
+  const closeIfMobile = () => {
+    if (isMobile) {
+      onClose();
+    }
+  };
+  const navigateTo = (path: string) => {
+    navigate(path);
+    closeIfMobile();
+  };
 
   return (
-    <aside className={styles.sidebar}>
+    <aside
+      className={cx(styles.sidebar, isMobile && styles.mobileSidebar, isOpen && styles.mobileSidebarOpen)}
+    >
       <div className={styles.sidebarLogo}>
         <img src={logoUrl} alt="" />
         <p>Taskman</p>
@@ -54,7 +68,7 @@ const Sidebar = ({ data, filter, act, refresh }: SidebarProps) => {
             <button
               key={path}
               className={cx(styles.navItem, styles.navTop, pathname === path && styles.active)}
-              onClick={() => navigate(path)}
+              onClick={() => navigateTo(path)}
             >
               {label}
             </button>
@@ -67,7 +81,7 @@ const Sidebar = ({ data, filter, act, refresh }: SidebarProps) => {
                 styles.navTop,
                 inTasks && !selectedList && !selectedGroup && styles.active,
               )}
-              onClick={() => navigate('/tasks')}
+              onClick={() => navigateTo('/tasks')}
             >
               {MSG.tasks}
             </button>
@@ -81,8 +95,8 @@ const Sidebar = ({ data, filter, act, refresh }: SidebarProps) => {
                   selectedList={selectedList}
                   editState={editState}
                   setEditState={setEditState}
-                  selectGroup={id => navigate(`/tasks?group=${id}`)}
-                  selectList={id => navigate(`/list/${id}`)}
+                  selectGroup={id => navigateTo(`/tasks?group=${id}`)}
+                  selectList={id => navigateTo(`/list/${id}`)}
                   act={act}
                   cancelEdit={cancelEdit}
                 />
