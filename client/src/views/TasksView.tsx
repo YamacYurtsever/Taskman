@@ -28,6 +28,7 @@ function TaskRow({ data, task, listName, act, refresh }: TaskRowProps) {
     const newName = name.trim();
     if (!newName) return;
     await act(API.edit, { list: listName, name: task.name, newName, due: due || null });
+    setMode('view');
   };
 
   if (mode === 'edit') {
@@ -37,7 +38,7 @@ function TaskRow({ data, task, listName, act, refresh }: TaskRowProps) {
         <div className={styles.taskEditBody}>
           <input className={styles.taskEditName} autoComplete="off" value={name} autoFocus onChange={e => setName(e.target.value)} onKeyDown={e => {
             if (e.key === 'Enter') saveEdit();
-            if (e.key === 'Escape') refresh();
+            if (e.key === 'Escape') setMode('view');
           }} />
           <input className={styles.taskEditDue} type="date" value={due} onChange={e => setDue(e.target.value)} />
         </div>
@@ -55,9 +56,9 @@ function TaskRow({ data, task, listName, act, refresh }: TaskRowProps) {
           {sortByName(data.lists).map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
         </select>
         <div className={styles.taskRight}>
-          <button className="task-btn sav" title="Save" onClick={() => {
-            if (newList && newList !== listName) act(API.moveTask, { list: listName, name: task.name, newList });
-            else refresh();
+          <button className="task-btn sav" title="Save" onClick={async () => {
+            if (newList && newList !== listName) await act(API.moveTask, { list: listName, name: task.name, newList });
+            setMode('view');
           }}><CheckIcon /></button>
         </div>
       </div>
@@ -136,17 +137,17 @@ function Card({ data, list, filter, expanded, toggleExpanded, act, refresh, open
   );
 }
 
-export function CardsView({ data, filter, selectedGroup, expandedCards, setExpandedCards, selectGroup, selectList, act, refresh }: {
+export function CardsView({ data, filter, selectedGroup, selectGroup, selectList, act, refresh }: {
   data: StateResponse;
   filter: TaskFilter;
   selectedGroup: string | null;
-  expandedCards: Set<string>;
-  setExpandedCards: (next: Set<string>) => void;
   selectGroup: (id: string | null) => void;
   selectList: (id: string | null) => void;
   act: Action;
   refresh: () => Promise<void>;
 }) {
+  const [expandedCards, setExpandedCards] = useState(new Set<string>());
+
   const toggleExpanded = (id: string) => {
     const next = new Set(expandedCards);
     next.has(id) ? next.delete(id) : next.add(id);
@@ -208,26 +209,21 @@ export function CardsView({ data, filter, selectedGroup, expandedCards, setExpan
   return <>{sections.length ? sections : <div className="empty">{MSG.noTasks}</div>}</>;
 }
 
-export function FocusedView({ data, listId, filter, showDone, setShowDone, act, refresh }: {
+export function FocusedView({ data, listId, filter, act, refresh }: {
   data: StateResponse;
   listId: string;
   filter: TaskFilter;
-  showDone: Set<string>;
-  setShowDone: (next: Set<string>) => void;
   act: Action;
   refresh: () => Promise<void>;
 }) {
+  const [showDone, setShowDone] = useState(false);
+
   const list = data.lists.find(l => l.id === listId);
   if (!list) return <div className="empty">{MSG.noTasks}</div>;
 
   const pending = pendingFor(data, listId, filter);
   const done = doneFor(data, listId);
-  const open = showDone.has(listId);
-  const toggleDone = () => {
-    const next = new Set(showDone);
-    open ? next.delete(listId) : next.add(listId);
-    setShowDone(next);
-  };
+  const toggleDone = () => setShowDone(v => !v);
 
   return (
     <div className={styles.focusedView}>
@@ -244,11 +240,11 @@ export function FocusedView({ data, listId, filter, showDone, setShowDone, act, 
       {done.length > 0 && (
         <div className={styles.doneWrapper}>
           <button className={styles.doneToggle} onClick={toggleDone}>
-            {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            {` ${open ? 'hide' : 'show'} done (${done.length})`}
+            {showDone ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            {` ${showDone ? 'hide' : 'show'} done (${done.length})`}
           </button>
           <div className={styles.doneSection}>
-            {open && done.map(t => <TaskRow key={t.id} data={data} task={t} listName={list.name} act={act} refresh={refresh} />)}
+            {showDone && done.map(t => <TaskRow key={t.id} data={data} task={t} listName={list.name} act={act} refresh={refresh} />)}
           </div>
         </div>
       )}

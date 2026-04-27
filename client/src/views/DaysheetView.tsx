@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { API } from '../lib/api';
+import { useCallback, useEffect, useState } from 'react';
+import { api, API } from '../lib/api';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, DeleteIcon, EditIcon, PlusIcon } from '../components/icons';
 import type { DaysheetEntry, DaysheetResponse, StateResponse } from '../lib/types';
 import { MSG, sortByName, todayStr } from '../lib/utils';
@@ -7,22 +7,39 @@ import styles from './DaysheetView.module.css';
 
 type Action = (path: string, body: unknown) => Promise<void>;
 
-export function DaysheetView({ data, daysheet, daysheetDate, setDaysheetDate, act, refresh }: {
+export function DaysheetView({ data, act, refresh }: {
   data: StateResponse | null;
-  daysheet: DaysheetResponse | null;
-  daysheetDate: string;
-  setDaysheetDate: (date: string) => void;
   act: Action;
   refresh: () => Promise<void>;
 }) {
-  const entries = daysheet?.entries || [];
-  const lists = data?.lists || [];
+  const [daysheetDate, setDaysheetDate] = useState(todayStr());
+  const [daysheet, setDaysheet] = useState<DaysheetResponse | null>(null);
+
+  const fetchDaysheet = useCallback(async (date: string) => {
+    setDaysheet(await api.daysheet(date));
+  }, []);
+
+  useEffect(() => {
+    fetchDaysheet(daysheetDate);
+  }, [daysheetDate, fetchDaysheet]);
+
+  const localAct = useCallback(async (path: string, body: unknown) => {
+    await act(path, body);
+    await fetchDaysheet(daysheetDate);
+  }, [act, fetchDaysheet, daysheetDate]);
+
+  const localRefresh = useCallback(async () => {
+    await Promise.all([refresh(), fetchDaysheet(daysheetDate)]);
+  }, [refresh, fetchDaysheet, daysheetDate]);
 
   const shiftDay = (delta: number) => {
     const d = new Date(`${daysheetDate}T12:00:00`);
     d.setDate(d.getDate() + delta);
     setDaysheetDate(d.toISOString().slice(0, 10));
   };
+
+  const entries = daysheet?.entries || [];
+  const lists = data?.lists || [];
 
   return (
     <div className={styles.daysheetView}>
@@ -34,8 +51,8 @@ export function DaysheetView({ data, daysheet, daysheetDate, setDaysheetDate, ac
           <button className={styles.dateNavBtn} onClick={() => shiftDay(1)}><ChevronRightIcon /></button>
         </div>
       </div>
-      <Timeline entries={entries} act={act} refresh={refresh} />
-      {lists.length > 0 && <LogForm lists={lists} act={act} />}
+      <Timeline entries={entries} act={localAct} refresh={localRefresh} />
+      {lists.length > 0 && <LogForm lists={lists} act={localAct} />}
     </div>
   );
 }

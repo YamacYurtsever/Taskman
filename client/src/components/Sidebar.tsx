@@ -50,7 +50,7 @@ export function Sidebar({ data, filter, act, refresh }: SidebarProps) {
       return <RenameListRow key={list.id} list={list} act={act} cancel={cancelEdit} />;
     }
     if (editState?.type === 'move-list' && editState.id === list.id) {
-      return <MoveListRow key={list.id} list={list} groups={data.groups} act={act} />;
+      return <MoveListRow key={list.id} list={list} groups={data.groups} act={act} cancel={cancelEdit} />;
     }
 
     return (
@@ -238,7 +238,7 @@ function RenameListRow({ list, act, cancel }: { list: TaskList; act: Action; can
   );
 }
 
-function MoveListRow({ list, groups, act }: { list: TaskList; groups: Group[]; act: Action }) {
+function MoveListRow({ list, groups, act, cancel }: { list: TaskList; groups: Group[]; act: Action; cancel: () => void }) {
   const currentGroup = groups.find(g => g.id === list.groupId);
   const [group, setGroup] = useState(currentGroup?.name || '');
 
@@ -250,7 +250,7 @@ function MoveListRow({ list, groups, act }: { list: TaskList; groups: Group[]; a
       </select>
       <div className={styles.right}>
         <div className={styles.actions}>
-          <button className={`${styles.action} ${styles.sav}`} title="Save" onClick={() => act(API.moveList, { list: list.name, group })}><CheckIcon /></button>
+          <button className={`${styles.action} ${styles.sav}`} title="Save" onClick={async () => { await act(API.moveList, { list: list.name, group }); cancel(); }}><CheckIcon /></button>
         </div>
       </div>
     </div>

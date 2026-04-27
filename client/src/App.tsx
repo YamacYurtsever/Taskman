@@ -1,158 +1,107 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
 import styles from './App.module.css';
 import { api } from './lib/api';
+import type { StateResponse, TaskFilter } from './lib/types';
+
+import { Sidebar } from './components/Sidebar';
+import { Topbar } from './components/Topbar';
 import { CalendarView } from './views/CalendarView';
 import { DaysheetView } from './views/DaysheetView';
-import { Sidebar } from './components/Sidebar';
 import { CardsView, FocusedView } from './views/TasksView';
-import { Topbar } from './components/Topbar';
-import type { DaysheetResponse, StateResponse, TaskFilter } from './lib/types';
-import { todayStr } from './lib/utils';
 
-type Action = (path: string, body: unknown) => Promise<void>;
+export type Action = (path: string, body: unknown) => Promise<void>;
 
-function CardsRoute({ data, filter, expandedCards, setExpandedCards, act, refresh }: {
+type RouteProps = {
   data: StateResponse;
   filter: TaskFilter;
-  expandedCards: Set<string>;
-  setExpandedCards: (next: Set<string>) => void;
   act: Action;
   refresh: () => Promise<void>;
-}) {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const selectedGroup = searchParams.get('group');
+};
+
+function TasksRoute({ data, filter, act, refresh }: RouteProps) {
+  const [sp] = useSearchParams();
+  const nav = useNavigate();
   return (
     <CardsView
       data={data}
       filter={filter}
-      selectedGroup={selectedGroup}
-      expandedCards={expandedCards}
-      setExpandedCards={setExpandedCards}
-      selectGroup={id => navigate(id ? `/tasks?group=${id}` : '/tasks')}
-      selectList={id => navigate(`/list/${id}`)}
+      selectedGroup={sp.get('group')}
+      selectGroup={id => nav(id ? `/tasks?group=${id}` : '/tasks')}
+      selectList={id => nav(`/list/${id}`)}
       act={act}
       refresh={refresh}
     />
   );
 }
 
-function FocusedRoute({ data, filter, showDone, setShowDone, act, refresh }: {
-  data: StateResponse;
-  filter: TaskFilter;
-  showDone: Set<string>;
-  setShowDone: (next: Set<string>) => void;
-  act: Action;
-  refresh: () => Promise<void>;
-}) {
+function ListRoute({ data, filter, act, refresh }: RouteProps) {
   const { listId } = useParams<{ listId: string }>();
-  return (
-    <FocusedView
-      data={data}
-      listId={listId!}
-      filter={filter}
-      showDone={showDone}
-      setShowDone={setShowDone}
-      act={act}
-      refresh={refresh}
-    />
-  );
+  if (!listId) return <Navigate to="/tasks" replace />;
+  return <FocusedView data={data} listId={listId} filter={filter} act={act} refresh={refresh} />;
+}
+
+function RequireData({ data, children }: {
+  data: StateResponse | null;
+  children: (data: StateResponse) => ReactNode;
+}) {
+  if (!data) return <p>Loading...</p>;
+  return children(data);
+}
+
+function useAppData() {
+  const [data, setData] = useState<StateResponse | null>(null);
+  const [calendarUrl, setCalendarUrl] = useState('');
+
+  const refresh = useCallback(async () => setData(await api.state()), []);
+  const act = useCallback(async (path: string, body: unknown) => {
+    const res = await api.post(path, body);
+    if (res?.ok) setData(await api.state());
+  }, []);
+
+  useEffect(() => { api.config().then(c => c?.calendarUrl && setCalendarUrl(c.calendarUrl)); }, []);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { data, calendarUrl, act, refresh };
 }
 
 export function App() {
-  const location = useLocation();
   const [filter, setFilter] = useState<TaskFilter>('all');
-  const [data, setData] = useState<StateResponse | null>(null);
-  const [daysheet, setDaysheet] = useState<DaysheetResponse | null>(null);
-  const [daysheetDate, setDaysheetDate] = useState(todayStr());
-  const [calendarUrl, setCalendarUrl] = useState('');
-  const [showDone, setShowDone] = useState(new Set<string>());
-  const [expandedCards, setExpandedCards] = useState(new Set<string>());
+  const { data, calendarUrl, act, refresh } = useAppData();
 
-  const isDaysheet = location.pathname === '/daysheet';
+  const location = useLocation();
   const isCalendar = location.pathname === '/calendar';
-
-  const refresh = useCallback(async () => {
-    if (isDaysheet) {
-      const [nextDaysheet, nextData] = await Promise.all([api.daysheet(daysheetDate), api.state()]);
-      setDaysheet(nextDaysheet);
-      setData(nextData);
-    } else {
-      setData(await api.state());
-    }
-  }, [daysheetDate, isDaysheet]);
-
-  const act = useCallback(async (path: string, body: unknown) => {
-    const res = await api.post(path, body);
-    if (res?.ok) {
-      setData(null);
-      setDaysheet(null);
-      if (isDaysheet) {
-        const [nextDaysheet, nextData] = await Promise.all([api.daysheet(daysheetDate), api.state()]);
-        setDaysheet(nextDaysheet);
-        setData(nextData);
-      } else {
-        setData(await api.state());
-      }
-    }
-  }, [daysheetDate, isDaysheet]);
-
-  useEffect(() => {
-    api.config().then(cfg => {
-      if (cfg?.calendarUrl) setCalendarUrl(cfg.calendarUrl);
-    });
-  }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   return (
     <>
       <Sidebar data={data} filter={filter} act={act} refresh={refresh} />
+
       <div className={styles.content}>
         <Topbar filter={filter} setFilter={setFilter} />
-        <main className={styles.main} style={{ display: isCalendar && calendarUrl ? 'none' : undefined }}>
+
+        <main
+          className={styles.main}
+          style={{ display: isCalendar && calendarUrl ? 'none' : undefined }}
+        >
           <Routes>
             <Route path="/" element={<Navigate to="/tasks" replace />} />
             <Route path="/calendar" element={<CalendarView calendarUrl={calendarUrl} />} />
-            <Route path="/daysheet" element={
-              <DaysheetView
-                data={data}
-                daysheet={daysheet}
-                daysheetDate={daysheetDate}
-                setDaysheetDate={setDaysheetDate}
-                act={act}
-                refresh={refresh}
-              />
+            <Route path="/daysheet" element={<DaysheetView data={data} act={act} refresh={refresh} />} />
+            <Route path="/tasks" element={
+              <RequireData data={data}>
+                {data => <TasksRoute data={data} filter={filter} act={act} refresh={refresh} />}
+              </RequireData>
             } />
             <Route path="/list/:listId" element={
-              data ? (
-                <FocusedRoute
-                  data={data}
-                  filter={filter}
-                  showDone={showDone}
-                  setShowDone={setShowDone}
-                  act={act}
-                  refresh={refresh}
-                />
-              ) : null
-            } />
-            <Route path="/tasks" element={
-              data ? (
-                <CardsRoute
-                  data={data}
-                  filter={filter}
-                  expandedCards={expandedCards}
-                  setExpandedCards={setExpandedCards}
-                  act={act}
-                  refresh={refresh}
-                />
-              ) : null
+              <RequireData data={data}>
+                {data => <ListRoute data={data} filter={filter} act={act} refresh={refresh} />}
+              </RequireData>
             } />
           </Routes>
         </main>
+
         {calendarUrl && (
           <iframe
             className={styles.calendarFrame}
