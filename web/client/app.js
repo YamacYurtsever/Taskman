@@ -267,11 +267,11 @@ function renderSidebar() {
           ...sortByName(groups).map(g => el('option', { value: g.name }, g.name)),
         );
         sel.value = currentGroup?.name || '';
-        sel.addEventListener('change', () => act(API.moveList, { list: list.name, group: sel.value }));
+        const saveBtn   = el('button', { class: 'lni-action sav', title: 'Save',   on: { click: () => act(API.moveList, { list: list.name, group: sel.value }) } }, icon(IC.check,  10));
         const cancelBtn = el('button', { class: 'lni-action lni-del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 10));
         item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-move-row' },
           sel,
-          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, cancelBtn)),
+          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, cancelBtn)),
         ));
         sel.focus();
       }}
@@ -450,13 +450,11 @@ function taskRow(task, listName) {
         el('option', { value: '', disabled: true, selected: true }, 'Move to…'),
         ...otherLists.map(l => el('option', { value: l.name }, l.name)),
       );
-      sel.addEventListener('change', () => {
-        if (sel.value) act(API.moveTask, { list: listName, name: task.name, newList: sel.value });
-      });
+      const saveBtn   = el('button', { class: 'task-btn sav', title: 'Save',   on: { click: () => { if (sel.value) act(API.moveTask, { list: listName, name: task.name, newList: sel.value }); } } }, icon(IC.check,  11));
       const cancelBtn = el('button', { class: 'task-btn del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 11));
       row.replaceWith(el('div', { class: 'task-row task-move-row' },
         sel,
-        el('div', { class: 'task-right' }, cancelBtn),
+        el('div', { class: 'task-right' }, saveBtn, cancelBtn),
       ));
       sel.focus();
     }}
