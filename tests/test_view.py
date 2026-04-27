@@ -3,20 +3,21 @@ from datetime import date
 from unittest.mock import patch
 
 from taskman.commands.view import cmd_ls, filter_tasks
+from tests.helpers import capture_stdout, db_record, group_record, list_record, task_record
 
 TODAY = date(2026, 4, 26)
 
-LIST_1 = {"id": "list-1", "name": "Work", "groupId": None}
-LIST_2 = {"id": "list-2", "name": "Personal", "groupId": "group-1"}
-LIST_3 = {"id": "list-3", "name": "Side", "groupId": "group-1"}
-GROUP_1 = {"id": "group-1", "name": "Mine"}
+LIST_1 = list_record(id="list-1", name="Work")
+LIST_2 = list_record(id="list-2", name="Personal", group_id="group-1")
+LIST_3 = list_record(id="list-3", name="Side", group_id="group-1")
+GROUP_1 = group_record(id="group-1", name="Mine")
 
-TASK_OVERDUE    = {"id": "t1", "name": "Overdue task",  "listId": "list-1", "due": "2026-04-20", "done": None}
-TASK_TODAY      = {"id": "t2", "name": "Today task",    "listId": "list-1", "due": "2026-04-26", "done": None}
-TASK_TOMORROW   = {"id": "t3", "name": "Tomorrow task", "listId": "list-1", "due": "2026-04-27", "done": None}
-TASK_NEXT_WEEK  = {"id": "t4", "name": "Next week",     "listId": "list-1", "due": "2026-05-10", "done": None}
-TASK_DATELESS   = {"id": "t5", "name": "No due date",   "listId": "list-1", "due": None,         "done": None}
-TASK_DONE       = {"id": "t6", "name": "Done task",     "listId": "list-1", "due": "2026-04-26", "done": "2026-04-25"}
+TASK_OVERDUE = task_record(id="t1", name="Overdue task", list_id="list-1", due="2026-04-20")
+TASK_TODAY = task_record(id="t2", name="Today task", list_id="list-1", due="2026-04-26")
+TASK_TOMORROW = task_record(id="t3", name="Tomorrow task", list_id="list-1", due="2026-04-27")
+TASK_NEXT_WEEK = task_record(id="t4", name="Next week", list_id="list-1", due="2026-05-10")
+TASK_DATELESS = task_record(id="t5", name="No due date", list_id="list-1")
+TASK_DONE = task_record(id="t6", name="Done task", list_id="list-1", due="2026-04-26", done="2026-04-25")
 
 
 class FilterTasksTest(unittest.TestCase):
@@ -102,16 +103,19 @@ class FilterTasksTest(unittest.TestCase):
 
 class CmdLsTest(unittest.TestCase):
 
-    TASK_PERSONAL = {"id": "t-p", "name": "Personal task", "listId": "list-2", "due": None, "done": None}
-    TASK_SIDE     = {"id": "t-s", "name": "Side task",     "listId": "list-3", "due": None, "done": None}
+    TASK_PERSONAL = task_record(id="t-p", name="Personal task", list_id="list-2")
+    TASK_SIDE = task_record(id="t-s", name="Side task", list_id="list-3")
 
     def _make_db(self):
-        return {
-            "groups": [GROUP_1],
-            "lists": [LIST_1, LIST_2, LIST_3],
-            "tasks": [TASK_TODAY, TASK_DATELESS, self.TASK_PERSONAL, self.TASK_SIDE],
-            "daysheet": [],
-        }
+        return db_record(
+            groups=[GROUP_1],
+            lists=[LIST_1, LIST_2, LIST_3],
+            tasks=[TASK_TODAY, TASK_DATELESS, self.TASK_PERSONAL, self.TASK_SIDE],
+        )
+
+    def _output_for(self, args, db=None):
+        with patch("taskman.db.load", return_value=db or self._make_db()):
+            return capture_stdout(cmd_ls, args)
 
     def test_unknown_filter_errors(self):
         with patch("taskman.db.load", return_value=self._make_db()):
@@ -119,46 +123,24 @@ class CmdLsTest(unittest.TestCase):
                 cmd_ls(["NonExistent"])
 
     def test_list_filter(self, ):
-        printed = []
-        with patch("taskman.db.load", return_value=self._make_db()), \
-             patch("builtins.print", side_effect=lambda *a, **k: printed.append(a)):
-            cmd_ls(["Work"])
-        output = " ".join(str(a) for line in printed for a in line)
+        output = self._output_for(["Work"])
         self.assertIn("Work", output)
         self.assertNotIn("Personal", output)
 
     def test_group_filter(self):
-        printed = []
-        with patch("taskman.db.load", return_value=self._make_db()), \
-             patch("builtins.print", side_effect=lambda *a, **k: printed.append(a)):
-            cmd_ls(["Mine"])
-        output = " ".join(str(a) for line in printed for a in line)
+        output = self._output_for(["Mine"])
         self.assertIn("Personal", output)
         self.assertIn("Side", output)
         self.assertNotIn("Work", output)
 
     def test_empty_list_hidden(self):
-        db = {
-            "groups": [],
-            "lists": [LIST_1, LIST_2],
-            "tasks": [TASK_DATELESS],  # only Work has a task
-            "daysheet": [],
-        }
-        printed = []
-        with patch("taskman.db.load", return_value=db), \
-             patch("builtins.print", side_effect=lambda *a, **k: printed.append(a)):
-            cmd_ls([])
-        output = " ".join(str(a) for line in printed for a in line)
+        db = db_record(lists=[LIST_1, LIST_2], tasks=[TASK_DATELESS])
+        output = self._output_for([], db)
         self.assertIn("Work", output)
         self.assertNotIn("Personal", output)
 
     def test_empty_db_prints_message(self):
-        empty = {"groups": [], "lists": [], "tasks": [], "daysheet": []}
-        printed = []
-        with patch("taskman.db.load", return_value=empty), \
-             patch("builtins.print", side_effect=lambda *a, **k: printed.append(a)):
-            cmd_ls([])
-        output = " ".join(str(a) for line in printed for a in line)
+        output = self._output_for([], db_record())
         self.assertIn("no lists", output)
 
 

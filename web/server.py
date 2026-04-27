@@ -1,5 +1,4 @@
 import io
-import re
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, datetime
 from pathlib import Path
@@ -9,9 +8,9 @@ from flask import Flask, jsonify, request, send_from_directory
 from taskman import config, db
 from taskman.commands.daysheet import cmd_continue, cmd_log
 from taskman.commands.tasks import cmd_add, cmd_delete, cmd_done, cmd_undo
+from taskman.constants import ANSI_ESCAPE_RE, DATE_FORMAT, DaysheetEntryType
 
 STATIC_DIR = Path(__file__).parent / "client"
-_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
 
 
 def _run(fn, args):
@@ -21,10 +20,10 @@ def _run(fn, args):
         with redirect_stdout(out), redirect_stderr(err):
             fn(args)
     except SystemExit:
-        msg = _ANSI_RE.sub("", err.getvalue()).strip() or "command failed"
+        msg = ANSI_ESCAPE_RE.sub("", err.getvalue()).strip() or "command failed"
         msg = msg.removeprefix("taskman:").strip()
         return False, msg
-    return True, _ANSI_RE.sub("", out.getvalue()).strip()
+    return True, ANSI_ESCAPE_RE.sub("", out.getvalue()).strip()
 
 
 def create_app():
@@ -71,7 +70,7 @@ def create_app():
     def get_daysheet():
         target = request.args.get("date") or date.today().isoformat()
         try:
-            datetime.strptime(target, "%Y-%m-%d")
+            datetime.strptime(target, DATE_FORMAT)
         except ValueError:
             return jsonify({"error": f"invalid date '{target}'"}), 400
 
@@ -250,7 +249,7 @@ def create_app():
         entry = next((e for e in data["daysheet"] if e["id"] == entry_id), None)
         if not entry:
             return jsonify({"ok": False, "message": "entry not found"}), 400
-        if entry["type"] != "log":
+        if entry["type"] != DaysheetEntryType.LOG:
             return jsonify({"ok": False, "message": "only log entries can be edited"}), 400
         entry["text"] = new_text
         db.save(data)

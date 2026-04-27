@@ -1,8 +1,11 @@
 from datetime import date, datetime
 from taskman import db
+from taskman.constants import DATE_FORMAT, DaysheetEntryType
 from taskman.commands.utils import (
     _err, _bold, _sort_name, _now, _entry_date,
-    _find_list, _find_task,
+    _require_list, _require_task,
+    _add_daysheet_entry, _find_daysheet_entry,
+    _has_daysheet_entry, _remove_daysheet_entries,
 )
 
 
@@ -15,16 +18,9 @@ def cmd_log(args):
             _err('usage: taskman log edit "list" "text" "new_text"')
         list_name, text, new_text = args[1], args[2], args[3]
         data = db.load()
-        lst = _find_list(data, list_name)
-        if not lst:
-            _err(f"list '{list_name}' not found")
+        lst = _require_list(data, list_name)
         today = date.today().isoformat()
-        entry = next(
-            (e for e in data["daysheet"]
-             if e["listId"] == lst["id"] and e["type"] == "log"
-             and e["text"] == text and _entry_date(e) == today),
-            None,
-        )
+        entry = _find_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, today)
         if not entry:
             _err(f"log entry '{text}' not found")
         entry["text"] = new_text
@@ -37,17 +33,9 @@ def cmd_log(args):
             _err('usage: taskman log delete "list" "text"')
         list_name, text = args[1], args[2]
         data = db.load()
-        lst = _find_list(data, list_name)
-        if not lst:
-            _err(f"list '{list_name}' not found")
+        lst = _require_list(data, list_name)
         today = date.today().isoformat()
-        before = len(data["daysheet"])
-        data["daysheet"] = [
-            e for e in data["daysheet"]
-            if not (e["listId"] == lst["id"] and e["type"] == "log"
-                    and e["text"] == text and _entry_date(e) == today)
-        ]
-        if len(data["daysheet"]) == before:
+        if not _remove_daysheet_entries(data, lst["id"], DaysheetEntryType.LOG, text, today):
             _err(f"log entry '{text}' not found")
         db.save(data)
         print(f"- [{list_name}] {text}")
@@ -57,16 +45,8 @@ def cmd_log(args):
         _err('usage: taskman log "list" "text"')
     list_name, text = args[0], args[1]
     data = db.load()
-    lst = _find_list(data, list_name)
-    if not lst:
-        _err(f"list '{list_name}' not found")
-    data["daysheet"].append({
-        "id": db.new_id(),
-        "datetime": _now(),
-        "listId": lst["id"],
-        "type": "log",
-        "text": text,
-    })
+    lst = _require_list(data, list_name)
+    _add_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, _now())
     db.save(data)
     print(f"+ [{list_name}] {text}")
 
@@ -77,30 +57,16 @@ def cmd_continue(args):
     list_name, task_name = args[0], args[1]
 
     data = db.load()
-    lst = _find_list(data, list_name)
-    if not lst:
-        _err(f"list '{list_name}' not found")
-
-    if not _find_task(data, lst["id"], task_name):
-        _err(f"task '{task_name}' not found in '{list_name}'")
+    lst = _require_list(data, list_name)
+    _require_task(data, lst, task_name)
 
     today = date.today().isoformat()
-    if any(e for e in data["daysheet"]
-           if e["listId"] == lst["id"] and e["type"] == "done"
-           and e["text"] == task_name and _entry_date(e) == today):
+    if _has_daysheet_entry(data, lst["id"], DaysheetEntryType.DONE, task_name, today):
         _err(f"'{task_name}' was already finished today")
-    if any(e for e in data["daysheet"]
-           if e["listId"] == lst["id"] and e["type"] == "continue"
-           and e["text"] == task_name and _entry_date(e) == today):
+    if _has_daysheet_entry(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, today):
         _err(f"'{task_name}' was already continued today")
 
-    data["daysheet"].append({
-        "id": db.new_id(),
-        "datetime": _now(),
-        "listId": lst["id"],
-        "type": "continue",
-        "text": task_name,
-    })
+    _add_daysheet_entry(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, _now())
     db.save(data)
     print(f"↻ [{list_name}] {task_name}")
 
@@ -108,7 +74,7 @@ def cmd_continue(args):
 def cmd_daysheet(args):
     target = args[0] if args else date.today().isoformat()
     try:
-        datetime.strptime(target, "%Y-%m-%d")
+        datetime.strptime(target, DATE_FORMAT)
     except ValueError:
         _err(f"invalid date '{target}' — expected YYYY-MM-DD")
 
@@ -151,9 +117,9 @@ def cmd_daysheet(args):
         for e in section["entries"]:
             lst = list_by_id.get(e["listId"])
             prefix = f"[{lst['name']}] " if is_group and lst else ""
-            if e["type"] == "done":
+            if e["type"] == DaysheetEntryType.DONE:
                 line = f"Finished {e['text']}"
-            elif e["type"] == "continue":
+            elif e["type"] == DaysheetEntryType.CONTINUE:
                 line = f"Continued {e['text']}"
             else:
                 line = e["text"]

@@ -1,18 +1,19 @@
 import subprocess
 from datetime import date, datetime
 from taskman import db
+from taskman.constants import COMPLETION_SOUND, DATETIME_FORMAT, DaysheetEntryType
 from taskman.commands.utils import (
     _err, _parse_date,
-    _find_list, _find_group, _find_task,
+    _find_group, _find_task,
+    _require_list, _require_task,
     _get_or_create_list, _get_or_create_group,
+    _add_daysheet_entry, _remove_daysheet_entries,
+    _delete_group, _delete_list, _prune_empty_group,
 )
-
-_SOUND = "/System/Library/Sounds/Glass.aiff"
-
 
 def _play_sound():
     try:
-        subprocess.Popen(["afplay", _SOUND], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen(["afplay", COMPLETION_SOUND], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
         pass
 
@@ -54,29 +55,20 @@ def cmd_done(args):
     list_name, task_name = args[0], args[1]
 
     data = db.load()
-    lst = _find_list(data, list_name)
-    if not lst:
-        _err(f"list '{list_name}' not found")
-
-    task = _find_task(data, lst["id"], task_name)
-    if not task:
-        _err(f"task '{task_name}' not found in '{list_name}'")
+    lst = _require_list(data, list_name)
+    task = _require_task(data, lst, task_name)
     if task["done"]:
         _err(f"task '{task_name}' is already done")
 
     today = date.today().isoformat()
-    data["daysheet"] = [
-        e for e in data["daysheet"]
-        if not (e["listId"] == lst["id"] and e["type"] == "continue"
-                and e["text"] == task_name and e["datetime"][:10] == today)
-    ]
-    data["daysheet"].append({
-        "id": db.new_id(),
-        "datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-        "listId": lst["id"],
-        "type": "done",
-        "text": task_name,
-    })
+    _remove_daysheet_entries(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, today)
+    _add_daysheet_entry(
+        data,
+        lst["id"],
+        DaysheetEntryType.DONE,
+        task_name,
+        datetime.now().strftime(DATETIME_FORMAT),
+    )
     task["done"] = today
     db.save(data)
     print(f"\033[32m✓ [{list_name}] {task_name}\033[0m")
@@ -89,13 +81,8 @@ def cmd_undo(args):
     list_name, task_name = args[0], args[1]
 
     data = db.load()
-    lst = _find_list(data, list_name)
-    if not lst:
-        _err(f"list '{list_name}' not found")
-
-    task = _find_task(data, lst["id"], task_name)
-    if not task:
-        _err(f"task '{task_name}' not found in '{list_name}'")
+    lst = _require_list(data, list_name)
+    task = _require_task(data, lst, task_name)
     if not task["done"]:
         _err(f"task '{task_name}' is not done")
 
@@ -118,9 +105,7 @@ def cmd_edit(args):
             db.save(data)
             print(f"~ group '{target}' → '{new_name}'")
             return
-        lst = _find_list(data, target)
-        if not lst:
-            _err(f"'{target}' not found")
+        lst = _require_list(data, target, f"'{target}' not found")
         lst["name"] = new_name
         db.save(data)
         print(f"~ [{target}] → [{new_name}]")
@@ -129,13 +114,8 @@ def cmd_edit(args):
     list_name, old_name, new_name = args[0], args[1], args[2]
     new_due = _parse_date(args[3]) if len(args) >= 4 else ...
 
-    lst = _find_list(data, list_name)
-    if not lst:
-        _err(f"list '{list_name}' not found")
-
-    task = _find_task(data, lst["id"], old_name)
-    if not task:
-        _err(f"task '{old_name}' not found in '{list_name}'")
+    lst = _require_list(data, list_name)
+    task = _require_task(data, lst, old_name)
 
     if new_name != old_name and _find_task(data, lst["id"], new_name):
         _err(f"task '{new_name}' already exists in '{list_name}'")
@@ -157,14 +137,11 @@ def cmd_move(args):
 
     if len(args) == 2:
         group_name = args[1]
-        lst = _find_list(data, list_name)
-        if not lst:
-            _err(f"list '{list_name}' not found")
+        lst = _require_list(data, list_name)
         if group_name == "":
             old_group_id = lst["groupId"]
             lst["groupId"] = None
-            if old_group_id and not any(l["groupId"] == old_group_id for l in data["lists"]):
-                data["groups"] = [g for g in data["groups"] if g["id"] != old_group_id]
+            _prune_empty_group(data, old_group_id)
             db.save(data)
             print(f"↑ [{list_name}] ungrouped")
             return
@@ -174,12 +151,8 @@ def cmd_move(args):
         print(f"→ [{list_name}] → group '{group_name}'")
     else:
         task_name, new_list_name = args[1], args[2]
-        lst = _find_list(data, list_name)
-        if not lst:
-            _err(f"list '{list_name}' not found")
-        task = _find_task(data, lst["id"], task_name)
-        if not task:
-            _err(f"task '{task_name}' not found in '{list_name}'")
+        lst = _require_list(data, list_name)
+        task = _require_task(data, lst, task_name)
         new_lst = _get_or_create_list(data, new_list_name)
         if _find_task(data, new_lst["id"], task_name):
             _err(f"task '{task_name}' already exists in '{new_list_name}'")
@@ -198,33 +171,19 @@ def cmd_delete(args):
     if len(args) == 1:
         group = _find_group(data, name)
         if group:
-            for l in data["lists"]:
-                if l["groupId"] == group["id"]:
-                    l["groupId"] = None
-            data["groups"] = [g for g in data["groups"] if g["id"] != group["id"]]
+            _delete_group(data, group)
             db.save(data)
             print(f"- group '{name}'")
             return
 
-        lst = _find_list(data, name)
-        if not lst:
-            _err(f"'{name}' not found")
-        group_id = lst["groupId"]
-        data["tasks"] = [t for t in data["tasks"] if t["listId"] != lst["id"]]
-        data["daysheet"] = [e for e in data["daysheet"] if e["listId"] != lst["id"]]
-        data["lists"] = [l for l in data["lists"] if l["id"] != lst["id"]]
-        if group_id and not any(l["groupId"] == group_id for l in data["lists"]):
-            data["groups"] = [g for g in data["groups"] if g["id"] != group_id]
+        lst = _require_list(data, name, f"'{name}' not found")
+        _delete_list(data, lst)
         db.save(data)
         print(f"- [{name}]")
     else:
-        lst = _find_list(data, name)
-        if not lst:
-            _err(f"list '{name}' not found")
+        lst = _require_list(data, name)
         task_name = args[1]
-        task = _find_task(data, lst["id"], task_name)
-        if not task:
-            _err(f"task '{task_name}' not found in '{name}'")
+        task = _require_task(data, lst, task_name)
         data["tasks"] = [t for t in data["tasks"] if t["id"] != task["id"]]
         db.save(data)
         print(f"- [{name}] {task_name}")

@@ -1,10 +1,7 @@
 import json
 import uuid
-from pathlib import Path
 
-DB_PATH = Path.home() / ".taskman" / "db.json"
-
-EMPTY_DB = {"groups": [], "lists": [], "tasks": [], "daysheet": []}
+from taskman.constants import DB_PATH, EMPTY_DB
 
 
 def load() -> dict:

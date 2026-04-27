@@ -1,34 +1,32 @@
-import copy
 import unittest
 from unittest.mock import patch
 
+from taskman.constants import DaysheetEntryType
 from taskman.commands.daysheet import cmd_log, cmd_continue, cmd_daysheet
+from tests.helpers import capture_stdout, daysheet_entry, db_record, list_record, saved_db, task_record
 
-LIST_1 = {"id": "list-1", "name": "COMP3131", "groupId": None}
-LIST_2 = {"id": "list-2", "name": "Work", "groupId": None}
-TASK_1 = {"id": "task-1", "name": "LEC 01", "listId": "list-1", "due": None, "done": None}
-TASK_DONE = {"id": "task-2", "name": "LEC 02", "listId": "list-1", "due": None, "done": "2026-04-26"}
+LIST_1 = list_record(id="list-1", name="COMP3131")
+LIST_2 = list_record(id="list-2", name="Work")
+TASK_1 = task_record(id="task-1", name="LEC 01", list_id="list-1")
+TASK_DONE = task_record(id="task-2", name="LEC 02", list_id="list-1", done="2026-04-26")
 
 TODAY = "2026-04-26"
 NOW_DT = "2026-04-26T10:00:00"
 
 
 def make_db(*daysheet_entries, tasks=None, lists=None):
-    return {
-        "groups": [],
-        "lists": list(lists or [LIST_1, LIST_2]),
-        "tasks": [copy.deepcopy(t) for t in (tasks or [TASK_1])],
-        "daysheet": list(daysheet_entries),
-    }
+    return db_record(
+        lists=lists or [LIST_1, LIST_2],
+        tasks=tasks or [TASK_1],
+        daysheet=daysheet_entries,
+    )
 
 
 class LogTest(unittest.TestCase):
 
     def test_log_adds_entry(self):
         db = make_db()
-        saved = {}
-        with patch("taskman.db.load", return_value=db), \
-             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+        with saved_db(db) as saved, \
              patch("taskman.db.new_id", return_value="new-id"), \
              patch("taskman.commands.daysheet._now", return_value=NOW_DT):
             cmd_log(["COMP3131", "Talked with tutor"])
@@ -46,11 +44,9 @@ class LogTest(unittest.TestCase):
                 cmd_log(["NoSuchList", "Some text"])
 
     def test_log_edit_updates_text(self):
-        entry = {"id": "e-1", "datetime": NOW_DT, "listId": "list-1", "type": "log", "text": "Old text"}
+        entry = daysheet_entry(id="e-1", datetime=NOW_DT, text="Old text")
         db = make_db(entry)
-        saved = {}
-        with patch("taskman.db.load", return_value=db), \
-             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+        with saved_db(db) as saved, \
              patch("taskman.commands.daysheet.date") as mock_date:
             mock_date.today.return_value.isoformat.return_value = TODAY
             cmd_log(["edit", "COMP3131", "Old text", "New text"])
@@ -67,11 +63,9 @@ class LogTest(unittest.TestCase):
                 cmd_log(["edit", "COMP3131", "Ghost", "New text"])
 
     def test_log_delete_removes_entry(self):
-        entry = {"id": "e-1", "datetime": NOW_DT, "listId": "list-1", "type": "log", "text": "Some text"}
+        entry = daysheet_entry(id="e-1", datetime=NOW_DT, text="Some text")
         db = make_db(entry)
-        saved = {}
-        with patch("taskman.db.load", return_value=db), \
-             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+        with saved_db(db) as saved, \
              patch("taskman.commands.daysheet.date") as mock_date:
             mock_date.today.return_value.isoformat.return_value = TODAY
             cmd_log(["delete", "COMP3131", "Some text"])
@@ -92,9 +86,7 @@ class ContinueTest(unittest.TestCase):
 
     def test_continue_adds_entry(self):
         db = make_db()
-        saved = {}
-        with patch("taskman.db.load", return_value=db), \
-             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+        with saved_db(db) as saved, \
              patch("taskman.db.new_id", return_value="new-id"), \
              patch("taskman.commands.daysheet._now", return_value=NOW_DT), \
              patch("taskman.commands.daysheet.date") as mock_date:
@@ -113,7 +105,9 @@ class ContinueTest(unittest.TestCase):
                 cmd_continue(["COMP3131", "Ghost task"])
 
     def test_continue_blocked_if_done_today(self):
-        done_entry = {"id": "e-1", "datetime": NOW_DT, "listId": "list-1", "type": "done", "text": "LEC 01"}
+        done_entry = daysheet_entry(
+            id="e-1", datetime=NOW_DT, type=DaysheetEntryType.DONE, text="LEC 01"
+        )
         db = make_db(done_entry)
         with patch("taskman.db.load", return_value=db), \
              patch("taskman.db.save"), \
@@ -127,12 +121,8 @@ class DoneWritesDaysheetTest(unittest.TestCase):
 
     def test_done_adds_daysheet_entry(self):
         from taskman.commands.tasks import cmd_done
-        db = {
-            "groups": [], "lists": [LIST_1], "tasks": [copy.deepcopy(TASK_1)], "daysheet": [],
-        }
-        saved = {}
-        with patch("taskman.db.load", return_value=db), \
-             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+        db = db_record(lists=[LIST_1], tasks=[TASK_1])
+        with saved_db(db) as saved, \
              patch("taskman.db.new_id", return_value="new-id"), \
              patch("taskman.commands.tasks.date") as mock_date, \
              patch("taskman.commands.tasks.datetime") as mock_dt, \
@@ -148,13 +138,11 @@ class DoneWritesDaysheetTest(unittest.TestCase):
 
     def test_done_removes_continue_entry(self):
         from taskman.commands.tasks import cmd_done
-        cont_entry = {"id": "e-1", "datetime": NOW_DT, "listId": "list-1", "type": "continue", "text": "LEC 01"}
-        db = {
-            "groups": [], "lists": [LIST_1], "tasks": [copy.deepcopy(TASK_1)], "daysheet": [cont_entry],
-        }
-        saved = {}
-        with patch("taskman.db.load", return_value=db), \
-             patch("taskman.db.save", side_effect=lambda d: saved.update(d)), \
+        cont_entry = daysheet_entry(
+            id="e-1", datetime=NOW_DT, type=DaysheetEntryType.CONTINUE, text="LEC 01"
+        )
+        db = db_record(lists=[LIST_1], tasks=[TASK_1], daysheet=[cont_entry])
+        with saved_db(db) as saved, \
              patch("taskman.db.new_id", return_value="new-id"), \
              patch("taskman.commands.tasks.date") as mock_date, \
              patch("taskman.commands.tasks.datetime") as mock_dt, \
@@ -173,53 +161,30 @@ class DaysheetViewTest(unittest.TestCase):
     def test_daysheet_no_entries(self, ):
         db = make_db()
         with patch("taskman.db.load", return_value=db):
-            from io import StringIO
-            import sys as _sys
-            buf = StringIO()
-            _sys.stdout = buf
-            try:
-                cmd_daysheet(["2026-04-26"])
-            finally:
-                _sys.stdout = _sys.__stdout__
-        self.assertIn("No entries", buf.getvalue())
+            out = capture_stdout(cmd_daysheet, ["2026-04-26"])
+        self.assertIn("No entries", out)
 
     def test_daysheet_shows_entries(self):
         entries = [
-            {"id": "e-1", "datetime": "2026-04-26T09:00:00", "listId": "list-1", "type": "done", "text": "LEC 01"},
-            {"id": "e-2", "datetime": "2026-04-26T10:00:00", "listId": "list-1", "type": "continue", "text": "LEC 02"},
-            {"id": "e-3", "datetime": "2026-04-26T11:00:00", "listId": "list-1", "type": "log", "text": "Asked tutor"},
+            daysheet_entry(id="e-1", datetime="2026-04-26T09:00:00", type=DaysheetEntryType.DONE, text="LEC 01"),
+            daysheet_entry(id="e-2", datetime="2026-04-26T10:00:00", type=DaysheetEntryType.CONTINUE, text="LEC 02"),
+            daysheet_entry(id="e-3", datetime="2026-04-26T11:00:00", text="Asked tutor"),
         ]
         db = make_db(*entries)
         with patch("taskman.db.load", return_value=db):
-            from io import StringIO
-            import sys as _sys
-            buf = StringIO()
-            _sys.stdout = buf
-            try:
-                cmd_daysheet(["2026-04-26"])
-            finally:
-                _sys.stdout = _sys.__stdout__
-        out = buf.getvalue()
+            out = capture_stdout(cmd_daysheet, ["2026-04-26"])
         self.assertIn("Finished LEC 01", out)
         self.assertIn("Continued LEC 02", out)
         self.assertIn("Asked tutor", out)
 
     def test_daysheet_filters_by_date(self):
         entries = [
-            {"id": "e-1", "datetime": "2026-04-25T09:00:00", "listId": "list-1", "type": "done", "text": "LEC 01"},
-            {"id": "e-2", "datetime": "2026-04-26T09:00:00", "listId": "list-1", "type": "done", "text": "LEC 02"},
+            daysheet_entry(id="e-1", datetime="2026-04-25T09:00:00", type=DaysheetEntryType.DONE, text="LEC 01"),
+            daysheet_entry(id="e-2", datetime="2026-04-26T09:00:00", type=DaysheetEntryType.DONE, text="LEC 02"),
         ]
         db = make_db(*entries)
         with patch("taskman.db.load", return_value=db):
-            from io import StringIO
-            import sys as _sys
-            buf = StringIO()
-            _sys.stdout = buf
-            try:
-                cmd_daysheet(["2026-04-26"])
-            finally:
-                _sys.stdout = _sys.__stdout__
-        out = buf.getvalue()
+            out = capture_stdout(cmd_daysheet, ["2026-04-26"])
         self.assertNotIn("LEC 01", out)
         self.assertIn("LEC 02", out)
 

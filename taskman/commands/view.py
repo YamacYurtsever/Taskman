@@ -1,19 +1,15 @@
-import re
 import shutil
 import sys
 import textwrap
 from datetime import date, timedelta
 
 from taskman import db
+from taskman.constants import ANSI_ESCAPE_RE, VIEW_COL_GAP, VIEW_MIN_COL_WIDTH
 from taskman.commands.utils import _bold, _sort_name
-
-_ANSI_RE = re.compile(r'\033\[[0-9;]*m')
-MIN_COL_WIDTH = 18
-COL_GAP = 2
 
 
 def _vlen(s):
-    return len(_ANSI_RE.sub('', s))
+    return len(ANSI_ESCAPE_RE.sub('', s))
 
 
 def _pad(s, width):
@@ -98,8 +94,8 @@ def _render_column(list_name, tasks, col_width, today, mode='all'):
 def _cols_per_row(n):
     term_w = shutil.get_terminal_size((80, 24)).columns
     for cols in range(n, 0, -1):
-        w = (term_w - COL_GAP * (cols - 1)) // cols
-        if w >= MIN_COL_WIDTH:
+        w = (term_w - VIEW_COL_GAP * (cols - 1)) // cols
+        if w >= VIEW_MIN_COL_WIDTH:
             return cols, w
     return 1, term_w
 
@@ -107,7 +103,7 @@ def _cols_per_row(n):
 def _render_section(pairs, today, mode):
     n = len(pairs)
     cols_per_row, col_width = _cols_per_row(n)
-    gap = ' ' * COL_GAP
+    gap = ' ' * VIEW_COL_GAP
 
     for row_start in range(0, n, cols_per_row):
         row = pairs[row_start:row_start + cols_per_row]
