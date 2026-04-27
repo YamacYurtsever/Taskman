@@ -23,12 +23,12 @@
   align-items: stretch;
   overflow: hidden;
   background: var(--primary);
-  border: 1px solid var(--border);
+  border: var(--border-w) solid var(--border);
   border-radius: var(--r);
 }
 
 .dateNavBtn {
-  width: 30px;
+  width: var(--date-nav-btn-w);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,13 +39,13 @@
   transition: color var(--animation-d), background var(--animation-d);
 }
 
-.dateNavBtn:first-child { border-right: 1px solid var(--border); }
-.dateNavBtn:last-child { border-left: 1px solid var(--border); }
+.dateNavBtn:first-child { border-right: var(--border-w) solid var(--border); }
+.dateNavBtn:last-child { border-left: var(--border-w) solid var(--border); }
 .dateNavBtn:hover { color: var(--text-1); background: var(--primary-bg); }
 
 .dateNavLabel {
   flex: 1;
-  min-width: 100px;
+  min-width: var(--date-nav-label-w);
   padding: var(--sp-sm);
   color: var(--text-1);
   font-size: var(--fs);
@@ -62,7 +62,7 @@
 
 .timelineGroupName {
   color: var(--text-2);
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   font-weight: 600;
 }
 
@@ -73,9 +73,9 @@
 }
 
 .timelineTime {
-  min-width: 40px;
+  min-width: var(--timeline-time-w);
   flex-shrink: 0;
-  padding-top: 2px;
+  padding-top: calc(var(--border-w) + 1px);
   color: var(--text-3);
   font-size: var(--fs-xs);
 }
@@ -115,9 +115,9 @@
 .timelineEditInput {
   flex: 1;
   min-width: 0;
-  padding: 1px 0;
+  padding: var(--border-w) 0;
   border: 0;
-  border-bottom: 1.5px solid var(--accent);
+  border-bottom: var(--border-w-strong) solid var(--accent);
   outline: 0;
   background: transparent;
   color: var(--text-1);
@@ -131,7 +131,7 @@
   gap: var(--sp);
   padding: var(--sp);
   background: var(--primary);
-  border: 1px solid var(--border);
+  border: var(--border-w) solid var(--border);
   border-radius: var(--r);
   transition: border-color var(--animation-d);
 }
@@ -144,7 +144,7 @@
 .logForm input[type="text"] {
   background: transparent;
   border: 0;
-  border-right: 1px solid var(--border);
+  border-right: var(--border-w) solid var(--border);
   outline: 0;
   color: var(--text-1);
   font: inherit;
@@ -152,7 +152,7 @@
 }
 
 .logForm select {
-  max-width: 130px;
+  max-width: var(--date-input-w);
   flex-shrink: 0;
   padding-right: var(--sp);
   color: var(--text-2);

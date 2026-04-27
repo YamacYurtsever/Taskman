@@ -12,6 +12,7 @@
   /* Typography */
   --font-sans:    'Nunito', sans-serif;
   --fs-title:     1.4rem;
+  --fs-lg:        1rem;
   --fs:           0.9rem;
   --fs-sm:        0.8rem;
   --fs-xs:        0.7rem;
@@ -24,11 +25,17 @@
   --daysheet-w:   500px;
   --nav-indent:   15px;
   --main-padding: 20px;
+  --date-input-w: 130px;
+  --inline-date-w: 120px;
+  --date-nav-btn-w: 30px;
+  --date-nav-label-w: 100px;
+  --timeline-time-w: 40px;
 
   /* Spacing */
   --sp-lg:        20px;
   --sp:           10px;
   --sp-sm:        5px;
+  --sp-xs:        3px;
 
   /* Radius */
   --r-lg:         20px;
@@ -42,6 +49,11 @@
   --logo-w:            25px;
   --theme-w:           35px;
   --animation-d:       0.15s;
+  --border-w:          1px;
+  --border-w-strong:   1.5px;
+  --outline-w:         2px;
+  --outline-offset:    2px;
+  --scrollbar-w:       5px;
 
   /* Default theme fallback (important) */
   --bg:           #f6f3ee;
@@ -128,7 +140,7 @@ body {
 /* ──────────────────────────── Scrollbar ─────────────────────────── */
 
 ::-webkit-scrollbar {
-  width: 5px;
+  width: var(--scrollbar-w);
 }
 
 ::-webkit-scrollbar-track {
@@ -137,7 +149,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: var(--r-sm);
 }
 
 ::-webkit-scrollbar-thumb:hover {

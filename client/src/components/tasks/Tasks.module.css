@@ -1,7 +1,7 @@
 /* ── Cards view ── */
 
 .sectionLabel {
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--text-2);
 }
@@ -22,7 +22,7 @@
 
 .card {
   background: var(--primary);
-  border: 1px solid var(--border);
+  border: var(--border-w) solid var(--border);
   border-radius: var(--r);
   overflow: hidden;
   display: flex;
@@ -48,7 +48,7 @@
 }
 
 .cardTitle {
-  font-size: 0.95rem;
+  font-size: var(--fs);
   font-weight: 600;
 }
 
@@ -90,8 +90,8 @@
   align-items: flex-start;
   background-color: var(--primary);
   gap: var(--sp);
-  padding: 7px;
-  border: 1px solid var(--border);
+  padding: calc(var(--sp-sm) + 2px);
+  border: var(--border-w) solid var(--border);
   border-radius: var(--r);
 }
 
@@ -114,7 +114,7 @@
 .taskCheck {
   width: var(--btn-w);
   height: var(--btn-w);
-  border: 1.5px solid var(--text-3);
+  border: var(--border-w-strong) solid var(--text-3);
   border-radius: var(--r-sm);
   flex-shrink: 0;
   cursor: pointer;
@@ -154,11 +154,11 @@
   color: var(--text-3);
   text-decoration: line-through;
   text-decoration-color: var(--text-3);
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--border-w);
 }
 
 .taskDue {
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   line-height: 1;
   color: var(--accent);
 }
@@ -226,19 +226,19 @@
   min-width: 0;
   background: transparent;
   border: none;
-  border-bottom: 1.5px solid var(--accent);
+  border-bottom: var(--border-w-strong) solid var(--accent);
   color: var(--text-1);
   font: inherit;
   font-size: var(--fs);
   font-weight: 500;
   outline: none;
-  padding: 1px 0;
+  padding: var(--border-w) 0;
 }
 
 .taskEditDue {
   background: transparent;
   border: none;
-  border-bottom: 1.5px solid var(--border);
+  border-bottom: var(--border-w-strong) solid var(--border);
   color: var(--text-2);
   font: inherit;
   font-size: var(--fs-sm);
@@ -247,7 +247,7 @@
 }
 
 .focusedView .taskEditDue {
-  width: 120px;
+  width: var(--inline-date-w);
   flex-shrink: 0;
 }
 
@@ -256,7 +256,7 @@
   min-width: 0;
   background: transparent;
   border: none;
-  border-bottom: 1.5px solid var(--accent);
+  border-bottom: var(--border-w-strong) solid var(--accent);
   color: var(--text-1);
   font: inherit;
   font-size: var(--fs);
@@ -284,7 +284,7 @@
 
 .focusedTitle {
   font-size: var(--fs-title);
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .focusedMeta {
@@ -334,7 +334,7 @@
   align-items: center;
   padding: var(--sp);
   background: var(--primary);
-  border: 1px solid var(--border);
+  border: var(--border-w) solid var(--border);
   border-radius: var(--r);
   transition: border-color var(--animation-d);
   gap: var(--sp);
@@ -342,14 +342,14 @@
 
 .inlineAdd:focus-within {
   border-color: var(--accent);
-  border-width: 1.5px;
+  border-width: var(--border-w-strong);
 }
 
 .inlineAdd input[type=text] {
   flex: 1;
   background: transparent;
   border: none;
-  border-right: 1px solid var(--border);
+  border-right: var(--border-w) solid var(--border);
   padding-right: var(--sp);
   color: var(--text-1);
   font: inherit;
@@ -365,13 +365,13 @@
 .inlineAdd input[type=date] {
   background: transparent;
   border: none;
-  border-right: 1px solid var(--border);
+  border-right: var(--border-w) solid var(--border);
   padding-right: var(--sp);
   color: var(--text-2);
   font: inherit;
   font-size: var(--fs-sm);
   outline: none;
-  width: 130px;
+  width: var(--date-input-w);
   color-scheme: light;
 }
 

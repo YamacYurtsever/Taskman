@@ -6,7 +6,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--primary);
-  border-right: 1px solid var(--border);
+  border-right: var(--border-w) solid var(--border);
 }
 
 .sidebarLogo {
@@ -15,9 +15,9 @@
   display: flex;
   align-items: center;
   gap: var(--sp);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-w) solid var(--border);
   color: var(--text-1);
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   font-weight: 500;
   user-select: none;
 }
@@ -96,7 +96,7 @@
 }
 
 .navList {
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
 }
 
 .count {
@@ -124,13 +124,13 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--sp-xs);
   flex-shrink: 0;
 }
 
 .actions {
   display: none;
-  gap: 3px;
+  gap: var(--sp-xs);
 }
 
 .action {
@@ -176,12 +176,12 @@
   flex: 1;
   min-width: 0;
   border: 0;
-  border-bottom: 1.5px solid var(--accent);
+  border-bottom: var(--border-w-strong) solid var(--accent);
   outline: 0;
   background: transparent;
   color: var(--text-1);
   font: inherit;
-  padding: 1px 0;
+  padding: var(--border-w) 0;
 }
 
 .moveSelect {
@@ -193,7 +193,7 @@
 .newListInput {
   width: 100%;
   padding: var(--sp-sm);
-  border: 1px dashed var(--border);
+  border: var(--border-w) dashed var(--border);
   border-radius: var(--r);
   background: transparent;
   color: var(--text-3);
