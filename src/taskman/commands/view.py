@@ -22,7 +22,7 @@ def _green(s): return f'\033[32m{s}\033[0m'
 def _dim(s):   return f'\033[2m{s}\033[0m'
 
 
-def _sort(items, key=lambda x: x['name']):
+def _sort(items):
     return sorted(items, key=lambda x: _sort_name(x['name']))
 
 

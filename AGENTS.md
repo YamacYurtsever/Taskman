@@ -10,6 +10,7 @@ After completing each milestone item:
 
 - Add unit tests for any new commands or logic
 - Run `python -m pytest tests/ -v` and confirm all pass
+- Run `python -m vulture src tests --min-confidence 80` and confirm it has no findings
 - Check off the item in the milestones section
 - Run `git add . && git commit -m "<description>"`
 
@@ -131,6 +132,8 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 - **Frontend:** Vanilla HTML / CSS / JavaScript (no build step)
 - **Storage:** JSON flat file (`~/.taskman/db.json`)
 - **Tests:** `python -m pytest tests/ -v`
+- **Dead code check:** `python -m vulture src tests --min-confidence 80`
+- **CI:** GitHub Actions workflow in `.github/workflows/ci.yml` installs `.[dev]`, then runs tests and Vulture
 
 ---
 
@@ -228,9 +231,9 @@ Google Calendar embed color codes (predefined palette):
 - [ ] Web: clicking a task name in focused view mounts the task view as a side panel to the right when there is enough horizontal space, or replaces the main content area when there isn't
 - [ ] Web: raw URLs in the description are rendered as clickable links
 
-##### Milestone 6 — Mobile Responsiveness
+##### Milestone 6 — Responsiveness
 
-- [ ] Sidebar collapses to a slide-in drawer on small screens (hamburger toggle in topbar)
+- [ ] Sidebar collapses to a full page from a burger icon
 - [ ] Focused view and daysheet fill full width on mobile
 - [ ] Calendar iframe scales to viewport width, with day view instead of week.
 

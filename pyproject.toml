@@ -8,6 +8,9 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = ["flask>=3"]
 
+[project.optional-dependencies]
+dev = ["pytest", "vulture"]
+
 [project.scripts]
 taskman = "cli:main"
 
