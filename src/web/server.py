@@ -11,6 +11,7 @@ from taskman.commands.tasks import cmd_add, cmd_delete, cmd_done, cmd_undo
 from taskman.constants import ANSI_ESCAPE_RE, DATE_FORMAT, DaysheetEntryType
 
 STATIC_DIR = Path(__file__).parent / "client"
+DIST_DIR = STATIC_DIR / "dist"
 
 
 def _run(fn, args):
@@ -31,10 +32,14 @@ def create_app():
 
     @app.get("/")
     def index():
+        if DIST_DIR.exists():
+            return send_from_directory(DIST_DIR, "index.html")
         return send_from_directory(STATIC_DIR, "index.html")
 
     @app.get("/client/<path:name>")
     def static_files(name):
+        if (DIST_DIR / name).exists():
+            return send_from_directory(DIST_DIR, name)
         return send_from_directory(STATIC_DIR, name)
 
     @app.get("/api/config")

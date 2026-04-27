@@ -60,6 +60,13 @@ tds [date]                                      # taskman daysheet
 
 ## Web UI
 
+Install and build the frontend once before serving it through Flask:
+
+```bash
+npm install
+npm run build
+```
+
 ```bash
 taskman web
 ```
@@ -76,6 +83,13 @@ Opens a local web interface at `http://127.0.0.1:5050` with:
 
 ```bash
 taskman web --port 8080 --debug
+```
+
+For frontend development, run Flask for the API and Vite for the React app:
+
+```bash
+taskman web
+npm run dev
 ```
 
 ### Calendar Config

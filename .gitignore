@@ -6,6 +6,9 @@ __pycache__/
 dist/
 build/
 
+# JavaScript
+node_modules/
+
 # Virtual environments
 .venv/
 venv/

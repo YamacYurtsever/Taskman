@@ -14,10 +14,10 @@ After completing each milestone item:
 - Check off the item in the milestones section
 - Run `git add . && git commit -m "<description>"`
 
-After changes to `src/web/server.py` or `src/taskman/config.py`, restart the web server:
+After changes to `src/web/server.py`, `src/taskman/config.py`, or the built frontend, advise the user to restart the web server manually:
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.taskman.web.plist && launchctl load ~/Library/LaunchAgents/com.taskman.web.plist
+taskman web
 ```
 
 Then advise the user to hard-refresh with Cmd+Shift+R.
@@ -33,10 +33,10 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 - The CLI entry point is `src/cli/main.py`.
 - Command behavior lives in `src/taskman/commands/`.
 - JSON persistence is centralized in `src/taskman/db.py`, currently using `~/.taskman/db.json`.
-- The web app is a Flask server in `src/web/server.py` plus static HTML/CSS/JS in `src/web/client/`.
+- The web app is a Flask server in `src/web/server.py` plus a Vite React TypeScript frontend in `src/web/client/`.
 - The web server mostly wraps CLI command functions for simple actions, but some list/group/task edit endpoints mutate the JSON data directly.
 - There is no schema migration layer yet. Any new task fields must be backward-compatible with existing JSON records.
-- There is no JavaScript build step or frontend package manager.
+- Frontend dependencies are managed by npm, and the production frontend is built with `npm run build`.
 
 ---
 
@@ -129,11 +129,12 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 ### Tech Stack
 
 - **Backend:** Python, Flask
-- **Frontend:** Vanilla HTML / CSS / JavaScript (no build step)
+- **Frontend:** Vite + React + TypeScript, with static assets built by `npm run build`
 - **Storage:** JSON flat file (`~/.taskman/db.json`)
 - **Tests:** `python -m pytest tests/ -v`
+- **Frontend build:** `npm run build`
 - **Dead code check:** `python -m vulture src tests --min-confidence 80`
-- **CI:** GitHub Actions workflow in `.github/workflows/ci.yml` installs `.[dev]`, then runs tests and Vulture
+- **CI:** GitHub Actions workflow in `.github/workflows/ci.yml` installs Python and npm dependencies, builds the frontend, then runs tests and Vulture
 
 ---
 
