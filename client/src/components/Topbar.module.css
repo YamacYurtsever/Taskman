@@ -1,0 +1,39 @@
+.topbar {
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.filterPills {
+  display: flex;
+  padding: 7px;
+  background: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.filterPill {
+  padding: var(--sp-sm) var(--sp);
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: color var(--animation-d), background var(--animation-d);
+}
+
+.filterPill:hover {
+  color: var(--text-1);
+}
+
+.filterPill.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+}

@@ -1,0 +1,328 @@
+/* ── Cards view ── */
+
+.sectionLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.sectionLabelLink {
+  cursor: pointer;
+}
+
+.sectionLabelLink:hover {
+  color: var(--accent);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-max-w), 1fr));
+  gap: var(--sp);
+}
+
+.card {
+  background: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: var(--sp);
+  gap: var(--sp);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-sm);
+  cursor: pointer;
+  transition: background var(--animation-d);
+  background: var(--primary);
+  border-radius: var(--r);
+}
+
+.cardHeader:hover {
+  background: var(--primary-bg);
+}
+
+.cardTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.cardCount {
+  font-size: 0.7rem;
+  color: var(--text-2);
+}
+
+.cardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.cardOverflowToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  width: 100%;
+  padding: var(--sp-sm);
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: color var(--animation-d);
+}
+
+.cardOverflowToggle:hover {
+  color: var(--text-2);
+}
+
+/* ── Task rows ── */
+
+.taskRow {
+  display: flex;
+  align-items: flex-start;
+  background-color: var(--primary);
+  gap: var(--sp);
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.taskBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+}
+
+.taskLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-sm);
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.taskCheck {
+  width: var(--btn-w);
+  height: var(--btn-w);
+  border: 1.5px solid var(--text-3);
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--animation-d), background var(--animation-d);
+}
+
+.taskCheck:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.taskRow.done .taskCheck {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.taskCheckSvg {
+  display: none;
+}
+
+.taskRow.done .taskCheckSvg {
+  display: block;
+}
+
+.taskName {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1;
+  word-break: break-word;
+}
+
+.taskRow.done .taskName {
+  color: var(--text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-3);
+  text-decoration-thickness: 1px;
+}
+
+.taskDue {
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.taskDue.overdue {
+  color: var(--red);
+}
+
+.taskRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-sm);
+  opacity: 0;
+  transition: opacity var(--animation-d);
+  flex-shrink: 0;
+}
+
+.taskEditActions {
+  display: flex;
+  flex-direction: row;
+  gap: var(--sp-sm);
+}
+
+.taskRow:hover .taskRight,
+.taskRow:focus-within .taskRight {
+  opacity: 1;
+}
+
+/* task-btn is global; scope opacity toggle here */
+.taskLeft :global(.task-btn) {
+  opacity: 0;
+  transition: opacity var(--animation-d);
+}
+
+.taskRow:hover .taskLeft :global(.task-btn),
+.taskRow:focus-within .taskLeft :global(.task-btn) {
+  opacity: 1;
+}
+
+.taskEditRow .taskRight,
+.taskMoveRow .taskRight {
+  opacity: 1;
+}
+
+/* ── Task edit / move ── */
+
+.taskEditBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-sm);
+  min-width: 0;
+}
+
+.focusedView .taskEditBody {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp);
+}
+
+.taskEditName {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  outline: none;
+  padding: 1px 0;
+}
+
+.taskEditDue {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--border);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-xs);
+  outline: none;
+  color-scheme: light;
+}
+
+.focusedView .taskEditDue {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.taskMoveSelect {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  outline: none;
+  cursor: pointer;
+}
+
+/* ── Focused view ── */
+
+.focusedView {
+  width: 100%;
+  max-width: var(--focused-w);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.focusedHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp);
+}
+
+.focusedTitle {
+  font-size: var(--fs-title);
+  font-weight: bold;
+}
+
+.focusedMeta {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+
+.focusedTasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.doneWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.doneToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: color var(--animation-d);
+}
+
+.doneToggle:hover {
+  color: var(--text-2);
+}
+
+.doneSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}

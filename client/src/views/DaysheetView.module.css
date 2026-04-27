@@ -1,0 +1,208 @@
+.daysheetView {
+  width: 100%;
+  max-width: var(--daysheet-w);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.daysheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.daysheetTitle {
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.dateNav {
+  display: flex;
+  align-items: stretch;
+  background: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.dateNavBtn {
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color var(--animation-d), background var(--animation-d);
+}
+
+.dateNavBtn:first-child { border-right: 1px solid var(--border); }
+.dateNavBtn:last-child  { border-left:  1px solid var(--border); }
+.dateNavBtn:hover       { color: var(--text-1); background: var(--primary-bg); }
+
+.dateNavLabel {
+  flex: 1;
+  min-width: 100px;
+  padding: var(--sp-sm);
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.timelineGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.timelineGroupName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.timelineEntry {
+  display: flex;
+  align-items: center;
+  gap: var(--sp);
+}
+
+.timelineTime {
+  flex-shrink: 0;
+  min-width: 42px;
+  padding-top: 2px;
+  font-size: 0.73rem;
+  color: var(--text-3);
+}
+
+.timelineBadge {
+  flex-shrink: 0;
+  margin-top: 1px;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  font-size: 0.67rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timelineBadge.log      { background: var(--primary-bg); color: var(--text-2); }
+.timelineBadge.done     { background: var(--green-bg);   color: var(--green); }
+.timelineBadge.continue { background: var(--accent-bg);  color: var(--accent); }
+
+.timelineText {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+}
+
+.timelineListTag {
+  font-size: 0.7rem;
+  color: var(--text-3);
+}
+
+.timelineActions {
+  display: flex;
+  gap: var(--sp-sm);
+  flex-shrink: 0;
+}
+
+.timelineDel {
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  transition: color var(--animation-d), background var(--animation-d), opacity var(--animation-d);
+}
+
+.timelineEntry:hover .timelineDel {
+  opacity: 1;
+}
+
+.timelineEditRow .timelineDel {
+  opacity: 1;
+}
+
+.timelineEditInput {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  outline: none;
+  padding: 1px 0;
+}
+
+.logForm {
+  display: flex;
+  align-items: center;
+  gap: var(--sp);
+  padding: var(--sp);
+  background: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  transition: border-color var(--animation-d);
+}
+
+.logForm:focus-within {
+  border: 1.5px solid var(--accent);
+}
+
+.logForm select {
+  flex-shrink: 0;
+  max-width: 130px;
+  padding-right: var(--sp);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  outline: none;
+}
+
+.logForm input[type=text] {
+  flex: 1;
+  padding-right: var(--sp);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs-sm);
+  outline: none;
+}
+
+.logForm input[type=text]::placeholder {
+  color: var(--text-3);
+}
+
+.logFormBtn {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color var(--animation-d);
+}
+
+.logFormBtn:hover {
+  color: var(--accent);
+}
