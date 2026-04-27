@@ -13,7 +13,7 @@ After completing each milestone item:
 - Check off the item in the milestones section
 - Run `git add . && git commit -m "<description>"`
 
-After changes to `web/server.py` or `taskman/config.py`, restart the web server:
+After changes to `src/web/server.py` or `src/taskman/config.py`, restart the web server:
 
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.taskman.web.plist && launchctl load ~/Library/LaunchAgents/com.taskman.web.plist
@@ -25,10 +25,14 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 
 ### Current Implementation Notes
 
-- The CLI entry point is `taskman/cli.py`.
-- Command behavior lives in `taskman/commands/`.
-- JSON persistence is centralized in `taskman/db.py`, currently using `~/.taskman/db.json`.
-- The web app is a Flask server in `web/server.py` plus static HTML/CSS/JS in `web/client/`.
+- Runtime packages use a `src/` layout:
+  - `src/taskman/` contains core taskman logic, persistence, config, constants, and command behavior.
+  - `src/cli/` contains the terminal interface and dispatches to `src/taskman/commands/`.
+  - `src/web/` contains the Flask web interface and static client.
+- The CLI entry point is `src/cli/main.py`.
+- Command behavior lives in `src/taskman/commands/`.
+- JSON persistence is centralized in `src/taskman/db.py`, currently using `~/.taskman/db.json`.
+- The web app is a Flask server in `src/web/server.py` plus static HTML/CSS/JS in `src/web/client/`.
 - The web server mostly wraps CLI command functions for simple actions, but some list/group/task edit endpoints mutate the JSON data directly.
 - There is no schema migration layer yet. Any new task fields must be backward-compatible with existing JSON records.
 - There is no JavaScript build step or frontend package manager.
@@ -135,17 +139,25 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 ##### Milestone 1 — Core
 
 - [x] Project setup
+- [x] `src/` package layout with core logic in `src/taskman/`
+- [x] JSON persistence in `src/taskman/db.py`
+- [x] Shared constants in `src/taskman/constants.py`
+- [x] Command behavior organized under `src/taskman/commands/`
+
+##### Milestone 2 — CLI Frontend
+
+- [x] CLI entry point in `src/cli/main.py`
 - [x] Task commands: `add`, `done`, `undo`, `edit`, `move`, `delete`
 - [x] Viewing commands: `taskman ls`
 - [x] Daysheet commands `log`, `continue`, `daysheet`
 - [x] Shell functions: `tls`, `tlsd`, `tlsw`, `tds`
 - [x] Completion sound and visual feedback on `taskman done`
 
-##### Milestone 2 — Web Frontend
+##### Milestone 3 — Web Frontend
 
 ###### Infrastructure
-- [x] Flask server (`web/server.py`) with REST endpoints for task/list/group/daysheet operations
-- [x] Serve static frontend from `web/client/`
+- [x] Flask server (`src/web/server.py`) with REST endpoints for task/list/group/daysheet operations
+- [x] Serve static frontend from `src/web/client/`
 - [x] Live updates without full page reload
 
 ###### View
@@ -180,14 +192,14 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 ###### Light / Dark Mode
 - [x] Light/dark mode toggle (persisted to `localStorage`, toggled via button in topbar)
 
-##### Milestone 3 — Google Calendar
+##### Milestone 4 — Google Calendar
 
 - [x] Web: Google Calendar iframe embedded in taskman (week view by default)
 - [x] Sidebar nav entry (above Daysheet) to access the calendar view
 - [x] Multi-calendar support: calendars configured in `~/.taskman/config.json` as an array of `{ id, color }` objects
 - [x] Per-calendar color override via Google Calendar embed `color` param
 - [x] iframe loaded once at boot and kept in DOM — switching to Calendar view shows/hides it instantly
-- [x] Config file (`~/.taskman/config.json`) with `calendars` array and `calendarTimezone`; built-in defaults in `taskman/config.py`
+- [x] Config file (`~/.taskman/config.json`) with `calendars` array and `calendarTimezone`; built-in defaults in `src/taskman/config.py`
 
 ###### Calendar Config (`~/.taskman/config.json`)
 
@@ -204,7 +216,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 Google Calendar embed color codes (predefined palette):
 `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` Wisteria · `#039BE5` Peacock · `#3F51B5` Blueberry · `#7986CB` Lavender · `#8E24AA` Grape · `#F6BF26` Banana · `#F4511E` Tangerine · `#0B8043` Basil · `#D50000` Tomato · `#616161` Graphite
 
-##### Milestone 4 — Task Descriptions
+##### Milestone 5 — Task Descriptions
 
 - [ ] Add `description` field to task schema (`db.json`)
 - [ ] Backfill missing `description` fields for existing tasks
@@ -216,20 +228,20 @@ Google Calendar embed color codes (predefined palette):
 - [ ] Web: clicking a task name in focused view mounts the task view as a side panel to the right when there is enough horizontal space, or replaces the main content area when there isn't
 - [ ] Web: raw URLs in the description are rendered as clickable links
 
-##### Milestone 5 — Mobile Responsiveness
+##### Milestone 6 — Mobile Responsiveness
 
 - [ ] Sidebar collapses to a slide-in drawer on small screens (hamburger toggle in topbar)
 - [ ] Focused view and daysheet fill full width on mobile
 - [ ] Calendar iframe scales to viewport width, with day view instead of week.
 
-##### Milestone 6 — Backups
+##### Milestone 7 — Backups
 
 - [ ] On each `db.save()`, write/overwrite a snapshot to `~/.taskman/backups/db.YYYY-MM-DD.json` (always reflects the latest state for that day)
 - [ ] Keep only the last 10 snapshots (days with writes), pruning older ones automatically
 - [ ] `taskman backup` command to force a snapshot immediately (useful before bulk changes)
 - [ ] `taskman restore [date]` command to restore from a snapshot (lists available dates if none given)
 
-##### Milestone 7 — iCloud Sync
+##### Milestone 8 — iCloud Sync
 
 - [ ] Add `db_path` to existing `~/.taskman/config.json` (config file already exists, used by Calendar)
 - [ ] Default `db_path` to `~/Library/Mobile Documents/com~apple~CloudDocs/taskman/db.json` when iCloud Drive is detected

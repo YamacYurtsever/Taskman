@@ -9,8 +9,11 @@ requires-python = ">=3.11"
 dependencies = ["flask>=3"]
 
 [project.scripts]
-taskman = "taskman.cli:main"
+taskman = "cli:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["taskman*", "web*"]
+where = ["src"]
+include = ["cli*", "taskman*", "web*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

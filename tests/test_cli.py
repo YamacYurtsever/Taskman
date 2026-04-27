@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from taskman.cli import main
+from cli import main
 
 
 class CliTest(unittest.TestCase):
