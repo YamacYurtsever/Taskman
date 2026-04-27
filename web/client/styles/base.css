@@ -1,13 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg:           #f4f3f0;
-  --surface:      #faf9f7;
-  --surface-hover:#eceae6;
-  --border:       #dddad4;
-  --text:         #252320;
-  --muted:        #726d66;
-  --faint:        #a8a099;
   --accent:       oklch(48% 0.16 248);
   --accent-bg:    oklch(48% 0.16 248 / 0.1);
   --green:        oklch(48% 0.14 148);
@@ -33,6 +26,16 @@
   --fs-xs:        0.8rem;
   --animation-d:  var(--animation-d);
   --logo-w:       25px;
+}
+
+[data-theme="light"] {
+  --bg:           #f4f3f0;
+  --surface:      #faf9f7;
+  --surface-hover:#eceae6;
+  --border:       #dddad4;
+  --text:         #252320;
+  --muted:        #726d66;
+  --faint:        #a8a099;
 }
 
 [data-theme="dark"] {
