@@ -159,7 +159,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 - [x] Mark done / undo (checkbox)
 - [x] Delete task
 - [x] Continue task (logs to daysheet)
-- [ ] Rename task / update due date (`taskman edit`)
+- [x] Rename task / update due date (`taskman edit`)
 - [ ] Move task to another list (`taskman move "list" "name" "new_list"`)
 
 ###### List & Group Actions
