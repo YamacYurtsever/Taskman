@@ -217,7 +217,7 @@ Google Calendar embed color codes (predefined palette):
 
 - [ ] Sidebar collapses to a slide-in drawer on small screens (hamburger toggle in topbar)
 - [ ] Focused view and daysheet fill full width on mobile
-- [ ] Calendar iframe scales to viewport width
+- [ ] Calendar iframe scales to viewport width, with day view instead of week.
 
 ##### Milestone 7 — Backups
 
