@@ -77,14 +77,19 @@ body {
   padding: 15px;
   display: flex;
   align-items: center;
+  gap: 8px;
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 500;
   color: var(--text);
   border-bottom: 1px solid var(--border);
   user-select: none;
-  display: flex;
-  align-items: center;
+}
+
+.sidebar-logo img {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 
 .sidebar-lists {
