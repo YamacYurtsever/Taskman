@@ -14,7 +14,7 @@ After completing each milestone item:
 - Check off the item in the milestones section
 - Run `git add . && git commit -m "<description>"`
 
-After changes to `server/` or `server/config.py`, advise the user to restart the web server:
+After changes to `server/`, advise the user to restart the web server:
 
 ```bash
 python -m server
@@ -35,7 +35,8 @@ Then hard-refresh with Cmd+Shift+R.
 ```
 taskman/
   server/               Flask app and all backend logic
-    __init__.py         App factory and API routes
+    api.py              App factory, all routes, main() entry point
+    __init__.py         Re-exports create_app and main from api.py
     __main__.py         Entry point for python -m server
     services/           Business logic called by routes
       daysheet.py       Log and continue entry operations
@@ -53,10 +54,14 @@ taskman/
     pytest.ini          Pytest config (pythonpath, testpaths)
   client/               Vite + React + TypeScript frontend
     src/
-      App.tsx           Root component and state
-      views/            CalendarView, DaysheetView, TasksView
-      components/       Sidebar, Topbar, ThemeToggle, InlineAdd, icons
+      App.tsx           Root component, routing, state
+      App.module.css    Layout styles (content wrapper, main, calendar iframe)
+      views/            CalendarView, DaysheetView, TasksView (each with .module.css)
+      components/       Sidebar, Topbar, ThemeToggle, InlineAdd, icons (each with .module.css)
       lib/              api.ts, types.ts, utils.ts
+    styles/
+      style.css         Global entry point (imports base.css)
+      base.css          CSS tokens, resets, body, shared .task-btn utility
     static/             Static assets (logo, etc.)
     index.html
     vite.config.ts
@@ -69,9 +74,23 @@ taskman/
 ### Implementation Notes
 
 - The Flask server exposes a REST API; some endpoints delegate to service functions, others mutate the DB directly for complex operations.
-- Service functions in `server/services/` use a CLI-style `args` list interface and raise `SystemExit` on error — the `_run()` helper in `server/__init__.py` captures both.
+- Service functions in `server/services/` use a CLI-style `args` list interface and raise `SystemExit` on error — the `_run()` helper in `server/api.py` captures both.
 - There is no schema migration layer. Any new task fields must be backward-compatible with existing JSON records.
 - The frontend is built with Vite and served as static files from `client/dist/`. In dev mode, Vite proxies `/api` to the Flask server on port 5050.
+- Routing uses React Router (`BrowserRouter`). Flask serves `index.html` for all non-API, non-asset paths via a catch-all route that falls back to the file if it exists in `dist/`.
+- Styles use CSS Modules per component (`.module.css` co-located with each `.tsx`). Global tokens and the shared `.task-btn` utility live in `styles/base.css`.
+
+---
+
+### Routes
+
+| Path | View |
+|---|---|
+| `/` | Redirects to `/tasks` |
+| `/tasks` | Cards view (all lists / filtered to a group via `?group=<id>`) |
+| `/list/:listId` | Focused view for a single list |
+| `/daysheet` | Day sheet with date navigation |
+| `/calendar` | Embedded Google Calendar |
 
 ---
 
@@ -79,9 +98,9 @@ taskman/
 
 ```json
 {
-  "groups": [{ "id": "uuid", "name": "UNSW" }],
-  "lists":  [{ "id": "uuid", "name": "COMP3131", "groupId": "uuid | null" }],
-  "tasks":  [{ "id": "uuid", "name": "Finish Assignment 5", "listId": "uuid", "due": "2026-04-30 | null", "done": "2026-04-26 | null" }],
+  "groups":   [{ "id": "uuid", "name": "UNSW" }],
+  "lists":    [{ "id": "uuid", "name": "COMP3131", "groupId": "uuid | null" }],
+  "tasks":    [{ "id": "uuid", "name": "Finish Assignment 5", "listId": "uuid", "due": "2026-04-30 | null", "done": "2026-04-26 | null" }],
   "daysheet": [{ "id": "uuid", "datetime": "2026-04-26T14:32:05", "listId": "uuid", "type": "log | continue | done", "text": "Talked with Baba" }]
 }
 ```
@@ -91,7 +110,8 @@ taskman/
 ### Tech Stack
 
 - **Backend:** Python, Flask
-- **Frontend:** Vite + React + TypeScript
+- **Frontend:** Vite + React + TypeScript, React Router
+- **Styling:** CSS Modules (per component) + global `base.css`
 - **Storage:** JSON flat file (`~/.taskman/db.json`)
 - **Tests:** `python -m pytest server/ -v`
 - **Frontend build:** `cd client && npm run build`
@@ -104,7 +124,7 @@ taskman/
 
 ##### Milestone 1 — Server
 
-- [x] Flask server with REST API in `server/__init__.py`
+- [x] Flask server with REST API in `server/api.py`
 - [x] Service layer in `server/services/`
 - [x] JSON persistence in `server/db.py`
 - [x] Config loader in `server/config.py`
@@ -122,6 +142,8 @@ taskman/
 - [x] Add / edit / delete daysheet log entries
 - [x] Continue task (logs to daysheet)
 - [x] Light/dark mode toggle (persisted to `localStorage`)
+- [x] React Router — URL-based navigation, browser back/forward support
+- [x] CSS Modules — styles co-located with each component
 
 ##### Milestone 3 — Google Calendar
 
@@ -169,3 +191,13 @@ Google Calendar embed colors: `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` 
 - [ ] Google OAuth: pull the user's calendars automatically, replacing the manual `config.json` calendar list
 - [ ] Account/settings UI for managing connected providers and calendar selection
 - [ ] Persistence boundaries ready for a deployed database
+
+##### Milestone 7 — Deploy
+
+- [ ] Gunicorn as the production WSGI server instead of Flask dev server
+- [ ] Dockerfile — single container running Gunicorn, serving both the API and built frontend static files
+- [ ] Deploy to Fly.io — one app, one shared-CPU VM, one persistent volume
+- [ ] `DB_PATH` driven by environment variable; `db.json` stored on the Fly volume (not `~/.taskman/`)
+- [ ] Health check endpoint (`/api/health`) for Fly's built-in health monitoring
+- [ ] Automated backups: periodic copy of `db.json` to a private GitHub repo or Cloudflare R2
+- [ ] CI pipeline extended to build and deploy to Fly on release
