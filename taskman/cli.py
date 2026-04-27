@@ -12,8 +12,6 @@ Usage:
   taskman move "list" ("group"|"")
   taskman move "list" "name" "new_list"
   taskman delete "list" ["name"]
-  taskman group "list"+ "group_name"
-  taskman ungroup "list"+
   taskman ls ["list" | "group"] [--day | --week]
   taskman log "list" "text"
   taskman log edit "list" "text" "new_text"
@@ -51,12 +49,6 @@ def main():
     elif cmd == "delete":
         from taskman.commands.tasks import cmd_delete
         cmd_delete(args[1:])
-    elif cmd == "group":
-        from taskman.commands.lists import cmd_group
-        cmd_group(args[1:])
-    elif cmd == "ungroup":
-        from taskman.commands.lists import cmd_ungroup
-        cmd_ungroup(args[1:])
     elif cmd == "ls":
         from taskman.commands.view import cmd_ls
         cmd_ls(args[1:])

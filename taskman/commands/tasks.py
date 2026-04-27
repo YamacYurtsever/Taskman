@@ -1,7 +1,11 @@
 import subprocess
-import sys
 from datetime import date, datetime
 from taskman import db
+from taskman.commands.utils import (
+    _err, _parse_date,
+    _find_list, _find_group, _find_task,
+    _get_or_create_list, _get_or_create_group,
+)
 
 _SOUND = "/System/Library/Sounds/Glass.aiff"
 
@@ -11,39 +15,6 @@ def _play_sound():
         subprocess.Popen(["afplay", _SOUND], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
         pass
-
-
-def _err(msg):
-    print(f"taskman: {msg}", file=sys.stderr)
-    sys.exit(1)
-
-
-def _parse_date(s):
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
-        try:
-            return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
-        except ValueError:
-            pass
-    _err(f"invalid date '{s}' — expected YYYY-MM-DD")
-
-
-def _find_list(data, name):
-    return next((l for l in data["lists"] if l["name"] == name), None)
-
-
-def _get_or_create_list(data, name):
-    lst = _find_list(data, name)
-    if not lst:
-        lst = {"id": db.new_id(), "name": name, "groupId": None}
-        data["lists"].append(lst)
-    return lst
-
-
-def _find_task(data, list_id, name):
-    return next(
-        (t for t in data["tasks"] if t["listId"] == list_id and t["name"] == name),
-        None,
-    )
 
 
 def cmd_add(args):
@@ -177,14 +148,6 @@ def cmd_edit(args):
     print(f"~ [{list_name}] {new_name}{due_str}")
 
 
-def _get_or_create_group(data, name):
-    group = _find_group(data, name)
-    if not group:
-        group = {"id": db.new_id(), "name": name}
-        data["groups"].append(group)
-    return group
-
-
 def cmd_move(args):
     if len(args) < 2:
         _err('usage: taskman move "list" "group" | taskman move "list" "name" "new_list"')
@@ -223,10 +186,6 @@ def cmd_move(args):
         task["listId"] = new_lst["id"]
         db.save(data)
         print(f"→ {task_name}  [{list_name}] → [{new_list_name}]")
-
-
-def _find_group(data, name):
-    return next((g for g in data["groups"] if g["name"] == name), None)
 
 
 def cmd_delete(args):

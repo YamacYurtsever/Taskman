@@ -5,6 +5,7 @@ import textwrap
 from datetime import date, timedelta
 
 from taskman import db
+from taskman.commands.utils import _bold, _sort_name
 
 _ANSI_RE = re.compile(r'\033\[[0-9;]*m')
 MIN_COL_WIDTH = 18
@@ -22,12 +23,11 @@ def _pad(s, width):
 def _red(s):   return f'\033[31m{s}\033[0m'
 def _blue(s):  return f'\033[34m{s}\033[0m'
 def _green(s): return f'\033[32m{s}\033[0m'
-def _bold(s):  return f'\033[1m{s}\033[0m'
 def _dim(s):   return f'\033[2m{s}\033[0m'
 
 
 def _sort(items, key=lambda x: x['name']):
-    return sorted(items, key=lambda x: ('\xff', x['name']) if re.match(r'^others?$', x['name'], re.I) else ('', x['name']))
+    return sorted(items, key=lambda x: _sort_name(x['name']))
 
 
 def _format_due(due_str, today):

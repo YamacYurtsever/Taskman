@@ -39,7 +39,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 | `taskman move "list" "name" "new_list"`                  | Move a task to another list                      |
 | `taskman delete ("group" \| "list" ["name"])`                         | Delete group (ungroup), list, or task    |
 
-##### Viewing
+##### View
 
 | Command                                  | Description                                             |
 | ---------------------------------------- | ------------------------------------------------------- |
@@ -48,7 +48,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 | `taskman ls ["list" \| "group"] --week`  | Overdue + due within 7 days                             |
 | `taskman ls ["list" \| "group"] --done`  | Completed tasks, most recent first                      |
 
-##### Day Sheets
+##### Daysheets
 
 | Command                                     | Description                                                  |
 | ------------------------------------------- | ------------------------------------------------------------ |
@@ -130,56 +130,51 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 
 - [x] Project setup
 - [x] Task commands: `add`, `done`, `undo`, `edit`, `move`, `delete`
-- [x] List & group commands: `move "list" "group"`, `move "list" ""`
 - [x] Viewing commands: `task ls`
-- [x] Shell functions: `tls`, `tlsd`, `tlsw`
+- [x] Daysheet commands `log`, `continue`, `daysheet`
+- [x] Shell functions: `tls`, `tlsd`, `tlsw`, `tds`
 - [x] Completion sound and visual feedback on `task done`
 
-##### Milestone 2 - Day Sheets
-
-- [x] Daysheet commands `log`, `continue`, `daysheet`
-- [x] Shell function: `tds [date]`
-
-##### Milestone 3 — Web Frontend
+##### Milestone 2 — Web Frontend
 
 ###### Infrastructure
 - [x] Flask server (`web/server.py`) with REST endpoints wrapping CLI command functions
 - [x] Serve static frontend from `web/client/`
 - [x] Live updates without full page reload
 
-###### Views
+###### View
 - [x] Cards view: all lists/groups with pending tasks, 4-column responsive grid
 - [x] Focused view: single list with pending + completed tasks
 - [x] Daysheet view: day sheet with date navigation
 - [x] Filter pills: All / Week / Day
 - [x] Sidebar: Daysheet + Tasks nav, groups, lists, alphabetical with Others last
 
-###### Task Actions
+###### Tasks
 - [x] Add task (inline per card, inline in focused view, quick-add modal Cmd+K)
 - [x] Mark done / undo (checkbox)
 - [x] Delete task
 - [x] Continue task (logs to daysheet)
-- [x] Rename task / update due date (`taskman edit`)
-- [x] Move task to another list (`taskman move "list" "name" "new_list"`)
+- [x] Rename task / update due date
+- [x] Move task to another list
 
-###### List & Group Actions
-- [x] Create list (sidebar + New List)
-- [x] Rename list (CLI: `taskman edit "list" "new_name"`)
+###### Lists & Groups
+- [x] Create list
+- [x] Rename list
 - [x] Delete list
-- [x] Rename group (CLI: `taskman edit "group" "new_name"`)
+- [x] Rename group
 - [x] Delete group
-- [x] Assign list to group / ungroup (`taskman move "list" "group"` / `taskman move "list" ""`)
+- [x] Move list to group / ungroup
 
-###### Daysheet Actions
+###### Daysheet
 - [x] Add log entry
 - [x] Continue task (from task cards)
 - [x] Delete entry
 - [x] Edit log entry (`taskman log edit`)
 
-###### UI
+###### Light / Dark Mode
 - [x] Light/dark mode toggle (persisted to `localStorage`, toggled via button in topbar)
 
-##### Milestone 4 — Google Calendar
+##### Milestone 3 — Google Calendar
 
 - [x] Web: Google Calendar iframe embedded in taskman (week view by default)
 - [x] Sidebar nav entry (above Daysheet) to access the calendar view
@@ -203,7 +198,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 Google Calendar embed color codes (predefined palette):
 `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` Wisteria · `#039BE5` Peacock · `#3F51B5` Blueberry · `#7986CB` Lavender · `#8E24AA` Grape · `#F6BF26` Banana · `#F4511E` Tangerine · `#0B8043` Basil · `#D50000` Tomato · `#616161` Graphite
 
-##### Milestone 5 — Task Descriptions
+##### Milestone 4 — Task Descriptions
 
 - [ ] Add `description` field to task schema (`db.json`)
 - [ ] CLI: `taskman describe "list" "task" ["description"]` — prints description if no text given, sets it otherwise
@@ -213,20 +208,20 @@ Google Calendar embed color codes (predefined palette):
 - [ ] Web: clicking a task name in focused view mounts the task view as a side panel to the right when there is enough horizontal space, or replaces the main content area when there isn't
 - [ ] Web: raw URLs in the description are rendered as clickable links
 
-##### Milestone 6 — Mobile Responsiveness
+##### Milestone 5 — Mobile Responsiveness
 
 - [ ] Sidebar collapses to a slide-in drawer on small screens (hamburger toggle in topbar)
 - [ ] Focused view and daysheet fill full width on mobile
 - [ ] Calendar iframe scales to viewport width, with day view instead of week.
 
-##### Milestone 7 — Backups
+##### Milestone 6 — Backups
 
 - [ ] On each `db.save()`, write/overwrite a snapshot to `~/.taskman/backups/db.YYYY-MM-DD.json` (always reflects the latest state for that day)
 - [ ] Keep only the last 10 snapshots (days with writes), pruning older ones automatically
 - [ ] `taskman backup` command to force a snapshot immediately (useful before bulk changes)
 - [ ] `taskman restore [date]` command to restore from a snapshot (lists available dates if none given)
 
-##### Milestone 8 — iCloud Sync
+##### Milestone 7 — iCloud Sync
 
 - [ ] Add `db_path` to existing `~/.taskman/config.json` (config file already exists, used by Calendar)
 - [ ] Default `db_path` to `~/Library/Mobile Documents/com~apple~CloudDocs/taskman/db.json` when iCloud Drive is detected

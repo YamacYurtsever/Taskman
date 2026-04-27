@@ -1,39 +1,9 @@
-import re
-import sys
 from datetime import date, datetime
 from taskman import db
-
-
-def _sort_name(name):
-    return ('\xff', name) if re.match(r'^others?$', name, re.I) else ('', name)
-
-
-def _err(msg):
-    print(f"taskman: {msg}", file=sys.stderr)
-    sys.exit(1)
-
-
-def _find_list(data, name):
-    return next((l for l in data["lists"] if l["name"] == name), None)
-
-
-def _find_task(data, list_id, name):
-    return next(
-        (t for t in data["tasks"] if t["listId"] == list_id and t["name"] == name),
-        None,
-    )
-
-
-def _now():
-    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
-
-def _entry_date(entry):
-    return entry["datetime"][:10]
-
-
-def _bold(s):
-    return f"\033[1m{s}\033[0m"
+from taskman.commands.utils import (
+    _err, _bold, _sort_name, _now, _entry_date,
+    _find_list, _find_task,
+)
 
 
 def cmd_log(args):
