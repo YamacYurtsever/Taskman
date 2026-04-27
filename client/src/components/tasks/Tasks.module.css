@@ -105,6 +105,11 @@
   padding: calc(var(--sp-sm) + 2px);
   border: var(--border-w) solid var(--border);
   border-radius: var(--r);
+  transition: border-color var(--animation-d-lg);
+}
+
+.taskRow:hover {
+  border-color: var(--accent);
 }
 
 .taskBody {

@@ -87,7 +87,8 @@ const App = () => {
   const openDetail = useCallback((task: Task) => setSelectedTaskId(task.id), []);
   const closeDetail = useCallback(() => setSelectedTaskId(null), []);
 
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const showingCalendar = pathname === '/calendar' && calendarUrl;
   const activeCalendarUrl = isMobile
     ? calendarUrl.replace('mode=WEEK', 'mode=AGENDA')
@@ -101,7 +102,8 @@ const App = () => {
 
   useEffect(() => {
     setSidebarOpen(false);
-  }, [pathname]);
+    closeDetail();
+  }, [location, closeDetail]);
 
   return (
     <>
