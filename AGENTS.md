@@ -204,21 +204,21 @@ Google OAuth is the sole login method — no local password. The OAuth flow both
 - [x] `server/constants.py` — add `SESSIONS_PATH = TASKMAN_DIR / "sessions"`
 - [x] `server/config.py` — add `save()`; extend `DEFAULTS` with `secretKey`, `googleRefreshToken`, `googleEmail`
 - [x] `.github/workflows/ci.yml` — install from `requirements.txt` instead of inline pip list
-- [ ] `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` read from environment; never committed
+- [x] `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` read from environment; never committed
 
 ###### Backend
 
-- [ ] `server/api.py` — `flask-session` setup; auto-generate `secretKey` and persist to `config.json` on first run
-- [ ] `server/api.py` — `require_auth` decorator (checks `session["authenticated"]`); applied to all `/api/*` except oauth/callback and auth/status
-- [ ] `server/api.py` — `GET /api/auth/status` → `{authenticated}` (public)
-- [ ] `server/api.py` — `GET /api/oauth/start` → return Google consent URL; `GET /api/oauth/callback` → store refresh token + email, set session, redirect to `/`; `POST /api/logout`; set `OAUTHLIB_INSECURE_TRANSPORT=1` in dev; use `access_type="offline"&prompt="consent"`
-- [ ] `server/api.py` — `GET /api/config` updated to fetch calendar list from Google Calendar API using stored refresh token
+- [x] `server/api.py` — `flask-session` setup; auto-generate `secretKey` and persist to `config.json` on first run
+- [x] `server/api.py` — `require_auth` decorator (checks `session["authenticated"]`); applied to all `/api/*` except oauth/callback and auth/status
+- [x] `server/api.py` — `GET /api/auth/status` → `{authenticated}` (public)
+- [x] `server/api.py` — `GET /api/oauth/start` → return Google consent URL; `GET /api/oauth/callback` → store refresh token + email, set session, redirect to `/`; `POST /api/logout`; set `OAUTHLIB_INSECURE_TRANSPORT=1` in dev; use `access_type="offline"&prompt="consent"`
+- [x] `server/api.py` — `GET /api/config` updated to fetch calendar list from Google Calendar API using stored refresh token
 
 ###### Backend — tests
 
-- [ ] `server/tests/utils.py` — add `saved_config` context manager (mirrors `saved_db`)
-- [ ] `server/tests/test_api.py` — seed `session["authenticated"] = True` in `setUp` so existing tests pass through `require_auth`
-- [ ] `server/tests/test_auth.py` — auth status, OAuth start/callback/logout, config calendar fetch
+- [x] `server/tests/utils.py` — add `saved_config` context manager (mirrors `saved_db`)
+- [x] `server/tests/test_api.py` — seed `session["authenticated"] = True` in `setUp` so existing tests pass through `require_auth`
+- [x] `server/tests/test_auth.py` — auth status, OAuth start/callback/logout, config calendar fetch
 
 ###### Frontend
 
