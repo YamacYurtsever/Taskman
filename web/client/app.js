@@ -223,6 +223,13 @@ function renderSidebar() {
     const active = state.view === 'tasks' && state.selectedList === list.id;
     let item;
 
+    const deleteBtn = el('button', { class: 'lni-action lni-del', title: 'Delete',
+      on: { click: e => {
+        e.stopPropagation();
+        if (confirm(`Delete list "${list.name}" and all its tasks?`)) act(API.deleteList, { list: list.name });
+      }}
+    }, icon(IC.delete, 10));
+
     const renameBtn = el('button', { class: 'lni-action', title: 'Rename',
       on: { click: e => {
         e.stopPropagation();
@@ -236,17 +243,17 @@ function renderSidebar() {
           if (ev.key === 'Enter') save();
           if (ev.key === 'Escape') refresh();
         });
-        item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-rename-row' }, input));
+        const saveBtn = el('button', { class: 'lni-action', title: 'Save', on: { click: save } }, icon(IC.check, 10));
+        const delBtn  = el('button', { class: 'lni-action lni-del', title: 'Delete',
+          on: { click: () => { if (confirm(`Delete list "${list.name}" and all its tasks?`)) act(API.deleteList, { list: list.name }); } }
+        }, icon(IC.delete, 10));
+        item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-rename-row' },
+          input,
+          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, delBtn)),
+        ));
         input.focus(); input.select();
       }}
     }, icon(IC.edit, 10));
-
-    const deleteBtn = el('button', { class: 'lni-action lni-del', title: 'Delete',
-      on: { click: e => {
-        e.stopPropagation();
-        if (confirm(`Delete list "${list.name}" and all its tasks?`)) act(API.deleteList, { list: list.name });
-      }}
-    }, icon(IC.delete, 10));
 
     item = el('button', {
       class: 'list-nav-item nav-list' + (active ? ' active' : ''),
@@ -290,6 +297,13 @@ function renderSidebar() {
     const grpActive = state.view === 'tasks' && state.selectedGroup === g.id;
     let groupHeader;
 
+    const grpDeleteBtn = el('button', { class: 'lni-action lni-del', title: 'Delete group',
+      on: { click: e => {
+        e.stopPropagation();
+        if (confirm(`Delete group "${g.name}"? Lists will be ungrouped.`)) act(API.deleteGroup, { group: g.name });
+      }}
+    }, icon(IC.delete, 10));
+
     const grpRenameBtn = el('button', { class: 'lni-action', title: 'Rename',
       on: { click: e => {
         e.stopPropagation();
@@ -303,17 +317,17 @@ function renderSidebar() {
           if (ev.key === 'Enter') save();
           if (ev.key === 'Escape') refresh();
         });
-        groupHeader.replaceWith(el('div', { class: 'list-nav-item nav-group-header lni-rename-row' }, input));
+        const saveBtn = el('button', { class: 'lni-action', title: 'Save', on: { click: save } }, icon(IC.check, 10));
+        const delBtn  = el('button', { class: 'lni-action lni-del', title: 'Delete group',
+          on: { click: () => { if (confirm(`Delete group "${g.name}"? Lists will be ungrouped.`)) act(API.deleteGroup, { group: g.name }); } }
+        }, icon(IC.delete, 10));
+        groupHeader.replaceWith(el('div', { class: 'list-nav-item nav-group-header lni-rename-row' },
+          input,
+          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, delBtn)),
+        ));
         input.focus(); input.select();
       }}
     }, icon(IC.edit, 10));
-
-    const grpDeleteBtn = el('button', { class: 'lni-action lni-del', title: 'Delete group',
-      on: { click: e => {
-        e.stopPropagation();
-        if (confirm(`Delete group "${g.name}"? Lists will be ungrouped.`)) act(API.deleteGroup, { group: g.name });
-      }}
-    }, icon(IC.delete, 10));
 
     groupHeader = el('button', {
       class: 'list-nav-item nav-group-header' + (grpActive ? ' active' : ''),
