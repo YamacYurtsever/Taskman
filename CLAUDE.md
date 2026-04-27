@@ -212,14 +212,23 @@ Google Calendar embed color codes (predefined palette):
 - [ ] Web: description visible in focused list view
 - [ ] Web: add description field to quick-add modal
 
-##### Milestone 6 — Backups
+##### Milestone 6 — Mobile Responsiveness
+
+- [ ] Sidebar collapses to a slide-in drawer on small screens (hamburger toggle in topbar)
+- [ ] Cards grid drops to 1-column on mobile
+- [ ] Focused view and daysheet fill full width on mobile
+- [ ] Topbar filter pills scroll horizontally if needed
+- [ ] Touch-friendly tap targets for all buttons (min 44px)
+- [ ] Calendar iframe scales to viewport width
+
+##### Milestone 7 — Backups
 
 - [ ] On each `db.save()`, write/overwrite a snapshot to `~/.taskman/backups/db.YYYY-MM-DD.json` (always reflects the latest state for that day)
 - [ ] Keep only the last 10 snapshots (days with writes), pruning older ones automatically
 - [ ] `taskman backup` command to force a snapshot immediately (useful before bulk changes)
 - [ ] `taskman restore [date]` command to restore from a snapshot (lists available dates if none given)
 
-##### Milestone 7 — iCloud Sync
+##### Milestone 8 — iCloud Sync
 
 - [ ] Add `db_path` to existing `~/.taskman/config.json` (config file already exists, used by Calendar)
 - [ ] Default `db_path` to `~/Library/Mobile Documents/com~apple~CloudDocs/taskman/db.json` when iCloud Drive is detected
