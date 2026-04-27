@@ -101,6 +101,7 @@ const API = {
   undo:           '/api/undo',
   delete:         '/api/delete',
   continue:       '/api/continue',
+  edit:           '/api/edit',
   log:            '/api/log',
   daysheetDelete: '/api/daysheet/delete',
 };
@@ -115,6 +116,7 @@ const IC = {
   chevL:    '<path d="M10 12L6 8l4-4"/>',
   chevR:    '<path d="M6 4l4 4-4 4"/>',
   plus:     '<path d="M8 3v10M3 8h10"/>',
+  edit:     '<path d="M12 2l2 2-9 9-3 1 1-3 9-9z"/>',
 };
 
 // ──────────────────────────── API ─────────────────────────────
@@ -289,6 +291,7 @@ function renderSidebar() {
 
 function taskRow(task, listName) {
   const due = task.due ? formatDue(task.due) : null;
+  let row;
 
   const checkEl = el('div', {
     class: 'task-check',
@@ -313,18 +316,45 @@ function taskRow(task, listName) {
         on: { click: () => act(API.continue, { list: listName, task: task.name }) } },
         icon(IC.continue, 11));
 
+  const editBtn = el('button', { class: 'task-btn edt', title: 'Rename',
+    on: { click: () => {
+      const nameIn = el('input', { type: 'text', value: task.name, class: 'task-edit-name', autocomplete: 'off' });
+      const dueIn  = el('input', { type: 'date', value: task.due || '', class: 'task-edit-due' });
+      const save = async () => {
+        const newName = nameIn.value.trim();
+        if (!newName) return;
+        await act(API.edit, { list: listName, name: task.name, newName, due: dueIn.value || null });
+      };
+      nameIn.addEventListener('keydown', e => {
+        if (e.key === 'Enter') save();
+        if (e.key === 'Escape') refresh();
+      });
+      const saveBtn   = el('button', { class: 'task-btn sav', title: 'Save',   on: { click: save            } }, icon(IC.check,  11));
+      const cancelBtn = el('button', { class: 'task-btn del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 11));
+      const editRow = el('div', { class: 'task-row task-edit-row' },
+        el('div', { class: 'task-left' }),
+        el('div', { class: 'task-edit-body' }, nameIn, dueIn),
+        el('div', { class: 'task-right' }, saveBtn, cancelBtn),
+      );
+      row.replaceWith(editRow);
+      nameIn.focus();
+      nameIn.select();
+    }}
+  }, icon(IC.edit, 11));
+
   const deleteBtn = el('button', { class: 'task-btn del', title: 'Delete',
     on: { click: () => { if (confirm(`Delete "${task.name}"?`)) act(API.delete, { list: listName, name: task.name }); } } },
     icon(IC.delete, 11));
 
-  return el('div', { class: 'task-row' + (task.done ? ' done' : '') },
+  row = el('div', { class: 'task-row' + (task.done ? ' done' : '') },
     el('div', { class: 'task-left' }, checkEl, continueEl),
     el('div', { class: 'task-body' },
       el('span', { class: 'task-name' }, task.name),
       dueEl,
     ),
-    el('div', { class: 'task-right' }, deleteBtn),
+    el('div', { class: 'task-right' }, editBtn, deleteBtn),
   );
+  return row;
 }
 
 // ─────────────────────── Inline add row ───────────────────────

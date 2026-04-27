@@ -522,6 +522,50 @@ body {
   background: var(--red-light);
 }
 
+.task-btn.sav:hover {
+  color: var(--green);
+  background: var(--green-bg);
+}
+
+.task-edit-row .task-right {
+  opacity: 1;
+}
+
+.task-edit-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp);
+  min-width: 0;
+}
+
+.task-edit-name {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  outline: none;
+  padding: 1px 0;
+}
+
+.task-edit-due {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--border);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  outline: none;
+  width: 120px;
+  color-scheme: light;
+  flex-shrink: 0;
+}
+
 /* ───────────────────── Focused list view ────────────────────── */
 
 .focused-view {

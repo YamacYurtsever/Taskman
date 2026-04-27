@@ -159,6 +159,60 @@ class WebTest(unittest.TestCase):
         res = self.client.post("/api/daysheet/delete", json={"id": "nonexistent"})
         self.assertEqual(res.status_code, 400)
 
+    # --- POST /api/edit ---
+
+    def test_edit_task_rename(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/edit", json={"list": "Work", "name": "Write report", "newName": "Write summary"})
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.get_json()["ok"])
+        names = [t["name"] for t in self.saved["tasks"]]
+        self.assertIn("Write summary", names)
+        self.assertNotIn("Write report", names)
+
+    def test_edit_task_set_due(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/edit", json={"list": "Work", "name": "Write report", "newName": "Write report", "due": "2026-05-15"})
+        self.assertEqual(res.status_code, 200)
+        task = next(t for t in self.saved["tasks"] if t["name"] == "Write report")
+        self.assertEqual(task["due"], "2026-05-15")
+
+    def test_edit_task_clear_due(self):
+        data = make_db()
+        data["tasks"][0]["due"] = "2026-05-01"
+        self._patch_all(data)
+        res = self.client.post("/api/edit", json={"list": "Work", "name": "Write report", "newName": "Write report", "due": None})
+        self.assertEqual(res.status_code, 200)
+        task = next(t for t in self.saved["tasks"] if t["name"] == "Write report")
+        self.assertIsNone(task["due"])
+
+    def test_edit_task_no_due_key_leaves_due_unchanged(self):
+        data = make_db()
+        data["tasks"][0]["due"] = "2026-05-01"
+        self._patch_all(data)
+        res = self.client.post("/api/edit", json={"list": "Work", "name": "Write report", "newName": "Renamed"})
+        self.assertEqual(res.status_code, 200)
+        task = next(t for t in self.saved["tasks"] if t["name"] == "Renamed")
+        self.assertEqual(task["due"], "2026-05-01")
+
+    def test_edit_task_duplicate_name_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/edit", json={"list": "Work", "name": "Write report", "newName": "Done task"})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("already exists", res.get_json()["message"])
+
+    def test_edit_task_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/edit", json={"list": "Work", "name": "Ghost task", "newName": "Whatever"})
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(res.get_json()["ok"])
+
+    def test_edit_task_list_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/edit", json={"list": "Nonexistent", "name": "Write report", "newName": "Renamed"})
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(res.get_json()["ok"])
+
     # --- POST /api/continue ---
 
     def test_continue_task(self):

@@ -148,6 +148,28 @@ def create_app():
         db.save(data)
         return jsonify({"ok": True, "message": ""})
 
+    @app.post("/api/edit")
+    def api_edit():
+        body = request.get_json(force=True) or {}
+        list_name = body.get("list", "")
+        name = body.get("name", "")
+        new_name = body.get("newName") or name
+
+        data = db.load()
+        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
+        if not lst:
+            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
+        task = next((t for t in data["tasks"] if t["listId"] == lst["id"] and t["name"] == name), None)
+        if not task:
+            return jsonify({"ok": False, "message": f"task '{name}' not found in '{list_name}'"}), 400
+        if new_name != name and any(t["name"] == new_name and t["listId"] == lst["id"] for t in data["tasks"]):
+            return jsonify({"ok": False, "message": f"task '{new_name}' already exists in '{list_name}'"}), 400
+        task["name"] = new_name
+        if "due" in body:
+            task["due"] = body["due"] or None
+        db.save(data)
+        return jsonify({"ok": True, "message": ""})
+
     @app.post("/api/continue")
     def api_continue():
         body = request.get_json(force=True) or {}
