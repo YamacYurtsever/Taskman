@@ -16,6 +16,7 @@ import { TaskDetail } from './components/tasks/TaskDetail';
 import { Topbar } from './components/Topbar';
 import { useAppData } from './hooks/useAppData';
 import { useIsMobile } from './hooks/useIsMobile';
+import { useIsNarrow } from './hooks/useIsNarrow';
 import type { StateResponse, Task, TaskFilter } from './lib/types';
 import { cx } from './lib/utils';
 import { CalendarView } from './views/CalendarView';
@@ -75,6 +76,7 @@ const App = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const { data, calendarUrl, act, refresh } = useAppData();
   const isMobile = useIsMobile();
+  const isNarrow = useIsNarrow();
 
   const selectedTask = selectedTaskId && data
     ? (data.tasks.find(t => t.id === selectedTaskId) ?? null)
@@ -134,7 +136,7 @@ const App = () => {
         <main className={cx(styles.main, panelOpen && styles.mainWithPanel)}>
 
           <div
-            className={cx(styles.routeContent, isMobile && panelOpen && styles.routeContentHidden)}
+            className={cx(styles.routeContent, isNarrow && panelOpen && styles.routeContentHidden)}
             hidden={false}
           >
             <div hidden={!!showingCalendar}>
