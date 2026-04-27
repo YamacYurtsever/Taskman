@@ -380,6 +380,7 @@ function renderSidebar() {
       input.focus();
     }},
   }, MSG.newList);
+  tasksSectionBody.append(newListBtn);
 
   nav.append(el('div', { class: 'nav-section' }, tasksHeader, tasksSectionBody));
 }
