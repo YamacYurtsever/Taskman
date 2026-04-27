@@ -206,19 +206,17 @@ Google Calendar embed color codes (predefined palette):
 ##### Milestone 5 — Task Descriptions
 
 - [ ] Add `description` field to task schema (`db.json`)
-- [ ] CLI: `taskman update` supports setting/clearing description
-- [ ] Terminal: show description in `taskman ls` focused view
-- [ ] Web: expand task row to show/edit description inline
-- [ ] Web: description visible in focused list view
-- [ ] Web: add description field to quick-add modal
+- [ ] CLI: `taskman describe "list" "task" ["description"]` — prints description if no text given, sets it otherwise
+- [ ] CLI: `taskman ls "list"` focused view shows a hint symbol next to tasks that have a description
+- [ ] Web: small icon on task row (cards + focused view) when a description exists
+- [ ] Web: clicking a task name in focused view opens a side panel to the right with an auto-focused editable textarea; updates saved debounced as you type; Escape closes it
+- [ ] Web: side panel falls back to a modal overlay on small screens
+- [ ] Web: raw URLs in the description are rendered as clickable links
 
 ##### Milestone 6 — Mobile Responsiveness
 
 - [ ] Sidebar collapses to a slide-in drawer on small screens (hamburger toggle in topbar)
-- [ ] Cards grid drops to 1-column on mobile
 - [ ] Focused view and daysheet fill full width on mobile
-- [ ] Topbar filter pills scroll horizontally if needed
-- [ ] Touch-friendly tap targets for all buttons (min 44px)
 - [ ] Calendar iframe scales to viewport width
 
 ##### Milestone 7 — Backups
