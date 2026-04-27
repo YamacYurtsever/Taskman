@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PlusIcon } from './icons';
 import { MSG } from '../lib/utils';
+import styles from './InlineAdd.module.css';
 
 type InlineAddProps = {
   listName: string;
@@ -24,15 +25,11 @@ export function InlineAdd({ listName, variant, onAdd }: InlineAddProps) {
     <>
       <input type="text" placeholder={MSG.addTask} value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
       <input type="date" value={due} onChange={e => setDue(e.target.value)} />
-      <button className={variant === 'focused' ? 'focused-add-btn' : 'task-btn sav'} onClick={submit}>
+      <button className={variant === 'focused' ? styles.addBtn : 'task-btn sav'} onClick={submit}>
         <PlusIcon />
       </button>
     </>
   );
 
-  if (variant === 'focused') {
-    return <div className="focused-add">{controls}</div>;
-  }
-
-  return <div className="focused-add">{controls}</div>;
+  return <div className={styles.focusedAdd}>{controls}</div>;
 }

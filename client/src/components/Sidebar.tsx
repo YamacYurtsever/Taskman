@@ -1,22 +1,18 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import logoUrl from '../../static/logo.png';
 import { API } from '../lib/api';
 import { CheckIcon, DeleteIcon, EditIcon, MoveIcon } from './icons';
-import type { Group, StateResponse, TaskFilter, TaskList, ViewMode } from '../lib/types';
+import type { Group, StateResponse, TaskFilter, TaskList } from '../lib/types';
 import { MSG, pendingFor, sortByName } from '../lib/utils';
+import styles from './Sidebar.module.css';
 
 type Action = (path: string, body: unknown) => Promise<void>;
 
 type SidebarProps = {
   data: StateResponse | null;
-  view: ViewMode;
   filter: TaskFilter;
-  selectedList: string | null;
-  selectedGroup: string | null;
-  setView: (view: ViewMode) => void;
-  selectList: (id: string | null) => void;
-  selectGroup: (id: string | null) => void;
   act: Action;
   refresh: () => Promise<void>;
 };
@@ -28,19 +24,17 @@ type EditState =
   | { type: 'new-list' }
   | null;
 
-export function Sidebar({ data, view, filter, selectedList, selectedGroup, setView, selectList, selectGroup, act, refresh }: SidebarProps) {
+export function Sidebar({ data, filter, act, refresh }: SidebarProps) {
   const [editState, setEditState] = useState<EditState>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
-  const navigate = (nextView: ViewMode, listId: string | null = null, groupId: string | null = null) => {
-    setView(nextView);
-    if (nextView === 'tasks') {
-      selectList(listId);
-      selectGroup(groupId);
-    } else {
-      selectList(null);
-      selectGroup(null);
-    }
-  };
+  const selectedList = location.pathname.startsWith('/list/') ? location.pathname.slice(6) : null;
+  const selectedGroup = searchParams.get('group');
+  const isTasks = location.pathname === '/tasks' || location.pathname.startsWith('/list/');
+  const isCalendar = location.pathname === '/calendar';
+  const isDaysheet = location.pathname === '/daysheet';
 
   const cancelEdit = () => {
     setEditState(null);
@@ -50,7 +44,7 @@ export function Sidebar({ data, view, filter, selectedList, selectedGroup, setVi
   const listButton = (list: TaskList) => {
     if (!data) return null;
     const count = pendingFor(data, list.id, filter).length;
-    const active = view === 'tasks' && selectedList === list.id;
+    const active = selectedList === list.id;
 
     if (editState?.type === 'list' && editState.id === list.id) {
       return <RenameListRow key={list.id} list={list} act={act} cancel={cancelEdit} />;
@@ -60,54 +54,75 @@ export function Sidebar({ data, view, filter, selectedList, selectedGroup, setVi
     }
 
     return (
-      <button key={list.id} className={`list-nav-item nav-list${active ? ' active' : ''}`} onClick={() => navigate('tasks', list.id, null)}>
+      <button
+        key={list.id}
+        className={[styles.navItem, styles.navList, active ? styles.active : ''].filter(Boolean).join(' ')}
+        onClick={() => navigate(`/list/${list.id}`)}
+      >
         {list.name}
-        <div className="lni-right">
-          <div className="lni-actions">
+        <div className={styles.right}>
+          <div className={styles.actions}>
             {data.groups.length > 0 && (
-              <button className="lni-action mov" title="Move to group" onClick={e => {
+              <button className={`${styles.action} ${styles.mov}`} title="Move to group" onClick={e => {
                 e.stopPropagation();
                 setEditState({ type: 'move-list', id: list.id });
               }}><MoveIcon /></button>
             )}
-            <button className="lni-action edt" title="Rename" onClick={e => {
+            <button className={`${styles.action} ${styles.edt}`} title="Rename" onClick={e => {
               e.stopPropagation();
               setEditState({ type: 'list', id: list.id });
             }}><EditIcon /></button>
-            <button className="lni-action lni-del" title="Delete" onClick={e => {
+            <button className={`${styles.action} ${styles.del}`} title="Delete" onClick={e => {
               e.stopPropagation();
               if (confirm(`Delete list "${list.name}" and all its tasks?`)) act(API.deleteList, { list: list.name });
             }}><DeleteIcon /></button>
           </div>
-          {count ? <span className="lni-count">{count}</span> : null}
+          {count ? <span className={styles.count}>{count}</span> : null}
         </div>
       </button>
     );
   };
 
   return (
-    <aside id="sidebar">
-      <div className="sidebar-logo">
+    <aside className={styles.sidebar}>
+      <div className={styles.sidebarLogo}>
         <img src={logoUrl} />
         <p>Taskman</p>
       </div>
-      <div className="sidebar-lists">
-        <div id="list-nav">
-          <button className={`list-nav-item nav-top${view === 'calendar' ? ' active' : ''}`} onClick={() => navigate('calendar')}>
+      <div className={styles.sidebarLists}>
+        <div className={styles.listNav}>
+          <button
+            className={[styles.navItem, styles.navTop, isCalendar ? styles.active : ''].filter(Boolean).join(' ')}
+            onClick={() => navigate('/calendar')}
+          >
             {MSG.calendar}
           </button>
-          <button className={`list-nav-item nav-top${view === 'daysheet' ? ' active' : ''}`} onClick={() => navigate('daysheet')}>
+          <button
+            className={[styles.navItem, styles.navTop, isDaysheet ? styles.active : ''].filter(Boolean).join(' ')}
+            onClick={() => navigate('/daysheet')}
+          >
             {MSG.daysheet}
           </button>
-          <div className="nav-section">
-            <button className={`list-nav-item nav-top${view === 'tasks' && selectedList === null && selectedGroup === null ? ' active' : ''}`} onClick={() => navigate('tasks')}>
+          <div className={styles.navSection}>
+            <button
+              className={[styles.navItem, styles.navTop, isTasks && !selectedList && !selectedGroup ? styles.active : ''].filter(Boolean).join(' ')}
+              onClick={() => navigate('/tasks')}
+            >
               {MSG.tasks}
             </button>
-            <div className="nav-section-body">
-              {data && <TaskNav data={data} view={view} selectedGroup={selectedGroup} listButton={listButton} selectGroup={selectGroup} setEditState={setEditState} act={act} />}
+            <div className={styles.navSectionBody}>
+              {data && (
+                <TaskNav
+                  data={data}
+                  selectedGroup={selectedGroup}
+                  listButton={listButton}
+                  selectGroup={id => navigate(`/tasks?group=${id}`)}
+                  act={act}
+                />
+              )}
               {editState?.type === 'new-list'
                 ? <NewListRow act={act} cancel={() => setEditState(null)} />
-                : <button className="new-list-btn" onClick={() => setEditState({ type: 'new-list' })}>{MSG.newList}</button>}
+                : <button className={styles.newListBtn} onClick={() => setEditState({ type: 'new-list' })}>{MSG.newList}</button>}
             </div>
           </div>
         </div>
@@ -116,13 +131,11 @@ export function Sidebar({ data, view, filter, selectedList, selectedGroup, setVi
   );
 }
 
-function TaskNav({ data, view, selectedGroup, listButton, selectGroup, setEditState, act }: {
+function TaskNav({ data, selectedGroup, listButton, selectGroup, act }: {
   data: StateResponse;
-  view: ViewMode;
   selectedGroup: string | null;
   listButton: (list: TaskList) => ReactNode;
-  selectGroup: (id: string | null) => void;
-  setEditState: (state: EditState) => void;
+  selectGroup: (id: string) => void;
   act: Action;
 }) {
   const seen = new Set<string>();
@@ -134,9 +147,14 @@ function TaskNav({ data, view, selectedGroup, listButton, selectGroup, setEditSt
         if (!lists.length) return null;
         lists.forEach(l => seen.add(l.id));
         return (
-          <div key={group.id} className="nav-group">
-            <GroupHeader group={group} active={view === 'tasks' && selectedGroup === group.id} selectGroup={() => selectGroup(group.id)} setEditState={setEditState} act={act} />
-            <div className="nav-group-lists">{lists.map(listButton)}</div>
+          <div key={group.id} className={styles.navGroup}>
+            <GroupHeader
+              group={group}
+              active={selectedGroup === group.id}
+              selectGroup={() => selectGroup(group.id)}
+              act={act}
+            />
+            <div className={styles.navGroupLists}>{lists.map(listButton)}</div>
           </div>
         );
       })}
@@ -145,11 +163,10 @@ function TaskNav({ data, view, selectedGroup, listButton, selectGroup, setEditSt
   );
 }
 
-function GroupHeader({ group, active, selectGroup, setEditState, act }: {
+function GroupHeader({ group, active, selectGroup, act }: {
   group: Group;
   active: boolean;
   selectGroup: () => void;
-  setEditState: (state: EditState) => void;
   act: Action;
 }) {
   const [renaming, setRenaming] = useState(false);
@@ -162,26 +179,33 @@ function GroupHeader({ group, active, selectGroup, setEditState, act }: {
       else setRenaming(false);
     };
     return (
-      <div className="list-nav-item nav-group-header lni-rename-row">
+      <div className={[styles.navItem, styles.navGroupHeader, styles.renameRow].join(' ')}>
         <input autoComplete="off" value={name} autoFocus onChange={e => setName(e.target.value)} onKeyDown={e => {
           if (e.key === 'Enter') save();
           if (e.key === 'Escape') setRenaming(false);
         }} />
-        <div className="lni-right"><div className="lni-actions"><button className="lni-action sav" title="Save" onClick={save}><CheckIcon /></button></div></div>
+        <div className={styles.right}>
+          <div className={styles.actions}>
+            <button className={`${styles.action} ${styles.sav}`} title="Save" onClick={save}><CheckIcon /></button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <button className={`list-nav-item nav-group-header${active ? ' active' : ''}`} onClick={selectGroup}>
+    <button
+      className={[styles.navItem, styles.navGroupHeader, active ? styles.active : ''].filter(Boolean).join(' ')}
+      onClick={selectGroup}
+    >
       {group.name}
-      <div className="lni-right">
-        <div className="lni-actions">
-          <button className="lni-action edt" title="Rename" onClick={e => {
+      <div className={styles.right}>
+        <div className={styles.actions}>
+          <button className={`${styles.action} ${styles.edt}`} title="Rename" onClick={e => {
             e.stopPropagation();
             setRenaming(true);
           }}><EditIcon /></button>
-          <button className="lni-action lni-del" title="Delete group" onClick={e => {
+          <button className={`${styles.action} ${styles.del}`} title="Delete group" onClick={e => {
             e.stopPropagation();
             if (confirm(`Delete group "${group.name}"? Lists will be ungrouped.`)) act(API.deleteGroup, { group: group.name });
           }}><DeleteIcon /></button>
@@ -200,12 +224,16 @@ function RenameListRow({ list, act, cancel }: { list: TaskList; act: Action; can
   };
 
   return (
-    <div className="list-nav-item nav-list lni-rename-row">
+    <div className={[styles.navItem, styles.navList, styles.renameRow].join(' ')}>
       <input autoComplete="off" value={name} autoFocus onChange={e => setName(e.target.value)} onKeyDown={e => {
         if (e.key === 'Enter') save();
         if (e.key === 'Escape') cancel();
       }} />
-      <div className="lni-right"><div className="lni-actions"><button className="lni-action sav" title="Save" onClick={save}><CheckIcon /></button></div></div>
+      <div className={styles.right}>
+        <div className={styles.actions}>
+          <button className={`${styles.action} ${styles.sav}`} title="Save" onClick={save}><CheckIcon /></button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -215,12 +243,16 @@ function MoveListRow({ list, groups, act }: { list: TaskList; groups: Group[]; a
   const [group, setGroup] = useState(currentGroup?.name || '');
 
   return (
-    <div className="list-nav-item nav-list lni-move-row">
-      <select className="lni-move-select" value={group} autoFocus onChange={e => setGroup(e.target.value)}>
+    <div className={[styles.navItem, styles.navList, styles.moveRow].join(' ')}>
+      <select className={styles.moveSelect} value={group} autoFocus onChange={e => setGroup(e.target.value)}>
         <option value="">No group</option>
         {sortByName(groups).map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
       </select>
-      <div className="lni-right"><div className="lni-actions"><button className="lni-action sav" title="Save" onClick={() => act(API.moveList, { list: list.name, group })}><CheckIcon /></button></div></div>
+      <div className={styles.right}>
+        <div className={styles.actions}>
+          <button className={`${styles.action} ${styles.sav}`} title="Save" onClick={() => act(API.moveList, { list: list.name, group })}><CheckIcon /></button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -234,12 +266,16 @@ function NewListRow({ act, cancel }: { act: Action; cancel: () => void }) {
   };
 
   return (
-    <div className="new-list-input lni-rename-row list-nav-item">
+    <div className={[styles.newListInput, styles.renameRow, styles.navItem].join(' ')}>
       <input placeholder={MSG.listName} autoComplete="off" value={name} autoFocus onChange={e => setName(e.target.value)} onKeyDown={e => {
         if (e.key === 'Enter') save();
         if (e.key === 'Escape') cancel();
       }} />
-      <div className="lni-right"><div className="lni-actions"><button className="lni-action sav" title="Add" onClick={save}><CheckIcon /></button></div></div>
+      <div className={styles.right}>
+        <div className={styles.actions}>
+          <button className={`${styles.action} ${styles.sav}`} title="Add" onClick={save}><CheckIcon /></button>
+        </div>
+      </div>
     </div>
   );
 }

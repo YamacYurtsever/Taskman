@@ -78,3 +78,25 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* Shared action button — used across TasksView, DaysheetView, InlineAdd */
+.task-btn {
+  width: var(--btn-w);
+  height: var(--btn-w);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--animation-d), background var(--animation-d);
+}
+
+.task-btn:hover     { color: var(--text-1);  background: var(--primary-bg); }
+.task-btn.cnt:hover { color: var(--yellow);   background: var(--yellow-bg); }
+.task-btn.del:hover { color: var(--red);      background: var(--red-bg); }
+.task-btn.sav:hover { color: var(--green);    background: var(--green-bg); }
+.task-btn.mov:hover { color: var(--text-1);   background: var(--primary-bg); }
+.task-btn.edt:hover { color: var(--text-1);   background: var(--primary-bg); }

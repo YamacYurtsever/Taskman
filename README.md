@@ -6,18 +6,12 @@ A minimal web-based task manager for personal daily use. Tasks live in lists, li
 
 ## Setup
 
-Install Python dependencies:
-
 ```bash
 pip install flask
 ```
 
-Build the frontend once before serving:
-
 ```bash
-cd client
-npm install
-npm run build
+cd client && npm install && npm run build
 ```
 
 ---
@@ -28,21 +22,13 @@ npm run build
 python -m server
 ```
 
-Opens a local web interface at `http://127.0.0.1:5050` with:
-
-- Cards view of all lists and groups with pending tasks
-- Focused view per list with pending + completed tasks
-- Daysheet view with date navigation and log entry form
-- Google Calendar embed (week view, multi-calendar support)
-- Filter pills: All / Week / Day
-- Inline task add, mark done, delete, rename, move, and continue
-- Light/dark mode
+Opens `http://127.0.0.1:5050`.
 
 ```bash
 python -m server --port 8080 --debug
 ```
 
-For frontend development, run Flask for the API and Vite for the React app in parallel:
+For frontend development, run both in parallel:
 
 ```bash
 python -m server
@@ -51,9 +37,9 @@ cd client && npm run dev
 
 ---
 
-### Calendar Config
+## Calendar Config
 
-Create `~/.taskman/config.json` to configure which calendars appear:
+Create `~/.taskman/config.json` to configure which calendars appear in the embedded Google Calendar view:
 
 ```json
 {
@@ -64,3 +50,5 @@ Create `~/.taskman/config.json` to configure which calendars appear:
   "calendarTimezone": "America/Sydney"
 }
 ```
+
+Available colors: `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` Wisteria · `#039BE5` Peacock · `#3F51B5` Blueberry · `#7986CB` Lavender · `#8E24AA` Grape · `#F6BF26` Banana · `#F4511E` Tangerine · `#0B8043` Basil · `#D50000` Tomato · `#616161` Graphite

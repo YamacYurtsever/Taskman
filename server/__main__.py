@@ -1,3 +1,3 @@
-from server import main
+from server.api import main
 
 main()

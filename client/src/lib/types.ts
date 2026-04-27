@@ -1,4 +1,3 @@
-export type ViewMode = 'tasks' | 'daysheet' | 'calendar';
 export type TaskFilter = 'all' | 'week' | 'day';
 
 export type Group = {

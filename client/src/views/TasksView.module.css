@@ -1,18 +1,20 @@
-.section-label {
+/* ── Cards view ── */
+
+.sectionLabel {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-2);
 }
 
-.section-label-link {
+.sectionLabelLink {
   cursor: pointer;
 }
 
-.section-label-link:hover {
+.sectionLabelLink:hover {
   color: var(--accent);
 }
 
-.cards-grid {
+.cardsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--card-max-w), 1fr));
   gap: var(--sp);
@@ -30,7 +32,7 @@
   gap: var(--sp);
 }
 
-.card-header {
+.cardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,28 +43,28 @@
   border-radius: var(--r);
 }
 
-.card-header:hover {
+.cardHeader:hover {
   background: var(--primary-bg);
 }
 
-.card-title {
+.cardTitle {
   font-size: 0.95rem;
   font-weight: 600;
 }
 
-.card-count {
+.cardCount {
   font-size: 0.7rem;
   color: var(--text-2);
 }
 
-.card-body {
+.cardBody {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--sp);
 }
 
-.card-overflow-toggle {
+.cardOverflowToggle {
   display: flex;
   align-items: center;
   gap: var(--sp-sm);
@@ -77,13 +79,13 @@
   transition: color var(--animation-d);
 }
 
-.card-overflow-toggle:hover {
+.cardOverflowToggle:hover {
   color: var(--text-2);
 }
 
 /* ── Task rows ── */
 
-.task-row {
+.taskRow {
   display: flex;
   align-items: flex-start;
   background-color: var(--primary);
@@ -93,14 +95,14 @@
   border-radius: var(--r);
 }
 
-.task-body {
+.taskBody {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
 }
 
-.task-left {
+.taskLeft {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -109,7 +111,7 @@
   align-self: flex-start;
 }
 
-.task-check {
+.taskCheck {
   width: var(--btn-w);
   height: var(--btn-w);
   border: 1.5px solid var(--text-3);
@@ -122,25 +124,25 @@
   transition: border-color var(--animation-d), background var(--animation-d);
 }
 
-.task-check:hover {
+.taskCheck:hover {
   border-color: var(--accent);
   background: var(--accent-bg);
 }
 
-.task-row.done .task-check {
+.taskRow.done .taskCheck {
   border-color: var(--accent);
   background: var(--accent);
 }
 
-.task-check-svg {
+.taskCheckSvg {
   display: none;
 }
 
-.task-row.done .task-check-svg {
+.taskRow.done .taskCheckSvg {
   display: block;
 }
 
-.task-name {
+.taskName {
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
   font-weight: 500;
@@ -148,24 +150,24 @@
   word-break: break-word;
 }
 
-.task-row.done .task-name {
+.taskRow.done .taskName {
   color: var(--text-3);
   text-decoration: line-through;
   text-decoration-color: var(--text-3);
   text-decoration-thickness: 1px;
 }
 
-.task-due {
+.taskDue {
   font-size: 0.75rem;
   line-height: 1;
   color: var(--accent);
 }
 
-.task-due.overdue {
+.taskDue.overdue {
   color: var(--red);
 }
 
-.task-right {
+.taskRight {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -175,51 +177,36 @@
   flex-shrink: 0;
 }
 
-.task-edit-actions {
+.taskEditActions {
   display: flex;
   flex-direction: row;
   gap: var(--sp-sm);
 }
 
-.task-row:hover .task-right,
-.task-row:focus-within .task-right,
-.task-row:hover .task-left .task-btn,
-.task-row:focus-within .task-left .task {
+.taskRow:hover .taskRight,
+.taskRow:focus-within .taskRight {
   opacity: 1;
 }
 
-.task-left .task-btn {
+/* task-btn is global; scope opacity toggle here */
+.taskLeft :global(.task-btn) {
   opacity: 0;
   transition: opacity var(--animation-d);
 }
 
-.task-btn {
-  width: var(--btn-w);
-  height: var(--btn-w);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--text-2);
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  transition: color var(--animation-d), background var(--animation-d);
-}
-
-.task-btn:hover     { color: var(--text-1);   background: var(--primary-bg); }
-.task-btn.cnt:hover { color: var(--yellow);  background: var(--yellow-bg); }
-.task-btn.del:hover { color: var(--red);    background: var(--red-bg); }
-.task-btn.sav:hover { color: var(--green);  background: var(--green-bg); }
-
-/* ── Task edit / move ── */
-
-.task-edit-row .task-right,
-.task-move-row .task-right {
+.taskRow:hover .taskLeft :global(.task-btn),
+.taskRow:focus-within .taskLeft :global(.task-btn) {
   opacity: 1;
 }
 
-.task-edit-body {
+.taskEditRow .taskRight,
+.taskMoveRow .taskRight {
+  opacity: 1;
+}
+
+/* ── Task edit / move ── */
+
+.taskEditBody {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -228,13 +215,13 @@
   min-width: 0;
 }
 
-.focused-view .task-edit-body {
+.focusedView .taskEditBody {
   flex-direction: row;
   align-items: center;
   gap: var(--sp);
 }
 
-.task-edit-name {
+.taskEditName {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -248,7 +235,7 @@
   padding: 1px 0;
 }
 
-.task-edit-due {
+.taskEditDue {
   background: transparent;
   border: none;
   border-bottom: 1.5px solid var(--border);
@@ -259,12 +246,12 @@
   color-scheme: light;
 }
 
-.focused-view .task-edit-due {
+.focusedView .taskEditDue {
   width: 120px;
   flex-shrink: 0;
 }
 
-.task-move-select {
+.taskMoveSelect {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -275,4 +262,67 @@
   font-size: var(--fs-sm);
   outline: none;
   cursor: pointer;
+}
+
+/* ── Focused view ── */
+
+.focusedView {
+  width: 100%;
+  max-width: var(--focused-w);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.focusedHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp);
+}
+
+.focusedTitle {
+  font-size: var(--fs-title);
+  font-weight: bold;
+}
+
+.focusedMeta {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+
+.focusedTasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.doneWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+}
+
+.doneToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: color var(--animation-d);
+}
+
+.doneToggle:hover {
+  color: var(--text-2);
+}
+
+.doneSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
 }

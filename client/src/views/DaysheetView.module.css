@@ -1,4 +1,4 @@
-.daysheet-view {
+.daysheetView {
   width: 100%;
   max-width: var(--daysheet-w);
   margin: 0 auto;
@@ -7,18 +7,18 @@
   gap: 20px;
 }
 
-.daysheet-header {
+.daysheetHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.daysheet-title {
+.daysheetTitle {
   font-size: var(--fs-title);
   font-weight: 700;
 }
 
-.date-nav {
+.dateNav {
   display: flex;
   align-items: stretch;
   background: var(--primary);
@@ -27,7 +27,7 @@
   overflow: hidden;
 }
 
-.date-nav-btn {
+.dateNavBtn {
   width: 30px;
   display: flex;
   align-items: center;
@@ -39,11 +39,11 @@
   transition: color var(--animation-d), background var(--animation-d);
 }
 
-.date-nav-btn:first-child { border-right: 1px solid var(--border); }
-.date-nav-btn:last-child  { border-left:  1px solid var(--border); }
-.date-nav-btn:hover       { color: var(--text-1); background: var(--primary-bg); }
+.dateNavBtn:first-child { border-right: 1px solid var(--border); }
+.dateNavBtn:last-child  { border-left:  1px solid var(--border); }
+.dateNavBtn:hover       { color: var(--text-1); background: var(--primary-bg); }
 
-.date-nav-label {
+.dateNavLabel {
   flex: 1;
   min-width: 100px;
   padding: var(--sp-sm);
@@ -59,25 +59,25 @@
   gap: 20px;
 }
 
-.timeline-group {
+.timelineGroup {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.timeline-group-name {
+.timelineGroupName {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-2);
 }
 
-.timeline-entry {
+.timelineEntry {
   display: flex;
   align-items: center;
   gap: var(--sp);
 }
 
-.timeline-time {
+.timelineTime {
   flex-shrink: 0;
   min-width: 42px;
   padding-top: 2px;
@@ -85,7 +85,7 @@
   color: var(--text-3);
 }
 
-.timeline-badge {
+.timelineBadge {
   flex-shrink: 0;
   margin-top: 1px;
   padding: 2px 6px;
@@ -96,11 +96,11 @@
   letter-spacing: 0.04em;
 }
 
-.timeline-badge.log      { background: var(--primary-bg); color: var(--text-2); }
-.timeline-badge.done     { background: var(--green-bg);      color: var(--green); }
-.timeline-badge.continue { background: var(--accent-bg);     color: var(--accent); }
+.timelineBadge.log      { background: var(--primary-bg); color: var(--text-2); }
+.timelineBadge.done     { background: var(--green-bg);   color: var(--green); }
+.timelineBadge.continue { background: var(--accent-bg);  color: var(--accent); }
 
-.timeline-text {
+.timelineText {
   flex: 1;
   display: flex;
   align-items: baseline;
@@ -109,33 +109,33 @@
   color: var(--text-1);
 }
 
-.timeline-list-tag {
+.timelineListTag {
   font-size: 0.7rem;
   color: var(--text-3);
 }
 
-.timeline-actions {
+.timelineActions {
   display: flex;
   gap: var(--sp-sm);
   flex-shrink: 0;
 }
 
-.timeline-del {
+.timelineDel {
   width: 20px;
   height: 20px;
   opacity: 0;
   transition: color var(--animation-d), background var(--animation-d), opacity var(--animation-d);
 }
 
-.timeline-entry:hover .timeline-del {
+.timelineEntry:hover .timelineDel {
   opacity: 1;
 }
 
-.timeline-edit-row .timeline-del {
+.timelineEditRow .timelineDel {
   opacity: 1;
 }
 
-.timeline-edit-input {
+.timelineEditInput {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -148,7 +148,7 @@
   padding: 1px 0;
 }
 
-.log-form {
+.logForm {
   display: flex;
   align-items: center;
   gap: var(--sp);
@@ -159,11 +159,11 @@
   transition: border-color var(--animation-d);
 }
 
-.log-form:focus-within {
+.logForm:focus-within {
   border: 1.5px solid var(--accent);
 }
 
-.log-form select {
+.logForm select {
   flex-shrink: 0;
   max-width: 130px;
   padding-right: var(--sp);
@@ -176,7 +176,7 @@
   outline: none;
 }
 
-.log-form input[type=text] {
+.logForm input[type=text] {
   flex: 1;
   padding-right: var(--sp);
   background: transparent;
@@ -188,6 +188,21 @@
   outline: none;
 }
 
-.log-form input[type=text]::placeholder {
+.logForm input[type=text]::placeholder {
   color: var(--text-3);
+}
+
+.logFormBtn {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color var(--animation-d);
+}
+
+.logFormBtn:hover {
+  color: var(--accent);
 }

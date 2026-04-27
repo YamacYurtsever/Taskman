@@ -3,6 +3,7 @@ import { API } from '../lib/api';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, DeleteIcon, EditIcon, PlusIcon } from '../components/icons';
 import type { DaysheetEntry, DaysheetResponse, StateResponse } from '../lib/types';
 import { MSG, sortByName, todayStr } from '../lib/utils';
+import styles from './DaysheetView.module.css';
 
 type Action = (path: string, body: unknown) => Promise<void>;
 
@@ -24,13 +25,13 @@ export function DaysheetView({ data, daysheet, daysheetDate, setDaysheetDate, ac
   };
 
   return (
-    <div className="daysheet-view">
-      <div className="daysheet-header">
-        <h1 className="daysheet-title">{MSG.daysheet}</h1>
-        <div className="date-nav">
-          <button className="date-nav-btn" onClick={() => shiftDay(-1)}><ChevronLeftIcon /></button>
-          <span className="date-nav-label">{dateLabel(daysheetDate)}</span>
-          <button className="date-nav-btn" onClick={() => shiftDay(1)}><ChevronRightIcon /></button>
+    <div className={styles.daysheetView}>
+      <div className={styles.daysheetHeader}>
+        <h1 className={styles.daysheetTitle}>{MSG.daysheet}</h1>
+        <div className={styles.dateNav}>
+          <button className={styles.dateNavBtn} onClick={() => shiftDay(-1)}><ChevronLeftIcon /></button>
+          <span className={styles.dateNavLabel}>{dateLabel(daysheetDate)}</span>
+          <button className={styles.dateNavBtn} onClick={() => shiftDay(1)}><ChevronRightIcon /></button>
         </div>
       </div>
       <Timeline entries={entries} act={act} refresh={refresh} />
@@ -50,7 +51,7 @@ function dateLabel(str: string) {
 
 function Timeline({ entries, act, refresh }: { entries: DaysheetEntry[]; act: Action; refresh: () => Promise<void> }) {
   if (!entries.length) {
-    return <div className="timeline"><div className="empty">{MSG.noEntries}</div></div>;
+    return <div className={styles.timeline}><div className="empty">{MSG.noEntries}</div></div>;
   }
 
   const bySection = new Map<string, { name: string; inGroup: boolean; items: DaysheetEntry[] }>();
@@ -62,10 +63,10 @@ function Timeline({ entries, act, refresh }: { entries: DaysheetEntry[]; act: Ac
   }
 
   return (
-    <div className="timeline">
+    <div className={styles.timeline}>
       {sortByName([...bySection.values()]).map(section => (
-        <div key={section.name} className="timeline-group">
-          <div className="timeline-group-name">{section.name}</div>
+        <div key={section.name} className={styles.timelineGroup}>
+          <div className={styles.timelineGroupName}>{section.name}</div>
           {section.items.map(entry => <TimelineEntry key={entry.id} entry={entry} inGroup={section.inGroup} act={act} refresh={refresh} />)}
         </div>
       ))}
@@ -91,29 +92,31 @@ function TimelineEntry({ entry, inGroup, act, refresh }: {
 
   if (editing) {
     return (
-      <div className="timeline-entry timeline-edit-row">
-        <span className="timeline-time">{entry.datetime.slice(11, 16)}</span>
-        <input className="timeline-edit-input" autoComplete="off" value={text} autoFocus onChange={e => setText(e.target.value)} onKeyDown={e => {
+      <div className={`${styles.timelineEntry} ${styles.timelineEditRow}`}>
+        <span className={styles.timelineTime}>{entry.datetime.slice(11, 16)}</span>
+        <input className={styles.timelineEditInput} autoComplete="off" value={text} autoFocus onChange={e => setText(e.target.value)} onKeyDown={e => {
           if (e.key === 'Enter') save();
           if (e.key === 'Escape') refresh();
         }} />
-        <div className="timeline-actions">
-          <button className="task-btn sav timeline-del" title="Save" onClick={save}><CheckIcon /></button>
+        <div className={styles.timelineActions}>
+          <button className={`task-btn sav ${styles.timelineDel}`} title="Save" onClick={save}><CheckIcon /></button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="timeline-entry">
-      <span className="timeline-time">{entry.datetime.slice(11, 16)}</span>
-      <span className="timeline-text">
+    <div className={styles.timelineEntry}>
+      <span className={styles.timelineTime}>{entry.datetime.slice(11, 16)}</span>
+      <span className={styles.timelineText}>
         {prefix + entry.text}
-        {inGroup && <span className="timeline-list-tag">{entry.listName}</span>}
+        {inGroup && <span className={styles.timelineListTag}>{entry.listName}</span>}
       </span>
-      <div className="timeline-actions">
-        {entry.type === 'log' && <button className="task-btn edt timeline-del" title="Edit" onClick={() => setEditing(true)}><EditIcon /></button>}
-        <button className="task-btn del timeline-del" title="Delete" onClick={() => act(API.daysheetDelete, { id: entry.id })}><DeleteIcon /></button>
+      <div className={styles.timelineActions}>
+        {entry.type === 'log' && (
+          <button className={`task-btn edt ${styles.timelineDel}`} title="Edit" onClick={() => setEditing(true)}><EditIcon /></button>
+        )}
+        <button className={`task-btn del ${styles.timelineDel}`} title="Delete" onClick={() => act(API.daysheetDelete, { id: entry.id })}><DeleteIcon /></button>
       </div>
     </div>
   );
@@ -132,12 +135,12 @@ function LogForm({ lists, act }: { lists: StateResponse['lists']; act: Action })
   };
 
   return (
-    <div className="log-form">
+    <div className={styles.logForm}>
       <select value={listName} onChange={e => setListName(e.target.value)}>
         {sorted.map(list => <option key={list.id} value={list.name}>{list.name}</option>)}
       </select>
       <input type="text" placeholder={MSG.entryText} autoComplete="off" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} />
-      <button className="log-form-btn" onClick={submit}><PlusIcon /></button>
+      <button className={styles.logFormBtn} onClick={submit}><PlusIcon /></button>
     </div>
   );
 }

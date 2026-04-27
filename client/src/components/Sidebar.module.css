@@ -1,4 +1,4 @@
-#sidebar {
+.sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
   background: var(--primary);
@@ -9,7 +9,7 @@
   overflow-x: hidden;
 }
 
-.sidebar-logo {
+.sidebarLogo {
   height: var(--topbar-h);
   padding: 15px;
   display: flex;
@@ -23,28 +23,27 @@
   user-select: none;
 }
 
-.sidebar-logo img {
+.sidebarLogo img {
   width: var(--logo-w);
   height: var(--logo-w);
   flex-shrink: 0;
 }
 
-.sidebar-lists {
+.sidebarLists {
   padding: 15px;
   flex: 1;
 }
 
-#list-nav {
+.listNav {
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
 }
 
-.list-nav-item {
+.navItem {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 0;
   width: 100%;
   padding: var(--sp-sm);
   border: none;
@@ -60,52 +59,52 @@
   text-overflow: ellipsis;
 }
 
-.list-nav-item:hover {
+.navItem:hover {
   color: var(--text-1);
   background: var(--primary-bg);
 }
 
-.list-nav-item.nav-top {
+.navItem.navTop {
   font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text-1);
 }
 
-.list-nav-item.nav-group-header {
+.navItem.navGroupHeader {
   font-size: var(--fs-xs);
   font-weight: 500;
   color: var(--text-2);
 }
 
-.list-nav-item.nav-list {
+.navItem.navList {
   font-size: 0.75rem;
 }
 
-.list-nav-item .lni-count {
+.navItem .count {
   font-size: 0.7rem;
   color: var(--text-3);
   flex-shrink: 0;
 }
 
-.list-nav-item.active .lni-count {
+.navItem.active .count {
   color: var(--accent);
   opacity: 0.7;
 }
 
-.list-nav-item:hover .lni-count {
+.navItem:hover .count {
   display: none;
 }
 
-.list-nav-item:hover .lni-actions {
+.navItem:hover .actions {
   display: flex;
 }
 
-.list-nav-item.active {
+.navItem.active {
   color: var(--accent);
   background: var(--accent-bg);
 }
 
-.lni-right {
+.right {
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -113,12 +112,12 @@
   flex-shrink: 0;
 }
 
-.lni-actions {
+.actions {
   display: none;
   gap: 2px;
 }
 
-.lni-action {
+.action {
   width: 14px;
   height: 14px;
   display: flex;
@@ -133,27 +132,28 @@
   transition: color var(--animation-d), background var(--animation-d);
 }
 
-.lni-action:hover       { color: var(--text-2);  background: var(--primary-bg); }
-.lni-action.mov:hover   { color: var(--text-1); background: var(--primary-bg); }
-.lni-action.edt:hover   { color: var(--text-1);   background: var(--primary-bg); }
-.lni-action.sav:hover   { color: var(--green);  background: var(--green-bg); }
-.lni-action.lni-del:hover { color: var(--red);  background: var(--red-bg); }
+.action:hover      { color: var(--text-2);  background: var(--primary-bg); }
+.action.mov:hover  { color: var(--text-1);  background: var(--primary-bg); }
+.action.edt:hover  { color: var(--text-1);  background: var(--primary-bg); }
+.action.sav:hover  { color: var(--green);   background: var(--green-bg); }
+.action.del:hover  { color: var(--red);     background: var(--red-bg); }
 
-.lni-rename-row, .lni-move-row {
+.renameRow,
+.moveRow {
   display: flex;
   gap: var(--sp);
 }
 
-.lni-rename-row {
+.renameRow {
   cursor: default;
   overflow: visible;
 }
 
-.lni-rename-row .lni-actions {
+.renameRow .actions {
   display: flex;
 }
 
-.lni-rename-row input {
+.renameRow input {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -166,7 +166,7 @@
   padding: 1px 0;
 }
 
-.lni-move-select {
+.moveSelect {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -179,18 +179,18 @@
   cursor: pointer;
 }
 
-.lni-move-row .lni-actions {
+.moveRow .actions {
   display: flex;
 }
 
-.nav-section {
+.navSection {
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
   width: 100%;
 }
 
-.nav-section-body {
+.navSectionBody {
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
@@ -198,22 +198,22 @@
   width: 100%;
 }
 
-.nav-group {
+.navGroup {
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
   width: 100%;
 }
 
-.nav-group-lists {
+.navGroupLists {
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
   padding-left: var(--nav-indent);
 }
 
-.new-list-btn,
-.new-list-input {
+.newListBtn,
+.newListInput {
   width: 100%;
   padding: var(--sp-sm);
   background: transparent;
@@ -224,33 +224,33 @@
   font-size: var(--fs-xs);
 }
 
-.new-list-btn {
+.newListBtn {
   cursor: pointer;
   text-align: left;
   transition: color var(--animation-d), border-color var(--animation-d);
 }
 
-.new-list-btn:hover {
+.newListBtn:hover {
   color: var(--text-2);
   border-color: var(--text-2);
 }
 
-.new-list-input.list-nav-item:hover {
+.newListInput.navItem:hover {
   background: transparent;
 }
 
-.new-list-input {
+.newListInput {
   display: flex;
   align-items: center;
   gap: var(--sp-sm);
 }
 
-.new-list-input:hover {
+.newListInput:hover {
   color: var(--text-2);
   border-color: var(--text-2);
 }
 
-.new-list-input input {
+.newListInput input {
   flex: 1;
   min-width: 0;
   background: transparent;

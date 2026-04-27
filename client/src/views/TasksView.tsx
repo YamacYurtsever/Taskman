@@ -5,6 +5,7 @@ import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, ContinueIcon, DeleteIcon,
 import { InlineAdd } from '../components/InlineAdd';
 import type { StateResponse, Task, TaskFilter, TaskList } from '../lib/types';
 import { doneFor, formatDue, MSG, pendingFor, sortByName } from '../lib/utils';
+import styles from './TasksView.module.css';
 
 type Action = (path: string, body: unknown) => Promise<void>;
 
@@ -31,16 +32,16 @@ function TaskRow({ data, task, listName, act, refresh }: TaskRowProps) {
 
   if (mode === 'edit') {
     return (
-      <div className="task-row task-edit-row">
-        <div className="task-left" />
-        <div className="task-edit-body">
-          <input className="task-edit-name" autoComplete="off" value={name} autoFocus onChange={e => setName(e.target.value)} onKeyDown={e => {
+      <div className={`${styles.taskRow} ${styles.taskEditRow}`}>
+        <div className={styles.taskLeft} />
+        <div className={styles.taskEditBody}>
+          <input className={styles.taskEditName} autoComplete="off" value={name} autoFocus onChange={e => setName(e.target.value)} onKeyDown={e => {
             if (e.key === 'Enter') saveEdit();
             if (e.key === 'Escape') refresh();
           }} />
-          <input className="task-edit-due" type="date" value={due} onChange={e => setDue(e.target.value)} />
+          <input className={styles.taskEditDue} type="date" value={due} onChange={e => setDue(e.target.value)} />
         </div>
-        <div className="task-right">
+        <div className={styles.taskRight}>
           <button className="task-btn sav" title="Save" onClick={saveEdit}><CheckIcon /></button>
         </div>
       </div>
@@ -49,11 +50,11 @@ function TaskRow({ data, task, listName, act, refresh }: TaskRowProps) {
 
   if (mode === 'move') {
     return (
-      <div className="task-row task-move-row">
-        <select className="task-move-select" value={newList} autoFocus onChange={e => setNewList(e.target.value)}>
+      <div className={`${styles.taskRow} ${styles.taskMoveRow}`}>
+        <select className={styles.taskMoveSelect} value={newList} autoFocus onChange={e => setNewList(e.target.value)}>
           {sortByName(data.lists).map(l => <option key={l.id} value={l.name}>{l.name}</option>)}
         </select>
-        <div className="task-right">
+        <div className={styles.taskRight}>
           <button className="task-btn sav" title="Save" onClick={() => {
             if (newList && newList !== listName) act(API.moveTask, { list: listName, name: task.name, newList });
             else refresh();
@@ -64,14 +65,14 @@ function TaskRow({ data, task, listName, act, refresh }: TaskRowProps) {
   }
 
   return (
-    <div className={`task-row${task.done ? ' done' : ''}`}>
-      <div className="task-left">
+    <div className={[styles.taskRow, task.done ? styles.done : ''].filter(Boolean).join(' ')}>
+      <div className={styles.taskLeft}>
         <div
-          className="task-check"
+          className={styles.taskCheck}
           title={task.done ? 'Mark pending' : 'Mark done'}
           onClick={() => task.done ? act(API.undo, { list: listName, name: task.name }) : act(API.done, { list: listName, name: task.name })}
         >
-          <svg className="task-check-svg" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg className={styles.taskCheckSvg} width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8.5l3 3L13 5" />
           </svg>
         </div>
@@ -81,12 +82,12 @@ function TaskRow({ data, task, listName, act, refresh }: TaskRowProps) {
           </button>
         )}
       </div>
-      <div className="task-body">
-        <span className="task-name">{task.name}</span>
-        {dueInfo && <span className={`task-due${dueInfo.cls ? ` ${dueInfo.cls}` : ''}`}>{dueInfo.label}</span>}
+      <div className={styles.taskBody}>
+        <span className={styles.taskName}>{task.name}</span>
+        {dueInfo && <span className={[styles.taskDue, dueInfo.cls ? styles[dueInfo.cls] : ''].filter(Boolean).join(' ')}>{dueInfo.label}</span>}
       </div>
-      <div className="task-right">
-        <div className="task-edit-actions">
+      <div className={styles.taskRight}>
+        <div className={styles.taskEditActions}>
           <button className="task-btn mov" title="Move to list" onClick={() => setMode('move')}><MoveIcon /></button>
           <button className="task-btn edt" title="Rename" onClick={() => setMode('edit')}><EditIcon /></button>
         </div>
@@ -117,16 +118,16 @@ function Card({ data, list, filter, expanded, toggleExpanded, act, refresh, open
   const visible = overflow && !expanded ? pending.slice(0, CARD_LIMIT) : pending;
 
   return (
-    <div className="card">
-      <div className="card-header" onClick={openList}>
-        <span className="card-title">{list.name}</span>
-        <span className="card-count">{pending.length}</span>
+    <div className={styles.card}>
+      <div className={styles.cardHeader} onClick={openList}>
+        <span className={styles.cardTitle}>{list.name}</span>
+        <span className={styles.cardCount}>{pending.length}</span>
       </div>
-      <div className="card-body">
+      <div className={styles.cardBody}>
         {visible.map(t => <TaskRow key={t.id} data={data} task={t} listName={list.name} act={act} refresh={refresh} />)}
       </div>
       {overflow && (
-        <button className="card-overflow-toggle" onClick={toggleExpanded}>
+        <button className={styles.cardOverflowToggle} onClick={toggleExpanded}>
           {expanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           {expanded ? ` hide ${pending.length - CARD_LIMIT}` : ` ${pending.length - CARD_LIMIT} more`}
         </button>
@@ -174,8 +175,8 @@ export function CardsView({ data, filter, selectedGroup, expandedCards, setExpan
     const cards = renderCards(sortByName(data.lists.filter(l => l.groupId === group.id)));
     return (
       <>
-        <div className="section-label">{group.name}</div>
-        {cards.length ? <div className="cards-grid">{cards}</div> : <div className="empty">{MSG.noTasks}</div>}
+        <div className={styles.sectionLabel}>{group.name}</div>
+        {cards.length ? <div className={styles.cardsGrid}>{cards}</div> : <div className="empty">{MSG.noTasks}</div>}
       </>
     );
   }
@@ -186,8 +187,12 @@ export function CardsView({ data, filter, selectedGroup, expandedCards, setExpan
     const lists = sortByName(data.lists.filter(l => l.groupId === group.id));
     const cards = renderCards(lists);
     if (cards.length) {
-      sections.push(<div key={`${group.id}-label`} className="section-label section-label-link" onClick={() => selectGroup(group.id)}>{group.name}</div>);
-      sections.push(<div key={group.id} className="cards-grid">{cards}</div>);
+      sections.push(
+        <div key={`${group.id}-label`} className={`${styles.sectionLabel} ${styles.sectionLabelLink}`} onClick={() => selectGroup(group.id)}>
+          {group.name}
+        </div>
+      );
+      sections.push(<div key={group.id} className={styles.cardsGrid}>{cards}</div>);
     }
     lists.forEach(l => seen.add(l.id));
   }
@@ -196,8 +201,8 @@ export function CardsView({ data, filter, selectedGroup, expandedCards, setExpan
   const ungroupedCards = renderCards(ungrouped);
   if (ungroupedCards.length) {
     const hasGroups = data.groups.some(g => data.lists.some(l => l.groupId === g.id));
-    if (hasGroups) sections.push(<div key="others-label" className="section-label">{MSG.others}</div>);
-    sections.push(<div key="others" className="cards-grid">{ungroupedCards}</div>);
+    if (hasGroups) sections.push(<div key="others-label" className={styles.sectionLabel}>{MSG.others}</div>);
+    sections.push(<div key="others" className={styles.cardsGrid}>{ungroupedCards}</div>);
   }
 
   return <>{sections.length ? sections : <div className="empty">{MSG.noTasks}</div>}</>;
@@ -225,24 +230,24 @@ export function FocusedView({ data, listId, filter, showDone, setShowDone, act, 
   };
 
   return (
-    <div className="focused-view">
-      <div className="focused-header">
-        <h1 className="focused-title">{list.name}</h1>
-        <span className="focused-meta">{pending.length}</span>
+    <div className={styles.focusedView}>
+      <div className={styles.focusedHeader}>
+        <h1 className={styles.focusedTitle}>{list.name}</h1>
+        <span className={styles.focusedMeta}>{pending.length}</span>
       </div>
-      <div className="focused-tasks">
+      <div className={styles.focusedTasks}>
         {pending.length
           ? pending.map(t => <TaskRow key={t.id} data={data} task={t} listName={list.name} act={act} refresh={refresh} />)
           : <div className="empty">{MSG.noTasks}</div>}
       </div>
       <InlineAdd listName={list.name} variant="focused" onAdd={(listName, name, due) => act(API.add, { list: listName, name, due })} />
       {done.length > 0 && (
-        <div className="done-wrapper">
-          <button className="done-toggle" onClick={toggleDone}>
+        <div className={styles.doneWrapper}>
+          <button className={styles.doneToggle} onClick={toggleDone}>
             {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             {` ${open ? 'hide' : 'show'} done (${done.length})`}
           </button>
-          <div className="done-section">
+          <div className={styles.doneSection}>
             {open && done.map(t => <TaskRow key={t.id} data={data} task={t} listName={list.name} act={act} refresh={refresh} />)}
           </div>
         </div>
