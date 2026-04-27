@@ -2,7 +2,16 @@ import copy
 from contextlib import contextmanager
 from unittest.mock import patch
 
+from cachelib.file import FileSystemCache
+
 from server.constants import DaysheetEntryType
+
+TEST_CONFIG = {
+    "TESTING": True,
+    "SECRET_KEY": "test-secret",
+    "SESSION_TYPE": "cachelib",
+    "SESSION_CACHELIB": FileSystemCache("/tmp/taskman-test-sessions"),
+}
 
 
 # ─────────────────────────── Records ───────────────────────────
@@ -120,5 +129,20 @@ def saved_db(initial_data):
     with (
         patch("server.db.load", return_value=copy.deepcopy(initial_data)),
         patch("server.db.save", side_effect=save),
+    ):
+        yield saved
+
+
+@contextmanager
+def saved_config(initial_data):
+    saved = {}
+
+    def save(next_data):
+        saved.clear()
+        saved.update(copy.deepcopy(next_data))
+
+    with (
+        patch("server.config.load", return_value=copy.deepcopy(initial_data)),
+        patch("server.config.save", side_effect=save),
     ):
         yield saved

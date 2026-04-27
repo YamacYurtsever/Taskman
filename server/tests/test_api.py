@@ -10,6 +10,7 @@ from server.tests.utils import (
     NOW_DT,
     TASK_1,
     TASK_DONE,
+    TEST_CONFIG,
     TODAY,
     daysheet_entry,
     db_record,
@@ -22,8 +23,10 @@ from server.tests.utils import (
 class ApiTest(unittest.TestCase):
 
     def setUp(self):
-        self.app = create_app()
+        self.app = create_app(TEST_CONFIG)
         self.client = self.app.test_client()
+        with self.client.session_transaction() as sess:
+            sess["authenticated"] = True
 
     # ─────────────────────────── Helpers ───────────────────────────
 

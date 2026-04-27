@@ -1,9 +1,17 @@
+import functools
+import os
+import secrets
 from datetime import date, datetime
 
-from flask import Flask, jsonify, request
+from cachelib.file import FileSystemCache
+from flask import Flask, jsonify, redirect, request, session
+from flask_session import Session
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
 
 from server import config, db
-from server.constants import DATE_FORMAT, DaysheetEntryType
+from server.constants import DATE_FORMAT, SESSIONS_PATH, DaysheetEntryType
 from server.services.daysheet import add_log, continue_task
 from server.services.tasks import (
     add_task,
@@ -21,6 +29,12 @@ from server.services.utils import (
     find_list,
     require_name,
 )
+
+SCOPES = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/calendar.readonly",
+]
+REDIRECT_URI = "http://127.0.0.1:5050/api/oauth/callback"
 
 
 # ─────────────────────────── Response Helpers ───────────────────────────
@@ -40,12 +54,98 @@ def respond(result):
 
 # ─────────────────────────── App Factory ───────────────────────────
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
+
+    if test_config is None:
+        cfg = config.load()
+        if not cfg.get("secretKey"):
+            cfg["secretKey"] = secrets.token_hex(32)
+            config.save(cfg)
+        SESSIONS_PATH.mkdir(parents=True, exist_ok=True)
+        app.config.update({
+            "SECRET_KEY": cfg["secretKey"],
+            "SESSION_TYPE": "cachelib",
+            "SESSION_CACHELIB": FileSystemCache(str(SESSIONS_PATH)),
+        })
+        os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
+    else:
+        app.config.update(test_config)
+
+    Session(app)
+
+    # ─────────────────────────── Auth ───────────────────────────
+
+    def require_auth(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            if not session.get("authenticated"):
+                return fail("not authenticated", 401)
+            return f(*args, **kwargs)
+        return wrapper
+
+    @app.get("/api/auth/status")
+    def auth_status():
+        return jsonify({"authenticated": bool(session.get("authenticated"))})
+
+    @app.get("/api/oauth/start")
+    def oauth_start():
+        flow = Flow.from_client_config(
+            {"web": {
+                "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
+                "client_secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [REDIRECT_URI],
+            }},
+            scopes=SCOPES,
+        )
+        flow.redirect_uri = REDIRECT_URI
+        url, state = flow.authorization_url(access_type="offline", prompt="consent")
+        session["oauth_state"] = state
+        return jsonify({"url": url})
+
+    @app.get("/api/oauth/callback")
+    def oauth_callback():
+        flow = Flow.from_client_config(
+            {"web": {
+                "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
+                "client_secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [REDIRECT_URI],
+            }},
+            scopes=SCOPES,
+            state=session.get("oauth_state"),
+        )
+        flow.redirect_uri = REDIRECT_URI
+        flow.fetch_token(authorization_response=request.url)
+
+        credentials = flow.credentials
+        cfg = config.load()
+        cfg["googleRefreshToken"] = credentials.refresh_token
+
+        try:
+            svc = build("oauth2", "v2", credentials=credentials)
+            user_info = svc.userinfo().get().execute()
+            cfg["googleEmail"] = user_info.get("email")
+        except Exception:
+            pass
+
+        config.save(cfg)
+        session["authenticated"] = True
+        session.pop("oauth_state", None)
+        return redirect("/")
+
+    @app.post("/api/logout")
+    def logout():
+        session.clear()
+        return ok()
 
     # ─────────────────────────── Config / State ───────────────────────────
 
     @app.get("/api/config")
+    @require_auth
     def get_config():
         cfg = config.load()
         calendars = cfg.get("calendars", [])
@@ -65,9 +165,30 @@ def create_app():
             if parts else ""
         )
 
-        return jsonify({"calendarUrl": calendar_url})
+        user_calendars = []
+        refresh_token = cfg.get("googleRefreshToken")
+        if refresh_token:
+            try:
+                creds = Credentials(
+                    token=None,
+                    refresh_token=refresh_token,
+                    token_uri="https://oauth2.googleapis.com/token",
+                    client_id=os.environ.get("GOOGLE_CLIENT_ID", ""),
+                    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+                )
+                svc = build("calendar", "v3", credentials=creds)
+                result = svc.calendarList().list().execute()
+                user_calendars = [
+                    {"id": c["id"], "summary": c.get("summary", "")}
+                    for c in result.get("items", [])
+                ]
+            except Exception:
+                pass
+
+        return jsonify({"calendarUrl": calendar_url, "userCalendars": user_calendars})
 
     @app.get("/api/state")
+    @require_auth
     def get_state():
         data = db.load()
         tasks = [{**t, "description": t.get("description", "")} for t in data["tasks"]]
@@ -81,6 +202,7 @@ def create_app():
     # ─────────────────────────── Daysheet Reads ───────────────────────────
 
     @app.get("/api/daysheet")
+    @require_auth
     def get_daysheet():
         target = request.args.get("date") or date.today().isoformat()
 
@@ -116,6 +238,7 @@ def create_app():
     # ─────────────────────────── Task Routes ───────────────────────────
 
     @app.post("/api/add")
+    @require_auth
     def api_add():
         body = request.get_json(force=True) or {}
         return respond(add_task(
@@ -125,6 +248,7 @@ def create_app():
         ))
 
     @app.post("/api/edit")
+    @require_auth
     def api_edit():
         body = request.get_json(force=True) or {}
         return respond(edit_task(
@@ -136,6 +260,7 @@ def create_app():
         ))
 
     @app.post("/api/delete")
+    @require_auth
     def api_delete():
         body = request.get_json(force=True) or {}
         return respond(delete_task(
@@ -144,6 +269,7 @@ def create_app():
         ))
 
     @app.post("/api/move-task")
+    @require_auth
     def api_move_task():
         body = request.get_json(force=True) or {}
         return respond(move_task(
@@ -153,6 +279,7 @@ def create_app():
         ))
 
     @app.post("/api/done")
+    @require_auth
     def api_done():
         body = request.get_json(force=True) or {}
         return respond(done_task(
@@ -161,6 +288,7 @@ def create_app():
         ))
 
     @app.post("/api/undo")
+    @require_auth
     def api_undo():
         body = request.get_json(force=True) or {}
         return respond(undo_task(
@@ -169,6 +297,7 @@ def create_app():
         ))
 
     @app.post("/api/task-description")
+    @require_auth
     def api_task_description():
         body = request.get_json(force=True) or {}
         return respond(set_task_description(
@@ -180,6 +309,7 @@ def create_app():
     # ─────────────────────────── List Routes ───────────────────────────
 
     @app.post("/api/add-list")
+    @require_auth
     def api_add_list():
         body = request.get_json(force=True) or {}
 
@@ -202,6 +332,7 @@ def create_app():
             return fail(str(e))
 
     @app.post("/api/rename-list")
+    @require_auth
     def api_rename_list():
         body = request.get_json(force=True) or {}
 
@@ -226,6 +357,7 @@ def create_app():
             return fail(str(e))
 
     @app.post("/api/delete-list")
+    @require_auth
     def api_delete_list():
         body = request.get_json(force=True) or {}
 
@@ -245,6 +377,7 @@ def create_app():
             return fail(str(e))
 
     @app.post("/api/move-list")
+    @require_auth
     def api_move_list():
         body = request.get_json(force=True) or {}
 
@@ -274,6 +407,7 @@ def create_app():
     # ─────────────────────────── Group Routes ───────────────────────────
 
     @app.post("/api/rename-group")
+    @require_auth
     def api_rename_group():
         body = request.get_json(force=True) or {}
 
@@ -298,6 +432,7 @@ def create_app():
             return fail(str(e))
 
     @app.post("/api/delete-group")
+    @require_auth
     def api_delete_group():
         body = request.get_json(force=True) or {}
 
@@ -324,6 +459,7 @@ def create_app():
     # ─────────────────────────── Daysheet Routes ───────────────────────────
 
     @app.post("/api/log")
+    @require_auth
     def api_log():
         body = request.get_json(force=True) or {}
         return respond(add_log(
@@ -332,6 +468,7 @@ def create_app():
         ))
 
     @app.post("/api/continue")
+    @require_auth
     def api_continue():
         body = request.get_json(force=True) or {}
         return respond(continue_task(
@@ -340,6 +477,7 @@ def create_app():
         ))
 
     @app.post("/api/daysheet/edit")
+    @require_auth
     def api_daysheet_edit():
         body = request.get_json(force=True) or {}
 
@@ -364,6 +502,7 @@ def create_app():
             return fail(str(e))
 
     @app.post("/api/daysheet/delete")
+    @require_auth
     def api_daysheet_delete():
         body = request.get_json(force=True) or {}
         entry_id = body.get("id", "")
