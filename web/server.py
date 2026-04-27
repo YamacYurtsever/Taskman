@@ -113,6 +113,50 @@ def create_app():
         body = request.get_json(force=True) or {}
         return _action(cmd_add, [body.get("list", "")])
 
+    @app.post("/api/move-task")
+    def api_move_task():
+        body = request.get_json(force=True) or {}
+        list_name = body.get("list", "")
+        task_name = body.get("name", "")
+        new_list_name = body.get("newList", "")
+        data = db.load()
+        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
+        if not lst:
+            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
+        task = next((t for t in data["tasks"] if t["listId"] == lst["id"] and t["name"] == task_name), None)
+        if not task:
+            return jsonify({"ok": False, "message": f"task '{task_name}' not found"}), 400
+        new_lst = next((l for l in data["lists"] if l["name"] == new_list_name), None)
+        if not new_lst:
+            return jsonify({"ok": False, "message": f"list '{new_list_name}' not found"}), 400
+        if any(t["name"] == task_name and t["listId"] == new_lst["id"] for t in data["tasks"]):
+            return jsonify({"ok": False, "message": f"task '{task_name}' already exists in '{new_list_name}'"}), 400
+        task["listId"] = new_lst["id"]
+        db.save(data)
+        return jsonify({"ok": True, "message": ""})
+
+    @app.post("/api/update-list")
+    def api_update_list():
+        body = request.get_json(force=True) or {}
+        list_name = body.get("list", "")
+        new_name = (body.get("newName") or "").strip() or list_name
+        data = db.load()
+        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
+        if not lst:
+            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
+        lst["name"] = new_name
+        if "group" in body:
+            group_name = body["group"]
+            if not group_name:
+                lst["groupId"] = None
+            else:
+                grp = next((g for g in data["groups"] if g["name"] == group_name), None)
+                if not grp:
+                    return jsonify({"ok": False, "message": f"group '{group_name}' not found"}), 400
+                lst["groupId"] = grp["id"]
+        db.save(data)
+        return jsonify({"ok": True, "message": ""})
+
     @app.post("/api/rename-list")
     def api_rename_list():
         body = request.get_json(force=True) or {}

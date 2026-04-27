@@ -190,6 +190,55 @@ class WebTest(unittest.TestCase):
         res = self.client.post("/api/daysheet/delete", json={"id": "nonexistent"})
         self.assertEqual(res.status_code, 400)
 
+    # --- POST /api/move-task ---
+
+    def test_move_task(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/move-task", json={"list": "Work", "name": "Write report", "newList": "Personal"})
+        self.assertEqual(res.status_code, 200)
+        task = next(t for t in self.saved["tasks"] if t["name"] == "Write report")
+        self.assertEqual(task["listId"], "list-2")
+
+    def test_move_task_duplicate_in_dest_returns_400(self):
+        data = make_db()
+        data["tasks"].append({"id": "task-3", "name": "Write report", "listId": "list-2", "due": None, "done": None})
+        self._patch_all(data)
+        res = self.client.post("/api/move-task", json={"list": "Work", "name": "Write report", "newList": "Personal"})
+        self.assertEqual(res.status_code, 400)
+
+    def test_move_task_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/move-task", json={"list": "Work", "name": "Ghost", "newList": "Personal"})
+        self.assertEqual(res.status_code, 400)
+
+    # --- POST /api/update-list ---
+
+    def test_update_list_rename(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/update-list", json={"list": "Work", "newName": "Job"})
+        self.assertEqual(res.status_code, 200)
+        names = [l["name"] for l in self.saved["lists"]]
+        self.assertIn("Job", names)
+
+    def test_update_list_move_to_group(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/update-list", json={"list": "Personal", "newName": "Personal", "group": "UNSW"})
+        self.assertEqual(res.status_code, 200)
+        lst = next(l for l in self.saved["lists"] if l["name"] == "Personal")
+        self.assertEqual(lst["groupId"], "group-1")
+
+    def test_update_list_ungroup(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/update-list", json={"list": "Work", "newName": "Work", "group": ""})
+        self.assertEqual(res.status_code, 200)
+        lst = next(l for l in self.saved["lists"] if l["name"] == "Work")
+        self.assertIsNone(lst["groupId"])
+
+    def test_update_list_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/update-list", json={"list": "Ghost", "newName": "X"})
+        self.assertEqual(res.status_code, 400)
+
     # --- POST /api/rename-list / delete-list ---
 
     def test_rename_list(self):

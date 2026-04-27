@@ -97,6 +97,8 @@ const API = {
   daysheet:       '/api/daysheet',
   add:            '/api/add',
   addList:        '/api/add-list',
+  moveTask:       '/api/move-task',
+  updateList:     '/api/update-list',
   renameList:     '/api/rename-list',
   deleteList:     '/api/delete-list',
   renameGroup:    '/api/rename-group',
@@ -122,6 +124,7 @@ const IC = {
   chevR:    '<path d="M6 4l4 4-4 4"/>',
   plus:     '<path d="M8 3v10M3 8h10"/>',
   edit:     '<path d="M12 2l2 2-9 9-3 1 1-3 9-9z"/>',
+  move:     '<path d="M3 8h10M9 4l4 4-4 4"/>',
 };
 
 // ──────────────────────────── API ─────────────────────────────
@@ -234,10 +237,21 @@ function renderSidebar() {
       on: { click: e => {
         e.stopPropagation();
         const input = el('input', { type: 'text', value: list.name, autocomplete: 'off' });
+        const currentGroup = groups.find(g => g.id === list.groupId);
+        const groupSel = groups.length ? el('select', { class: 'lni-group-select' },
+          el('option', { value: '' }, 'No group'),
+          ...sortByName(groups).map(g => el('option', { value: g.name }, g.name)),
+        ) : null;
+        if (groupSel) groupSel.value = currentGroup?.name || '';
         const save = async () => {
-          const newName = input.value.trim();
-          if (!newName || newName === list.name) { refresh(); return; }
-          await act(API.renameList, { list: list.name, newName });
+          const newName = input.value.trim() || list.name;
+          const selectedGroup = groupSel?.value;
+          const nameChanged = newName !== list.name;
+          const groupChanged = groupSel && selectedGroup !== (currentGroup?.name || '');
+          if (!nameChanged && !groupChanged) { refresh(); return; }
+          const body = { list: list.name, newName };
+          if (groupChanged) body.group = selectedGroup;
+          await act(API.updateList, body);
         };
         input.addEventListener('keydown', ev => {
           if (ev.key === 'Enter') save();
@@ -249,6 +263,7 @@ function renderSidebar() {
         }, icon(IC.delete, 10));
         item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-rename-row' },
           input,
+          groupSel,
           el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, delBtn)),
         ));
         input.focus(); input.select();
@@ -421,6 +436,25 @@ function taskRow(task, listName) {
     }}
   }, icon(IC.edit, 11));
 
+  const moveBtn = el('button', { class: 'task-btn mov', title: 'Move to list',
+    on: { click: () => {
+      const otherLists = sortByName(state.data.lists.filter(l => l.name !== listName));
+      const sel = el('select', { class: 'task-move-select' },
+        el('option', { value: '', disabled: true, selected: true }, 'Move to…'),
+        ...otherLists.map(l => el('option', { value: l.name }, l.name)),
+      );
+      sel.addEventListener('change', () => {
+        if (sel.value) act(API.moveTask, { list: listName, name: task.name, newList: sel.value });
+      });
+      const cancelBtn = el('button', { class: 'task-btn del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 11));
+      row.replaceWith(el('div', { class: 'task-row task-move-row' },
+        sel,
+        el('div', { class: 'task-right' }, cancelBtn),
+      ));
+      sel.focus();
+    }}
+  }, icon(IC.move, 11));
+
   const deleteBtn = el('button', { class: 'task-btn del', title: 'Delete',
     on: { click: () => { if (confirm(`Delete "${task.name}"?`)) act(API.delete, { list: listName, name: task.name }); } } },
     icon(IC.delete, 11));
@@ -431,7 +465,7 @@ function taskRow(task, listName) {
       el('span', { class: 'task-name' }, task.name),
       dueEl,
     ),
-    el('div', { class: 'task-right' }, editBtn, deleteBtn),
+    el('div', { class: 'task-right' }, editBtn, moveBtn, deleteBtn),
   );
   return row;
 }

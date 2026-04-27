@@ -160,7 +160,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 - [x] Delete task
 - [x] Continue task (logs to daysheet)
 - [x] Rename task / update due date (`taskman edit`)
-- [ ] Move task to another list (`taskman move "list" "name" "new_list"`)
+- [x] Move task to another list (`taskman move "list" "name" "new_list"`)
 
 ###### List & Group Actions
 - [x] Create list (sidebar + New List)
@@ -168,7 +168,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 - [x] Delete list
 - [x] Rename group (CLI: `taskman edit "group" "new_name"`)
 - [x] Delete group
-- [ ] Assign list to group / ungroup (`taskman move "list" "group"` / `taskman move "list" ""`)
+- [x] Assign list to group / ungroup (`taskman move "list" "group"` / `taskman move "list" ""`)
 
 ###### Daysheet Actions
 - [x] Add log entry
@@ -179,16 +179,7 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 ###### UI
 - [x] Light/dark mode toggle (persisted to `localStorage`, toggled via button in topbar)
 
-##### Milestone 4 — Task Descriptions
-
-- [ ] Add `description` field to task schema (`db.json`)
-- [ ] CLI: `taskman update` supports setting/clearing description
-- [ ] Terminal: show description in `taskman ls` focused view
-- [ ] Web: expand task row to show/edit description inline
-- [ ] Web: description visible in focused list view
-- [ ] Web: add description field to quick-add modal
-
-##### Milestone 5 — Google Calendar
+##### Milestone 4 — Google Calendar
 
 - [x] Web: Google Calendar iframe embedded in taskman (week view by default)
 - [x] Sidebar nav entry (above Daysheet) to access the calendar view
@@ -211,6 +202,15 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 
 Google Calendar embed color codes (predefined palette):
 `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` Wisteria · `#039BE5` Peacock · `#3F51B5` Blueberry · `#7986CB` Lavender · `#8E24AA` Grape · `#F6BF26` Banana · `#F4511E` Tangerine · `#0B8043` Basil · `#D50000` Tomato · `#616161` Graphite
+
+##### Milestone 5 — Task Descriptions
+
+- [ ] Add `description` field to task schema (`db.json`)
+- [ ] CLI: `taskman update` supports setting/clearing description
+- [ ] Terminal: show description in `taskman ls` focused view
+- [ ] Web: expand task row to show/edit description inline
+- [ ] Web: description visible in focused list view
+- [ ] Web: add description field to quick-add modal
 
 ##### Milestone 6 — Backups
 

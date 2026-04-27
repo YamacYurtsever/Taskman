@@ -188,6 +188,7 @@ body {
 
 .lni-rename-row {
   cursor: default;
+  overflow: visible;
 }
 
 .lni-rename-row .lni-actions {
@@ -195,7 +196,8 @@ body {
 }
 
 .lni-rename-row input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   border-bottom: 1.5px solid var(--accent);
@@ -204,6 +206,36 @@ body {
   font-size: inherit;
   outline: none;
   padding: 1px 0;
+}
+
+.lni-group-select {
+  flex-shrink: 0;
+  max-width: 72px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  outline: none;
+  cursor: pointer;
+}
+
+.task-move-select {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  outline: none;
+  cursor: pointer;
+}
+
+.task-move-row .task-right {
+  opacity: 1;
 }
 
 .list-nav-item.active .lni-count {
