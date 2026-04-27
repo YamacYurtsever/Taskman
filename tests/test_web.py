@@ -211,32 +211,30 @@ class WebTest(unittest.TestCase):
         res = self.client.post("/api/move-task", json={"list": "Work", "name": "Ghost", "newList": "Personal"})
         self.assertEqual(res.status_code, 400)
 
-    # --- POST /api/update-list ---
+    # --- POST /api/move-list ---
 
-    def test_update_list_rename(self):
+    def test_move_list_to_group(self):
         self._patch_all(make_db())
-        res = self.client.post("/api/update-list", json={"list": "Work", "newName": "Job"})
-        self.assertEqual(res.status_code, 200)
-        names = [l["name"] for l in self.saved["lists"]]
-        self.assertIn("Job", names)
-
-    def test_update_list_move_to_group(self):
-        self._patch_all(make_db())
-        res = self.client.post("/api/update-list", json={"list": "Personal", "newName": "Personal", "group": "UNSW"})
+        res = self.client.post("/api/move-list", json={"list": "Personal", "group": "UNSW"})
         self.assertEqual(res.status_code, 200)
         lst = next(l for l in self.saved["lists"] if l["name"] == "Personal")
         self.assertEqual(lst["groupId"], "group-1")
 
-    def test_update_list_ungroup(self):
+    def test_move_list_ungroup(self):
         self._patch_all(make_db())
-        res = self.client.post("/api/update-list", json={"list": "Work", "newName": "Work", "group": ""})
+        res = self.client.post("/api/move-list", json={"list": "Work", "group": ""})
         self.assertEqual(res.status_code, 200)
         lst = next(l for l in self.saved["lists"] if l["name"] == "Work")
         self.assertIsNone(lst["groupId"])
 
-    def test_update_list_not_found_returns_400(self):
+    def test_move_list_not_found_returns_400(self):
         self._patch_all(make_db())
-        res = self.client.post("/api/update-list", json={"list": "Ghost", "newName": "X"})
+        res = self.client.post("/api/move-list", json={"list": "Ghost", "group": "UNSW"})
+        self.assertEqual(res.status_code, 400)
+
+    def test_move_list_group_not_found_returns_400(self):
+        self._patch_all(make_db())
+        res = self.client.post("/api/move-list", json={"list": "Personal", "group": "Ghost"})
         self.assertEqual(res.status_code, 400)
 
     # --- POST /api/rename-list / delete-list ---

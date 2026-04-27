@@ -208,17 +208,26 @@ body {
   padding: 1px 0;
 }
 
-.lni-group-select {
-  flex-shrink: 0;
-  max-width: 72px;
+.lni-move-select {
+  flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--border);
-  color: var(--muted);
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--text);
   font: inherit;
   font-size: var(--fs-xs);
   outline: none;
   cursor: pointer;
+}
+
+.lni-move-row .lni-actions {
+  display: flex;
+}
+
+.lni-action.mov:hover {
+  color: var(--accent);
+  background: var(--accent-bg);
 }
 
 .task-move-select {

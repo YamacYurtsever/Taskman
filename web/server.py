@@ -135,25 +135,22 @@ def create_app():
         db.save(data)
         return jsonify({"ok": True, "message": ""})
 
-    @app.post("/api/update-list")
-    def api_update_list():
+    @app.post("/api/move-list")
+    def api_move_list():
         body = request.get_json(force=True) or {}
         list_name = body.get("list", "")
-        new_name = (body.get("newName") or "").strip() or list_name
+        group_name = body.get("group", None)
         data = db.load()
         lst = next((l for l in data["lists"] if l["name"] == list_name), None)
         if not lst:
             return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
-        lst["name"] = new_name
-        if "group" in body:
-            group_name = body["group"]
-            if not group_name:
-                lst["groupId"] = None
-            else:
-                grp = next((g for g in data["groups"] if g["name"] == group_name), None)
-                if not grp:
-                    return jsonify({"ok": False, "message": f"group '{group_name}' not found"}), 400
-                lst["groupId"] = grp["id"]
+        if group_name == "":
+            lst["groupId"] = None
+        else:
+            grp = next((g for g in data["groups"] if g["name"] == group_name), None)
+            if not grp:
+                return jsonify({"ok": False, "message": f"group '{group_name}' not found"}), 400
+            lst["groupId"] = grp["id"]
         db.save(data)
         return jsonify({"ok": True, "message": ""})
 

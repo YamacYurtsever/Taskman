@@ -98,7 +98,7 @@ const API = {
   add:            '/api/add',
   addList:        '/api/add-list',
   moveTask:       '/api/move-task',
-  updateList:     '/api/update-list',
+  moveList:       '/api/move-list',
   renameList:     '/api/rename-list',
   deleteList:     '/api/delete-list',
   renameGroup:    '/api/rename-group',
@@ -237,21 +237,10 @@ function renderSidebar() {
       on: { click: e => {
         e.stopPropagation();
         const input = el('input', { type: 'text', value: list.name, autocomplete: 'off' });
-        const currentGroup = groups.find(g => g.id === list.groupId);
-        const groupSel = groups.length ? el('select', { class: 'lni-group-select' },
-          el('option', { value: '' }, 'No group'),
-          ...sortByName(groups).map(g => el('option', { value: g.name }, g.name)),
-        ) : null;
-        if (groupSel) groupSel.value = currentGroup?.name || '';
         const save = async () => {
-          const newName = input.value.trim() || list.name;
-          const selectedGroup = groupSel?.value;
-          const nameChanged = newName !== list.name;
-          const groupChanged = groupSel && selectedGroup !== (currentGroup?.name || '');
-          if (!nameChanged && !groupChanged) { refresh(); return; }
-          const body = { list: list.name, newName };
-          if (groupChanged) body.group = selectedGroup;
-          await act(API.updateList, body);
+          const newName = input.value.trim();
+          if (!newName || newName === list.name) { refresh(); return; }
+          await act(API.renameList, { list: list.name, newName });
         };
         input.addEventListener('keydown', ev => {
           if (ev.key === 'Enter') save();
@@ -263,19 +252,37 @@ function renderSidebar() {
         }, icon(IC.delete, 10));
         item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-rename-row' },
           input,
-          groupSel,
           el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, delBtn)),
         ));
         input.focus(); input.select();
       }}
     }, icon(IC.edit, 10));
 
+    const moveGroupBtn = groups.length === 0 ? null : el('button', { class: 'lni-action mov', title: 'Move to group',
+      on: { click: e => {
+        e.stopPropagation();
+        const currentGroup = groups.find(g => g.id === list.groupId);
+        const sel = el('select', { class: 'lni-move-select' },
+          el('option', { value: '' }, 'No group'),
+          ...sortByName(groups).map(g => el('option', { value: g.name }, g.name)),
+        );
+        sel.value = currentGroup?.name || '';
+        sel.addEventListener('change', () => act(API.moveList, { list: list.name, group: sel.value }));
+        const cancelBtn = el('button', { class: 'lni-action lni-del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 10));
+        item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-move-row' },
+          sel,
+          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, cancelBtn)),
+        ));
+        sel.focus();
+      }}
+    }, icon(IC.move, 10));
+
     item = el('button', {
       class: 'list-nav-item nav-list' + (active ? ' active' : ''),
       on: { click: () => { state.selectedList = list.id; state.selectedGroup = null; state.view = 'tasks'; render(); renderSidebar(); } },
     }, list.name,
       el('div', { class: 'lni-right' },
-        el('div', { class: 'lni-actions' }, renameBtn, deleteBtn),
+        el('div', { class: 'lni-actions' }, renameBtn, moveGroupBtn, deleteBtn),
         count ? el('span', { class: 'lni-count' }, count) : null,
       ),
     );
