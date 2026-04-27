@@ -21,7 +21,7 @@
 .date-nav {
   display: flex;
   align-items: stretch;
-  background: var(--surface);
+  background: var(--primary);
   border: 1px solid var(--border);
   border-radius: var(--r);
   overflow: hidden;
@@ -34,14 +34,14 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: var(--muted);
+  color: var(--text-2);
   cursor: pointer;
   transition: color var(--animation-d), background var(--animation-d);
 }
 
 .date-nav-btn:first-child { border-right: 1px solid var(--border); }
 .date-nav-btn:last-child  { border-left:  1px solid var(--border); }
-.date-nav-btn:hover       { color: var(--text); background: var(--surface-hover); }
+.date-nav-btn:hover       { color: var(--text-1); background: var(--primary-bg); }
 
 .date-nav-label {
   flex: 1;
@@ -50,7 +50,7 @@
   text-align: center;
   font-size: var(--fs-sm);
   font-weight: 500;
-  color: var(--text);
+  color: var(--text-1);
 }
 
 .timeline {
@@ -68,7 +68,7 @@
 .timeline-group-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-2);
 }
 
 .timeline-entry {
@@ -82,7 +82,7 @@
   min-width: 42px;
   padding-top: 2px;
   font-size: 0.73rem;
-  color: var(--faint);
+  color: var(--text-3);
 }
 
 .timeline-badge {
@@ -96,7 +96,7 @@
   letter-spacing: 0.04em;
 }
 
-.timeline-badge.log      { background: var(--surface-hover); color: var(--muted); }
+.timeline-badge.log      { background: var(--primary-bg); color: var(--text-2); }
 .timeline-badge.done     { background: var(--green-bg);      color: var(--green); }
 .timeline-badge.continue { background: var(--accent-bg);     color: var(--accent); }
 
@@ -106,12 +106,12 @@
   align-items: baseline;
   justify-content: space-between;
   font-size: var(--fs-sm);
-  color: var(--text);
+  color: var(--text-1);
 }
 
 .timeline-list-tag {
   font-size: 0.7rem;
-  color: var(--faint);
+  color: var(--text-3);
 }
 
 .timeline-actions {
@@ -141,7 +141,7 @@
   background: transparent;
   border: none;
   border-bottom: 1.5px solid var(--accent);
-  color: var(--text);
+  color: var(--text-1);
   font: inherit;
   font-size: var(--fs-sm);
   outline: none;
@@ -153,7 +153,7 @@
   align-items: center;
   gap: var(--sp);
   padding: var(--sp);
-  background: var(--surface);
+  background: var(--primary);
   border: 1px solid var(--border);
   border-radius: var(--r);
   transition: border-color var(--animation-d);
@@ -170,7 +170,7 @@
   background: transparent;
   border: none;
   border-right: 1px solid var(--border);
-  color: var(--muted);
+  color: var(--text-2);
   font: inherit;
   font-size: var(--fs-sm);
   outline: none;
@@ -182,12 +182,12 @@
   background: transparent;
   border: none;
   border-right: 1px solid var(--border);
-  color: var(--text);
+  color: var(--text-1);
   font: inherit;
   font-size: var(--fs-sm);
   outline: none;
 }
 
 .log-form input[type=text]::placeholder {
-  color: var(--faint);
+  color: var(--text-3);
 }

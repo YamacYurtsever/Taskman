@@ -1,7 +1,7 @@
 .section-label {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-2);
 }
 
 .section-label-link {
@@ -19,7 +19,7 @@
 }
 
 .card {
-  background: var(--surface);
+  background: var(--primary);
   border: 1px solid var(--border);
   border-radius: var(--r);
   overflow: hidden;
@@ -37,12 +37,12 @@
   padding: var(--sp-sm);
   cursor: pointer;
   transition: background var(--animation-d);
-  background: var(--surface);
+  background: var(--primary);
   border-radius: var(--r);
 }
 
 .card-header:hover {
-  background: var(--surface-hover);
+  background: var(--primary-bg);
 }
 
 .card-title {
@@ -52,7 +52,7 @@
 
 .card-count {
   font-size: 0.7rem;
-  color: var(--muted);
+  color: var(--text-2);
 }
 
 .card-body {
@@ -70,7 +70,7 @@
   padding: var(--sp-sm);
   background: none;
   border: none;
-  color: var(--faint);
+  color: var(--text-3);
   font: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
@@ -78,7 +78,7 @@
 }
 
 .card-overflow-toggle:hover {
-  color: var(--muted);
+  color: var(--text-2);
 }
 
 /* ── Task rows ── */
@@ -86,7 +86,7 @@
 .task-row {
   display: flex;
   align-items: flex-start;
-  background-color: var(--surface);
+  background-color: var(--primary);
   gap: var(--sp);
   padding: 7px;
   border: 1px solid var(--border);
@@ -112,7 +112,7 @@
 .task-check {
   width: var(--btn-w);
   height: var(--btn-w);
-  border: 1.5px solid var(--faint);
+  border: 1.5px solid var(--text-3);
   border-radius: var(--r-sm);
   flex-shrink: 0;
   cursor: pointer;
@@ -149,9 +149,9 @@
 }
 
 .task-row.done .task-name {
-  color: var(--faint);
+  color: var(--text-3);
   text-decoration: line-through;
-  text-decoration-color: var(--faint);
+  text-decoration-color: var(--text-3);
   text-decoration-thickness: 1px;
 }
 
@@ -201,13 +201,13 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--muted);
+  color: var(--text-2);
   border-radius: var(--r-sm);
   cursor: pointer;
   transition: color var(--animation-d), background var(--animation-d);
 }
 
-.task-btn:hover     { color: var(--text);   background: var(--surface-hover); }
+.task-btn:hover     { color: var(--text-1);   background: var(--primary-bg); }
 .task-btn.cnt:hover { color: var(--yellow);  background: var(--yellow-bg); }
 .task-btn.del:hover { color: var(--red);    background: var(--red-bg); }
 .task-btn.sav:hover { color: var(--green);  background: var(--green-bg); }
@@ -240,7 +240,7 @@
   background: transparent;
   border: none;
   border-bottom: 1.5px solid var(--accent);
-  color: var(--text);
+  color: var(--text-1);
   font: inherit;
   font-size: var(--fs-sm);
   font-weight: 500;
@@ -252,7 +252,7 @@
   background: transparent;
   border: none;
   border-bottom: 1.5px solid var(--border);
-  color: var(--muted);
+  color: var(--text-2);
   font: inherit;
   font-size: var(--fs-xs);
   outline: none;
@@ -270,7 +270,7 @@
   background: transparent;
   border: none;
   border-bottom: 1.5px solid var(--accent);
-  color: var(--text);
+  color: var(--text-1);
   font: inherit;
   font-size: var(--fs-sm);
   outline: none;

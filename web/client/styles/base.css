@@ -1,14 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
 
 :root {
-  --accent:       oklch(48% 0.16 248);
-  --accent-bg:    oklch(48% 0.16 248 / 0.1);
   --green:        oklch(48% 0.14 148);
   --green-bg:     oklch(48% 0.14 148 / 0.1);
   --red:          oklch(50% 0.17 22);
   --red-bg:       oklch(65% 0.17 22 / 0.1);
-  --yellow:        oklch(63.652% 0.12987 75.411);
-  --yellow-bg:     oklch(61.473% 0.12953 72.842 / 0.1);
+  --yellow:       oklch(63.652% 0.12987 75.411);
+  --yellow-bg:    oklch(61.473% 0.12953 72.842 / 0.1);
   --animation-d:  var(--animation-d);
   --font-sans:    'Nunito', sans-serif;
   --fs-title:     1.4rem;
@@ -24,28 +22,32 @@
   --sp-sm:        5px;
   --r:            10px;
   --r-sm:         3px;
-  --btn-w:       15px;
+  --btn-w:        15px;
   --logo-w:       25px;
 }
 
 [data-theme="light"] {
   --bg:           #f4f3f0;
-  --surface:      #faf9f7;
-  --surface-hover:#eceae6;
+  --primary:      #faf9f7;
+  --primary-bg:   #eceae6;
   --border:       #dddad4;
-  --text:         #252320;
-  --muted:        #726d66;
-  --faint:        #a8a099;
+  --text-1:       #252320;
+  --text-2:       #726d66;
+  --text-3:       #a8a099;
+  --accent:       oklch(48% 0.16 248);
+  --accent-bg:    oklch(48% 0.16 248 / 0.1);
 }
 
 [data-theme="dark"] {
   --bg:           #13151a;
-  --surface:      #1e2028;
-  --surface-hover:#272a35;
+  --primary:      #1e2028;
+  --primary-bg:   #272a35;
   --border:       #32363f;
-  --text:         #e8eaf0;
-  --muted:        #8892a4;
-  --faint:        #555e72;
+  --text-1:       #e8eaf0;
+  --text-2:       #8892a4;
+  --text-3:       #555e72;
+  --accent:       oklch(48% 0.16 248);
+  --accent-bg:    oklch(48% 0.16 248 / 0.1);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -57,16 +59,16 @@ body {
   font-size: 1rem;
   line-height: 1.5;
   background: var(--bg);
-  color: var(--text);
+  color: var(--text-1);
   height: 100dvh;
   display: flex;
   overflow: hidden;
 }
 
-.empty { color: var(--faint); font-size: var(--fs-sm); }
+.empty { color: var(--text-3); font-size: var(--fs-sm); }
 .spacer { flex: 1; }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }

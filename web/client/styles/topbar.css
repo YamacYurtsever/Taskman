@@ -32,7 +32,7 @@
   height: 32px;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--primary);
   cursor: pointer;
   font-size: 1rem;
   display: flex;
@@ -42,13 +42,13 @@
 }
 
 .theme-toggle:hover {
-  background: var(--surface-hover);
+  background: var(--primary-bg);
 }
 
 .filter-pills {
   display: flex;
   padding: 7px;
-  background: var(--surface);
+  background: var(--primary);
   border: 1px solid var(--border);
   border-radius: var(--r);
 }
@@ -57,7 +57,7 @@
   padding: var(--sp-sm) var(--sp);
   border: none;
   background: transparent;
-  color: var(--muted);
+  color: var(--text-2);
   font: inherit;
   font-size: var(--fs-sm);
   font-weight: 500;
@@ -67,7 +67,7 @@
 }
 
 .filter-pill:hover {
-  color: var(--text);
+  color: var(--text-1);
 }
 
 .filter-pill.active {

@@ -21,7 +21,7 @@
 
 .focused-meta {
   font-size: var(--fs-xs);
-  color: var(--muted);
+  color: var(--text-2);
 }
 
 .focused-tasks {
@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   padding: var(--sp);
-  background: var(--surface);
+  background: var(--primary);
   border: 1px solid var(--border);
   border-radius: var(--r);
   transition: border-color var(--animation-d);
@@ -52,7 +52,7 @@
   border: none;
   border-right: 1px solid var(--border);
   padding-right: var(--sp);
-  color: var(--text);
+  color: var(--text-1);
   font: inherit;
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
@@ -60,7 +60,7 @@
 }
 
 .focused-add input[type=text]::placeholder {
-  color: var(--faint);
+  color: var(--text-3);
 }
 
 .focused-add input[type=date] {
@@ -68,7 +68,7 @@
   border: none;
   border-right: 1px solid var(--border);
   padding-right: var(--sp);
-  color: var(--muted);
+  color: var(--text-2);
   font: inherit;
   font-size: var(--fs-xs);
   outline: none;
@@ -80,7 +80,7 @@
 .log-form-btn {
   background: none;
   border: none;
-  color: var(--faint);
+  color: var(--text-3);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -105,7 +105,7 @@
   gap: var(--sp-sm);
   background: none;
   border: none;
-  color: var(--faint);
+  color: var(--text-3);
   font: inherit;
   font-size: var(--fs-sm);
   cursor: pointer;
@@ -113,7 +113,7 @@
 }
 
 .done-toggle:hover {
-  color: var(--muted);
+  color: var(--text-2);
 }
 
 .done-section {
