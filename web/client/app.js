@@ -278,7 +278,7 @@ function renderSidebar() {
       on: { click: () => { state.selectedList = list.id; state.selectedGroup = null; state.view = 'tasks'; render(); renderSidebar(); } },
     }, list.name,
       el('div', { class: 'lni-right' },
-        el('div', { class: 'lni-actions' }, renameBtn, moveGroupBtn, deleteBtn),
+        el('div', { class: 'lni-actions' }, moveGroupBtn, renameBtn, deleteBtn),
         count ? el('span', { class: 'lni-count' }, count) : null,
       ),
     );

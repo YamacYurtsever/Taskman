@@ -597,6 +597,7 @@ body {
 .task-right {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: var(--sp-sm);
   opacity: 0;
   transition: opacity var(--animation-d);
@@ -606,7 +607,7 @@ body {
 .task-edit-actions {
   display: flex;
   flex-direction: row;
-  gap: var(--sp);
+  gap: var(--sp-sm);
 }
 
 .task-row:hover .task-right,
