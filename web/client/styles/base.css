@@ -7,24 +7,24 @@
   --green-bg:     oklch(48% 0.14 148 / 0.1);
   --red:          oklch(50% 0.17 22);
   --red-bg:       oklch(65% 0.17 22 / 0.1);
-  --amber:        oklch(60% 0.14 75);
-  --amber-bg:     oklch(60% 0.14 75 / 0.1);
+  --yellow:        oklch(63.652% 0.12987 75.411);
+  --yellow-bg:     oklch(61.473% 0.12953 72.842 / 0.1);
+  --animation-d:  var(--animation-d);
   --font-sans:    'Nunito', sans-serif;
+  --fs-title:     1.4rem;
+  --fs-sm:        0.9rem;
+  --fs-xs:        0.8rem;
   --sidebar-w:    250px;
+  --nav-indent:   15px;
   --topbar-h:     70px;
   --card-max-w:   250px;
   --focused-w:    500px;
   --daysheet-w:   500px;
   --sp:           10px;
   --sp-sm:        5px;
-  --nav-indent:   12px;
   --r:            10px;
   --r-sm:         3px;
-  --btn-sz:       15px;
-  --fs-title:     1.4rem;
-  --fs-sm:        0.9rem;
-  --fs-xs:        0.8rem;
-  --animation-d:  var(--animation-d);
+  --btn-w:       15px;
   --logo-w:       25px;
 }
 
