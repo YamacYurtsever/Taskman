@@ -65,11 +65,6 @@
   background: var(--primary-bg);
 }
 
-.list-nav-item.active {
-  color: var(--accent);
-  background: var(--accent-bg);
-}
-
 .list-nav-item.nav-top {
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -103,6 +98,11 @@
 
 .list-nav-item:hover .lni-actions {
   display: flex;
+}
+
+.list-nav-item.active {
+  color: var(--accent);
+  background: var(--accent-bg);
 }
 
 .lni-right {
