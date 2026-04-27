@@ -243,7 +243,7 @@ function renderSidebar() {
           if (ev.key === 'Enter') save();
           if (ev.key === 'Escape') refresh();
         });
-        const saveBtn = el('button', { class: 'lni-action', title: 'Save', on: { click: save } }, icon(IC.check, 10));
+        const saveBtn = el('button', { class: 'lni-action sav', title: 'Save', on: { click: save } }, icon(IC.check, 10));
         const delBtn  = el('button', { class: 'lni-action lni-del', title: 'Delete',
           on: { click: () => { if (confirm(`Delete list "${list.name}" and all its tasks?`)) act(API.deleteList, { list: list.name }); } }
         }, icon(IC.delete, 10));
@@ -317,7 +317,7 @@ function renderSidebar() {
           if (ev.key === 'Enter') save();
           if (ev.key === 'Escape') refresh();
         });
-        const saveBtn = el('button', { class: 'lni-action', title: 'Save', on: { click: save } }, icon(IC.check, 10));
+        const saveBtn = el('button', { class: 'lni-action sav', title: 'Save', on: { click: save } }, icon(IC.check, 10));
         const delBtn  = el('button', { class: 'lni-action lni-del', title: 'Delete group',
           on: { click: () => { if (confirm(`Delete group "${g.name}"? Lists will be ungrouped.`)) act(API.deleteGroup, { group: g.name }); } }
         }, icon(IC.delete, 10));

@@ -170,6 +170,11 @@ body {
   background: var(--red-light);
 }
 
+.lni-action.sav:hover {
+  color: var(--green);
+  background: var(--green-bg);
+}
+
 .lni-rename-row {
   cursor: default;
 }
