@@ -461,7 +461,7 @@ function taskRow(task, listName) {
       dueEl,
     ),
     el('div', { class: 'task-right' },
-      el('div', { class: 'task-edit-actions' }, editBtn, moveBtn),
+      el('div', { class: 'task-edit-actions' }, moveBtn, editBtn),
       deleteBtn,
     ),
   );
