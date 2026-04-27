@@ -603,6 +603,12 @@ body {
   flex-shrink: 0;
 }
 
+.task-edit-actions {
+  display: flex;
+  flex-direction: row;
+  gap: var(--sp);
+}
+
 .task-row:hover .task-right,
 .task-row:focus-within .task-right,
 .task-row:hover .task-left .task-btn,

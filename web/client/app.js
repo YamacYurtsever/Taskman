@@ -460,7 +460,10 @@ function taskRow(task, listName) {
       el('span', { class: 'task-name' }, task.name),
       dueEl,
     ),
-    el('div', { class: 'task-right' }, editBtn, moveBtn, deleteBtn),
+    el('div', { class: 'task-right' },
+      el('div', { class: 'task-edit-actions' }, editBtn, moveBtn),
+      deleteBtn,
+    ),
   );
   return row;
 }
