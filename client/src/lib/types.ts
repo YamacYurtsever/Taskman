@@ -1,17 +1,17 @@
-export type TaskFilter = 'all' | 'week' | 'day';
+type TaskFilter = 'all' | 'week' | 'day';
 
-export type Group = {
+type Group = {
   id: string;
   name: string;
 };
 
-export type TaskList = {
+type TaskList = {
   id: string;
   name: string;
   groupId: string | null;
 };
 
-export type Task = {
+type Task = {
   id: string;
   name: string;
   listId: string;
@@ -19,18 +19,18 @@ export type Task = {
   done: string | null;
 };
 
-export type StateResponse = {
+type StateResponse = {
   groups: Group[];
   lists: TaskList[];
   tasks: Task[];
   today: string;
 };
 
-export type ConfigResponse = {
+type ConfigResponse = {
   calendarUrl: string;
 };
 
-export type DaysheetEntry = {
+type DaysheetEntry = {
   id: string;
   datetime: string;
   listId: string;
@@ -42,12 +42,24 @@ export type DaysheetEntry = {
   inGroup: boolean;
 };
 
-export type DaysheetResponse = {
+type DaysheetResponse = {
   date: string;
   entries: DaysheetEntry[];
 };
 
-export type ApiResult = {
+type ApiResult = {
   ok: boolean;
   message: string;
+};
+
+export type {
+  TaskFilter,
+  Group,
+  TaskList,
+  Task,
+  StateResponse,
+  ConfigResponse,
+  DaysheetEntry,
+  DaysheetResponse,
+  ApiResult,
 };

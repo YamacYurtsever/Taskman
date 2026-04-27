@@ -23,10 +23,13 @@ flask --app server run -p 5050
 After changes to the frontend source, advise the user to rebuild:
 
 ```bash
+cd client && npm run lint
 cd client && npm run build
 ```
 
 Then hard-refresh with Cmd+Shift+R.
+
+Frontend changes should leave both lint and build passing.
 
 ---
 
@@ -52,16 +55,21 @@ taskman/
       utils.py          Shared test fixtures and DB patching helpers
     pytest.ini          Pytest config (pythonpath, testpaths)
   client/               Vite + React + TypeScript frontend
+    style.css           Global tokens, themes, reset, layout, shared utilities
     src/
-      App.tsx           Root component, routing, state
+      App.tsx           Root component and route composition
       App.module.css    Layout styles (content wrapper, main, calendar iframe)
-      views/            CalendarView, DaysheetView, TasksView (each with .module.css)
-      components/       Sidebar, Topbar, ThemeToggle, InlineAdd, icons (each with .module.css)
+      main.tsx          React entry point, imports global styles
+      action-button.css Shared global action-button styles (`.action-btn`)
+      views/            Route-level screens: CalendarView, DaysheetView, CardsView, FocusedView
+      components/       Reusable UI
+        Sidebar/        Sidebar shell, nav, list/group rows, shared sidebar types
+        tasks/          TaskRow, TaskCard, AddTaskForm, shared task types/styles
+        Topbar.tsx      Filter pills and theme toggle container
+        ThemeToggle.tsx Theme switcher
+        icons.tsx       Shared icon components
+      hooks/            App-level React hooks (for example `useAppData`)
       lib/              api.ts, types.ts, utils.ts
-    styles/
-      style.css         Global entry point (imports base.css)
-      base.css          CSS tokens, resets, body, shared .task-btn utility
-    static/             Static assets (logo, etc.)
     index.html
     vite.config.ts
     tsconfig.json
@@ -82,7 +90,8 @@ taskman/
 - The Flask server currently exposes API routes only; it does not serve the frontend bundle.
 - The frontend is built with Vite. In dev mode, Vite proxies `/api` to the Flask server on port 5050.
 - Routing uses React Router (`BrowserRouter`).
-- Styles use CSS Modules per component (`.module.css` co-located with each `.tsx`). Global tokens and the shared `.task-btn` utility live in `styles/base.css`.
+- Frontend organization is route-oriented: route screens live in `client/src/views/`, reusable UI lives in `client/src/components/`, shared hooks live in `client/src/hooks/`, and generic helpers/types live in `client/src/lib/`.
+- Styles use CSS Modules for feature/component-local styling. Global tokens and layout styles live in `client/style.css`, and the shared `.action-btn` utility lives in `client/src/action-button.css`.
 
 ---
 
@@ -115,9 +124,10 @@ taskman/
 
 - **Backend:** Python, Flask
 - **Frontend:** Vite + React + TypeScript, React Router
-- **Styling:** CSS Modules (per component) + global `base.css`
+- **Styling:** CSS Modules + global `client/style.css` + shared `client/src/action-button.css`
 - **Storage:** JSON flat file (`~/.taskman/db.json`)
 - **Tests:** `python -m pytest server/ -v`
+- **Frontend lint:** `cd client && npm run lint`
 - **Frontend build:** `cd client && npm run build`
 - **Dead code check:** `python -m vulture server --min-confidence 80`
 - **CI:** `.github/workflows/ci.yml` — installs deps, builds frontend, runs tests and Vulture

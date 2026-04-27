@@ -4,7 +4,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--sp-lg);
 }
 
 .daysheetHeader {
@@ -21,10 +21,10 @@
 .dateNav {
   display: flex;
   align-items: stretch;
+  overflow: hidden;
   background: var(--primary);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  overflow: hidden;
 }
 
 .dateNavBtn {
@@ -32,43 +32,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 0;
   background: transparent;
-  border: none;
   color: var(--text-2);
   cursor: pointer;
   transition: color var(--animation-d), background var(--animation-d);
 }
 
 .dateNavBtn:first-child { border-right: 1px solid var(--border); }
-.dateNavBtn:last-child  { border-left:  1px solid var(--border); }
-.dateNavBtn:hover       { color: var(--text-1); background: var(--primary-bg); }
+.dateNavBtn:last-child { border-left: 1px solid var(--border); }
+.dateNavBtn:hover { color: var(--text-1); background: var(--primary-bg); }
 
 .dateNavLabel {
   flex: 1;
   min-width: 100px;
   padding: var(--sp-sm);
-  text-align: center;
-  font-size: var(--fs-sm);
-  font-weight: 500;
   color: var(--text-1);
+  font-size: var(--fs);
+  font-weight: 500;
+  text-align: center;
 }
 
-.timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
+.timeline,
 .timelineGroup {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--sp-lg);
 }
 
 .timelineGroupName {
+  color: var(--text-2);
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-2);
 }
 
 .timelineEntry {
@@ -78,74 +73,56 @@
 }
 
 .timelineTime {
+  min-width: 40px;
   flex-shrink: 0;
-  min-width: 42px;
   padding-top: 2px;
-  font-size: 0.73rem;
   color: var(--text-3);
+  font-size: var(--fs-xs);
 }
-
-.timelineBadge {
-  flex-shrink: 0;
-  margin-top: 1px;
-  padding: 2px 6px;
-  border-radius: var(--r-sm);
-  font-size: 0.67rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.timelineBadge.log      { background: var(--primary-bg); color: var(--text-2); }
-.timelineBadge.done     { background: var(--green-bg);   color: var(--green); }
-.timelineBadge.continue { background: var(--accent-bg);  color: var(--accent); }
 
 .timelineText {
   flex: 1;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  font-size: var(--fs-sm);
   color: var(--text-1);
+  font-size: var(--fs);
 }
 
 .timelineListTag {
-  font-size: 0.7rem;
   color: var(--text-3);
+  font-size: var(--fs-xs);
 }
 
 .timelineActions {
   display: flex;
-  gap: var(--sp-sm);
   flex-shrink: 0;
+  gap: var(--sp-sm);
 }
 
-.timelineDel {
-  width: 20px;
-  height: 20px;
+.timelineAction {
+  width: var(--timeline-action-w);
+  height: var(--timeline-action-w);
   opacity: 0;
   transition: color var(--animation-d), background var(--animation-d), opacity var(--animation-d);
 }
 
-.timelineEntry:hover .timelineDel {
-  opacity: 1;
-}
-
-.timelineEditRow .timelineDel {
+.timelineEntry:hover .timelineAction,
+.timelineEditRow .timelineAction {
   opacity: 1;
 }
 
 .timelineEditInput {
   flex: 1;
   min-width: 0;
-  background: transparent;
-  border: none;
+  padding: 1px 0;
+  border: 0;
   border-bottom: 1.5px solid var(--accent);
+  outline: 0;
+  background: transparent;
   color: var(--text-1);
   font: inherit;
-  font-size: var(--fs-sm);
-  outline: none;
-  padding: 1px 0;
+  font-size: var(--fs);
 }
 
 .logForm {
@@ -160,46 +137,44 @@
 }
 
 .logForm:focus-within {
-  border: 1.5px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.logForm select,
+.logForm input[type="text"] {
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--border);
+  outline: 0;
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--fs);
 }
 
 .logForm select {
-  flex-shrink: 0;
   max-width: 130px;
+  flex-shrink: 0;
   padding-right: var(--sp);
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--border);
   color: var(--text-2);
-  font: inherit;
-  font-size: var(--fs-sm);
-  outline: none;
 }
 
-.logForm input[type=text] {
+.logForm input[type="text"] {
   flex: 1;
   padding-right: var(--sp);
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--border);
-  color: var(--text-1);
-  font: inherit;
-  font-size: var(--fs-sm);
-  outline: none;
 }
 
-.logForm input[type=text]::placeholder {
+.logForm input[type="text"]::placeholder {
   color: var(--text-3);
 }
 
 .logFormBtn {
-  background: none;
-  border: none;
-  color: var(--text-3);
-  cursor: pointer;
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
   transition: color var(--animation-d);
 }
 

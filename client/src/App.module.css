@@ -1,27 +1,34 @@
 .content {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-width: 0;
 }
 
 .main {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: var(--sp);
+  padding: var(--main-padding);
+  overflow-y: auto;
 }
 
 .calendarFrame {
   flex: 1;
   width: 100%;
-  border: none;
-  border-radius: var(--r);
+  min-height: 0;
+  display: block;
+  border: 0;
+  border-radius: var(--r-lg);
 }
 
+.calendarFrame[hidden] {
+  display: none;
+}
+
+/* Dark mode hack for embedded calendar */
 :global([data-theme="dark"]) .calendarFrame {
   filter: invert(1) hue-rotate(180deg);
 }

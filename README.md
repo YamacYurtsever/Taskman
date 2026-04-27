@@ -39,6 +39,29 @@ The Flask server only exposes `/api` routes. It does not currently serve the fro
 
 ---
 
+## Frontend Structure
+
+The client is organized by role:
+
+- `client/src/views/` contains route-level screens:
+  - `CardsView.tsx` for `/tasks`
+  - `FocusedView.tsx` for `/list/:listId`
+  - `DaysheetView.tsx` for `/daysheet`
+  - `CalendarView.tsx` for `/calendar`
+- `client/src/components/` contains reusable UI:
+  - `Sidebar/` for sidebar-specific pieces
+  - `tasks/` for reusable task UI like `TaskRow`, `TaskCard`, and `AddTaskForm`
+- `client/src/hooks/` contains app-level hooks like `useAppData`
+- `client/src/lib/` contains shared API/types/utilities
+
+Styling is split between:
+
+- `client/style.css` for global tokens, themes, reset, and app-wide layout
+- CSS Modules for component/view-local styles
+- `client/src/action-button.css` for the shared global `.action-btn` action button primitive
+
+---
+
 ## Calendar Config
 
 Create `~/.taskman/config.json` to configure which calendars appear in the embedded Google Calendar view:

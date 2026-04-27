@@ -1,45 +1,81 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren, SVGProps } from 'react';
 
-type IconProps = {
+type IconProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
-function Icon({ children, size = 12 }: PropsWithChildren<IconProps>) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      {children}
-    </svg>
-  );
-}
+const Icon = ({ children, size = 12, ...rest }: PropsWithChildren<IconProps>) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...rest}
+  >
+    {children}
+  </svg>
+);
 
-export function CheckIcon(props: IconProps) {
-  return <Icon {...props}><path d="M3 8.5l3 3L13 5" /></Icon>;
-}
+const CheckIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 8.5l3 3L13 5" />
+  </Icon>
+);
 
-export function DeleteIcon(props: IconProps) {
-  return <Icon {...props}><path d="M3 3l10 10M13 3L3 13" /></Icon>;
-}
+const DeleteIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 3l10 10M13 3L3 13" />
+  </Icon>
+);
 
-export function ContinueIcon(props: IconProps) {
-  return <Icon {...props}><path d="M4 4l4 4-4 4" /><path d="M9 4l4 4-4 4" /></Icon>;
-}
+const ContinueIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 4l4 4-4 4" />
+    <path d="M9 4l4 4-4 4" />
+  </Icon>
+);
 
-export function ChevronLeftIcon(props: IconProps) {
-  return <Icon {...props}><path d="M10 12L6 8l4-4" /></Icon>;
-}
+const ChevronLeftIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M10 12L6 8l4-4" />
+  </Icon>
+);
 
-export function ChevronRightIcon(props: IconProps) {
-  return <Icon {...props}><path d="M6 4l4 4-4 4" /></Icon>;
-}
+const ChevronRightIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M6 4l4 4-4 4" />
+  </Icon>
+);
 
-export function PlusIcon(props: IconProps) {
-  return <Icon {...props}><path d="M8 3v10M3 8h10" /></Icon>;
-}
+const PlusIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M8 3v10M3 8h10" />
+  </Icon>
+);
 
-export function EditIcon(props: IconProps) {
-  return <Icon {...props}><path d="M12 2l2 2-9 9-3 1 1-3 9-9z" /></Icon>;
-}
+const EditIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 2l2 2-9 9-3 1 1-3 9-9z" />
+  </Icon>
+);
 
-export function MoveIcon(props: IconProps) {
-  return <Icon {...props}><path d="M3 8h10M9 4l4 4-4 4" /></Icon>;
-}
+const MoveIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 8h10M9 4l4 4-4 4" />
+  </Icon>
+);
+
+export {
+  CheckIcon,
+  DeleteIcon,
+  ContinueIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PlusIcon,
+  EditIcon,
+  MoveIcon,
+};

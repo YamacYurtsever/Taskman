@@ -53,7 +53,7 @@
 }
 
 .cardCount {
-  font-size: 0.7rem;
+  font-size: var(--fs-xs);
   color: var(--text-2);
 }
 
@@ -74,7 +74,7 @@
   border: none;
   color: var(--text-3);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs);
   cursor: pointer;
   transition: color var(--animation-d);
 }
@@ -144,7 +144,7 @@
 
 .taskName {
   font-family: var(--font-sans);
-  font-size: var(--fs-sm);
+  font-size: var(--fs);
   font-weight: 500;
   line-height: 1;
   word-break: break-word;
@@ -188,14 +188,14 @@
   opacity: 1;
 }
 
-/* task-btn is global; scope opacity toggle here */
-.taskLeft :global(.task-btn) {
+/* action-btn is global; scope opacity toggle here */
+.taskLeft :global(.action-btn) {
   opacity: 0;
   transition: opacity var(--animation-d);
 }
 
-.taskRow:hover .taskLeft :global(.task-btn),
-.taskRow:focus-within .taskLeft :global(.task-btn) {
+.taskRow:hover .taskLeft :global(.action-btn),
+.taskRow:focus-within .taskLeft :global(.action-btn) {
   opacity: 1;
 }
 
@@ -229,7 +229,7 @@
   border-bottom: 1.5px solid var(--accent);
   color: var(--text-1);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs);
   font-weight: 500;
   outline: none;
   padding: 1px 0;
@@ -241,7 +241,7 @@
   border-bottom: 1.5px solid var(--border);
   color: var(--text-2);
   font: inherit;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   outline: none;
   color-scheme: light;
 }
@@ -259,7 +259,7 @@
   border-bottom: 1.5px solid var(--accent);
   color: var(--text-1);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs);
   outline: none;
   cursor: pointer;
 }
@@ -288,7 +288,7 @@
 }
 
 .focusedMeta {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 
@@ -312,7 +312,7 @@
   border: none;
   color: var(--text-3);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs);
   cursor: pointer;
   transition: color var(--animation-d);
 }
@@ -354,7 +354,7 @@
   color: var(--text-1);
   font: inherit;
   font-family: var(--font-sans);
-  font-size: var(--fs-sm);
+  font-size: var(--fs);
   outline: none;
 }
 
@@ -369,7 +369,7 @@
   padding-right: var(--sp);
   color: var(--text-2);
   font: inherit;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   outline: none;
   width: 130px;
   color-scheme: light;

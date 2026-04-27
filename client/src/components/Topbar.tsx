@@ -8,29 +8,40 @@ type TopbarProps = {
   setFilter: (filter: TaskFilter) => void;
 };
 
-export function Topbar({ filter, setFilter }: TopbarProps) {
-  const location = useLocation();
-  const showFilter = location.pathname === '/tasks' || location.pathname.startsWith('/list/');
-  const filters: TaskFilter[] = ['all', 'week', 'day'];
+const filters: TaskFilter[] = ['all', 'week', 'day'];
+
+const label = (f: TaskFilter) =>
+  f[0].toUpperCase() + f.slice(1);
+
+const Topbar = ({ filter, setFilter }: TopbarProps) => {
+  const { pathname } = useLocation();
+
+  const showFilter =
+    pathname === '/tasks' || pathname.startsWith('/list/');
 
   return (
     <div className={styles.topbar}>
-      <div>
-        {showFilter && (
-          <div className={styles.filterPills}>
-            {filters.map(f => (
-              <button
-                key={f}
-                className={[styles.filterPill, filter === f ? styles.active : ''].filter(Boolean).join(' ')}
-                onClick={() => setFilter(f)}
-              >
-                {f[0].toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {showFilter && (
+        <div className={styles.filterPills}>
+          {filters.map(f => (
+            <button
+              key={f}
+              className={
+                filter === f
+                  ? `${styles.filterPill} ${styles.active}`
+                  : styles.filterPill
+              }
+              onClick={() => setFilter(f)}
+            >
+              {label(f)}
+            </button>
+          ))}
+        </div>
+      )}
+
       <ThemeToggle />
     </div>
   );
-}
+};
+
+export { Topbar };

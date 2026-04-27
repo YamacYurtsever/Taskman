@@ -1,0 +1,145 @@
+/* ──────────────────────────── Tokens ─────────────────────────── */
+
+:root {
+  /* Accent colors */
+  --green:        oklch(48% 0.14 148);
+  --green-bg:     oklch(48% 0.14 148 / 0.1);
+  --red:          oklch(50% 0.17 22);
+  --red-bg:       oklch(65% 0.17 22 / 0.1);
+  --yellow:       oklch(63.65% 0.13 75.4);
+  --yellow-bg:    oklch(61.47% 0.13 72.8 / 0.1);
+
+  /* Typography */
+  --font-sans:    'Nunito', sans-serif;
+  --fs-title:     1.4rem;
+  --fs:           0.9rem;
+  --fs-sm:        0.8rem;
+  --fs-xs:        0.7rem;
+
+  /* Layout */
+  --sidebar-w:    250px;
+  --topbar-h:     70px;
+  --card-max-w:   250px;
+  --focused-w:    500px;
+  --daysheet-w:   500px;
+  --nav-indent:   15px;
+  --main-padding: 20px;
+
+  /* Spacing */
+  --sp-lg:        20px;
+  --sp:           10px;
+  --sp-sm:        5px;
+
+  /* Radius */
+  --r-lg:         20px;
+  --r:            10px;
+  --r-sm:         3px;
+
+  /* Misc */
+  --btn-w:             15px;
+  --sidebar-action-w:  15px;
+  --timeline-action-w: 20px;
+  --logo-w:            25px;
+  --theme-w:           35px;
+  --animation-d:       0.15s;
+
+  /* Default theme fallback (important) */
+  --bg:           #f6f3ee;
+  --primary:      #fbfaf8;
+  --primary-bg:   #f5f0e7;
+  --border:       #ddd4c7;
+  --text-1:       #2a2622;
+  --text-2:       #6f665c;
+  --text-3:       #a59a8f;
+  --accent:       #5b6cff;
+  --accent-bg:    #5b6cff1a;
+}
+
+/* ──────────────────────────── Themes ─────────────────────────── */
+
+[data-theme="light"] {
+  --bg:           #f6f3ee;
+  --primary:      #fbfaf8;
+  --primary-bg:   #f5f0e7;
+  --border:       #ddd4c7;
+  --text-1:       #2a2622;
+  --text-2:       #6f665c;
+  --text-3:       #a59a8f;
+  --accent:       #5b6cff;
+  --accent-bg:    #5b6cff1a;
+}
+
+[data-theme="dark"] {
+  --bg:           #121212;
+  --primary:      #1b1b1b;
+  --primary-bg:   #232323;
+  --border:       #2f2f2f;
+  --text-1:       #ece7df;
+  --text-2:       #a8a29a;
+  --text-3:       #6b645d;
+  --accent:       #7a8cff;
+  --accent-bg:    #7a8cff1a;
+}
+
+/* ──────────────────────────── Reset ─────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 18px;
+}
+
+/* ──────────────────────────── Base Layout ─────────────────────────── */
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+
+  background: var(--bg);
+  color: var(--text-1);
+
+  height: 100dvh;
+  display: flex;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+/* ──────────────────────────── Utilities ─────────────────────────── */
+
+.empty {
+  color: var(--text-3);
+  font-size: var(--fs);
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ──────────────────────────── Scrollbar ─────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+}

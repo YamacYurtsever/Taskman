@@ -4,13 +4,13 @@
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
   position: relative;
+  flex-shrink: 0;
 }
 
 .filterPills {
   display: flex;
-  padding: 7px;
+  padding: var(--sp-sm);
   background: var(--primary);
   border: 1px solid var(--border);
   border-radius: var(--r);
@@ -18,22 +18,28 @@
 
 .filterPill {
   padding: var(--sp-sm) var(--sp);
-  border: none;
+  border: 0;
+  border-radius: var(--r);
   background: transparent;
   color: var(--text-2);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs);
   font-weight: 500;
-  border-radius: var(--r);
   cursor: pointer;
   transition: color var(--animation-d), background var(--animation-d);
 }
 
 .filterPill:hover {
   color: var(--text-1);
+  background: var(--primary-bg);
 }
 
 .filterPill.active {
   background: var(--accent-bg);
   color: var(--accent);
+}
+
+.filterPill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

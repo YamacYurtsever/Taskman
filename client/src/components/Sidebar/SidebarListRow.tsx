@@ -1,0 +1,190 @@
+import { useState } from 'react';
+import type { KeyboardEvent } from 'react';
+import { API } from '../../lib/api';
+import { MSG, cx, sortByName, stop } from '../../lib/utils';
+import { CheckIcon, DeleteIcon, EditIcon, MoveIcon } from '../icons';
+import styles from './Sidebar.module.css';
+import type { Action, ListRowProps } from './Sidebar.shared';
+
+const submitOnEnter =
+  (save: () => void, cancel: () => void) =>
+  (e: KeyboardEvent) => {
+    if (e.key === 'Enter') save();
+    if (e.key === 'Escape') cancel();
+  };
+
+const SaveAction = ({ title, onClick }: { title: string; onClick: () => void }) => (
+  <div className={styles.right}>
+    <div className={styles.actions}>
+      <button className={cx(styles.action, styles.sav)} title={title} onClick={onClick}>
+        <CheckIcon />
+      </button>
+    </div>
+  </div>
+);
+
+const SidebarListRow = ({
+  dataGroups,
+  filterCount,
+  isActive,
+  isEditing,
+  isMoving,
+  list,
+  onDelete,
+  onEdit,
+  onMove,
+  onSelect,
+  act,
+  cancel,
+}: ListRowProps) => {
+  if (isEditing) {
+    return <RenameListRow list={list} act={act} cancel={cancel} />;
+  }
+
+  if (isMoving) {
+    return <MoveListRow list={list} groups={dataGroups} act={act} cancel={cancel} />;
+  }
+
+  return (
+    <button
+      className={cx(styles.navItem, styles.navList, isActive && styles.active)}
+      onClick={onSelect}
+    >
+      {list.name}
+
+      <div className={styles.right}>
+        <div className={styles.actions}>
+          {dataGroups.length > 0 && (
+            <button
+              className={cx(styles.action, styles.mov)}
+              title="Move to group"
+              onClick={stop(onMove)}
+            >
+              <MoveIcon />
+            </button>
+          )}
+
+          <button className={cx(styles.action, styles.edt)} title="Rename" onClick={stop(onEdit)}>
+            <EditIcon />
+          </button>
+
+          <button className={cx(styles.action, styles.del)} title="Delete" onClick={stop(onDelete)}>
+            <DeleteIcon />
+          </button>
+        </div>
+
+        {filterCount > 0 && <span className={styles.count}>{filterCount}</span>}
+      </div>
+    </button>
+  );
+};
+
+type RenameListRowProps = {
+  list: ListRowProps['list'];
+  act: Action;
+  cancel: () => void;
+};
+
+const RenameListRow = ({ list, act, cancel }: RenameListRowProps) => {
+  const [name, setName] = useState(list.name);
+
+  const save = () => {
+    const newName = name.trim();
+
+    if (newName && newName !== list.name) {
+      act(API.renameList, { list: list.name, newName });
+    } else {
+      cancel();
+    }
+  };
+
+  return (
+    <div className={cx(styles.navItem, styles.navList, styles.renameRow)}>
+      <input
+        autoFocus
+        autoComplete="off"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={submitOnEnter(save, cancel)}
+      />
+
+      <SaveAction title="Save" onClick={save} />
+    </div>
+  );
+};
+
+type MoveListRowProps = {
+  list: ListRowProps['list'];
+  groups: ListRowProps['dataGroups'];
+  act: Action;
+  cancel: () => void;
+};
+
+const MoveListRow = ({ list, groups, act, cancel }: MoveListRowProps) => {
+  const currentGroup = groups.find(group => group.id === list.groupId);
+  const [group, setGroup] = useState(currentGroup?.name ?? '');
+
+  const save = async () => {
+    await act(API.moveList, { list: list.name, group });
+    cancel();
+  };
+
+  return (
+    <div className={cx(styles.navItem, styles.navList, styles.moveRow)}>
+      <select
+        autoFocus
+        className={styles.moveSelect}
+        value={group}
+        onChange={e => setGroup(e.target.value)}
+      >
+        <option value="">No group</option>
+        {sortByName(groups).map(group => (
+          <option key={group.id} value={group.name}>
+            {group.name}
+          </option>
+        ))}
+      </select>
+
+      <SaveAction title="Save" onClick={save} />
+    </div>
+  );
+};
+
+type SidebarNewListRowProps = {
+  act: Action;
+  cancel: () => void;
+};
+
+const SidebarNewListRow = ({ act, cancel }: SidebarNewListRowProps) => {
+  const [name, setName] = useState('');
+
+  const save = () => {
+    const trimmed = name.trim();
+
+    if (trimmed) {
+      act(API.addList, { list: trimmed });
+    } else {
+      cancel();
+    }
+  };
+
+  return (
+    <div className={cx(styles.newListInput, styles.renameRow, styles.navItem)}>
+      <input
+        autoFocus
+        autoComplete="off"
+        placeholder={MSG.listName}
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={submitOnEnter(save, cancel)}
+      />
+
+      <SaveAction title="Add" onClick={save} />
+    </div>
+  );
+};
+
+export {
+  SidebarListRow,
+  SidebarNewListRow,
+};
