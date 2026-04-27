@@ -1,0 +1,6 @@
+flask
+flask-session
+pytest
+vulture
+google-auth-oauthlib
+google-api-python-client

@@ -7,6 +7,7 @@ from pathlib import Path
 TASKMAN_DIR = Path.home() / ".taskman"
 CONFIG_PATH = TASKMAN_DIR / "config.json"
 DB_PATH = TASKMAN_DIR / "db.json"
+SESSIONS_PATH = TASKMAN_DIR / "sessions"
 
 
 # ─────────────────────────── Defaults ───────────────────────────
