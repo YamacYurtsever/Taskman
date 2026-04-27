@@ -212,7 +212,8 @@
   padding-left: var(--nav-indent);
 }
 
-.new-list-btn {
+.new-list-btn,
+.new-list-input {
   width: 100%;
   padding: var(--sp-sm);
   background: transparent;
@@ -221,12 +222,30 @@
   color: var(--text-3);
   font: inherit;
   font-size: var(--fs-xs);
+}
+
+.new-list-btn {
   cursor: pointer;
   text-align: left;
   transition: color var(--animation-d), border-color var(--animation-d);
 }
 
 .new-list-btn:hover {
+  color: var(--text-2);
+  border-color: var(--text-2);
+}
+
+.new-list-input.list-nav-item:hover {
+  background: transparent;
+}
+
+.new-list-input {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+
+.new-list-input:hover {
   color: var(--text-2);
   border-color: var(--text-2);
 }
