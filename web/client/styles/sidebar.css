@@ -139,6 +139,11 @@
 .lni-action.sav:hover   { color: var(--green);  background: var(--green-bg); }
 .lni-action.mov:hover   { color: var(--accent); background: var(--accent-bg); }
 
+.lni-rename-row, .lni-move-row {
+  display: flex;
+  gap: var(--sp);
+}
+
 .lni-rename-row {
   cursor: default;
   overflow: visible;
