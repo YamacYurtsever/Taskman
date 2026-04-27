@@ -112,6 +112,18 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
+  cursor: pointer;
+}
+
+.taskNameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+
+.noteIcon {
+  color: var(--text-3);
+  flex-shrink: 0;
 }
 
 .taskLeft {
