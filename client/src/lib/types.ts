@@ -53,6 +53,10 @@ type ApiResult = {
   message: string;
 };
 
+type AuthStatusResponse = {
+  authenticated: boolean;
+};
+
 export type {
   TaskFilter,
   Group,
@@ -63,4 +67,5 @@ export type {
   DaysheetEntry,
   DaysheetResponse,
   ApiResult,
+  AuthStatusResponse,
 };

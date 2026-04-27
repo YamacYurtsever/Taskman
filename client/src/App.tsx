@@ -17,12 +17,14 @@ import { Topbar } from './components/Topbar';
 import { useAppData } from './hooks/useAppData';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useIsNarrow } from './hooks/useIsNarrow';
+import { api, setUnauthorizedHandler } from './lib/api';
 import type { StateResponse, Task, TaskFilter } from './lib/types';
 import { cx } from './lib/utils';
 import { CalendarView } from './views/CalendarView';
 import { CardsView } from './views/CardsView';
 import { DaysheetView } from './views/DaysheetView';
 import { FocusedView } from './views/FocusedView';
+import { LoginView } from './views/LoginView';
 
 type Action = (path: string, body: unknown) => Promise<void>;
 
@@ -70,13 +72,22 @@ const ListRoute = ({ data, filter, act, openDetail }: RouteProps) => {
   return <FocusedView data={data} listId={listId} filter={filter} act={act} openDetail={openDetail} />;
 };
 
-const App = () => {
+type AuthenticatedAppProps = {
+  onLogout: () => void;
+};
+
+const AuthenticatedApp = ({ onLogout }: AuthenticatedAppProps) => {
   const [filter, setFilter] = useState<TaskFilter>('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const { data, calendarUrl, act, refresh } = useAppData();
+  const { data, calendarUrl, act, refresh, logout } = useAppData();
   const isMobile = useIsMobile();
   const isNarrow = useIsNarrow();
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    onLogout();
+  }, [logout, onLogout]);
 
   const selectedTask = selectedTaskId && data
     ? (data.tasks.find(t => t.id === selectedTaskId) ?? null)
@@ -132,6 +143,7 @@ const App = () => {
           setFilter={setFilter}
           showMenuButton={isMobile}
           onMenuClick={() => setSidebarOpen(true)}
+          onLogout={handleLogout}
         />
         <main className={cx(styles.main, panelOpen && styles.mainWithPanel)}>
 
@@ -186,6 +198,21 @@ const App = () => {
       </div>
     </>
   );
+};
+
+const App = () => {
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => setAuthenticated(false));
+    api.authStatus().then(res => {
+      setAuthenticated(res?.authenticated ?? false);
+    });
+  }, []);
+
+  if (authenticated === null) return null;
+  if (!authenticated) return <LoginView />;
+  return <AuthenticatedApp onLogout={() => setAuthenticated(false)} />;
 };
 
 export type { Action };

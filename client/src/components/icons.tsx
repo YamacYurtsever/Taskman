@@ -83,6 +83,14 @@ const NoteIcon = (props: IconProps) => (
   </Icon>
 );
 
+const SignOutIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M6 3H4a1 1 0 00-1 1v8a1 1 0 001 1h2" />
+    <path d="M10 11l3-3-3-3" />
+    <path d="M6 8h7" />
+  </Icon>
+);
+
 export {
   CheckIcon,
   DeleteIcon,
@@ -94,4 +102,5 @@ export {
   MoveIcon,
   MenuIcon,
   NoteIcon,
+  SignOutIcon,
 };

@@ -64,3 +64,24 @@
   outline: var(--outline-w) solid var(--accent);
   outline-offset: var(--outline-offset);
 }
+
+.logoutBtn {
+  position: absolute;
+  right: calc(var(--sp) + var(--theme-w) + var(--sp-sm));
+  width: var(--theme-w);
+  height: var(--theme-w);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-w) solid var(--border);
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color var(--animation-d), background var(--animation-d), border-color var(--animation-d);
+}
+
+.logoutBtn:hover {
+  color: var(--text-1);
+  background: var(--primary-bg);
+}
