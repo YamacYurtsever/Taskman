@@ -19,21 +19,23 @@ cd client && npm install && npm run build
 ## Running
 
 ```bash
-python -m server
+flask --app server run -p 5050
 ```
 
-Opens `http://127.0.0.1:5050`.
+This starts the Flask API at `http://127.0.0.1:5050`.
 
 ```bash
-python -m server --port 8080 --debug
+flask --app server run -p 8080 --debug
 ```
 
 For frontend development, run both in parallel:
 
 ```bash
-python -m server
+flask --app server run -p 5050
 cd client && npm run dev
 ```
+
+The Flask server only exposes `/api` routes. It does not currently serve the frontend bundle.
 
 ---
 

@@ -1,427 +1,280 @@
-import copy
 import unittest
 from unittest.mock import patch
 
+from server.constants import DaysheetEntryType
 from server.services.tasks import (
-    cmd_add, cmd_delete, cmd_done, cmd_edit, cmd_move, cmd_undo,
+    add_task,
+    delete_task,
+    done_task,
+    edit_task,
+    move_task,
+    undo_task,
+)
+from server.tests.utils import (
+    assert_error,
+    assert_ok,
+    db_record,
+    daysheet_entry,
+    list_record,
+    saved_db,
+    task_record,
 )
 
-LIST_1 = {"id": "list-1", "name": "Work", "groupId": None}
-LIST_2 = {"id": "list-2", "name": "Personal", "groupId": None}
-TASK_1 = {"id": "task-1", "name": "Write report", "listId": "list-1", "due": None, "done": None}
-TASK_DONE = {"id": "task-2", "name": "Done task", "listId": "list-1", "due": None, "done": "2026-04-25"}
+
+LIST_1 = list_record(id="list-1", name="List A")
+LIST_2 = list_record(id="list-2", name="List B")
+TASK_1 = task_record(id="task-1", name="Task A", list_id="list-1")
+TASK_DONE = task_record(id="task-2", name="Task B", list_id="list-1", done="2026-04-25")
+
+TODAY = "2026-04-26"
+NOW_DT = "2026-04-26T10:00:00"
 
 
-def make_db(*tasks, lists=None):
-    return {
-        "groups": [],
-        "lists": [copy.deepcopy(l) for l in (lists or [LIST_1, LIST_2])],
-        "tasks": [copy.deepcopy(t) for t in tasks],
-        "daysheet": [],
-    }
+def make_db(*tasks, lists=None, daysheet=None):
+    return db_record(
+        lists=lists or [LIST_1, LIST_2],
+        tasks=tasks,
+        daysheet=daysheet or [],
+    )
 
 
-class TasksTest(unittest.TestCase):
+class TaskCreateTest(unittest.TestCase):
 
-    # --- add ---
+    def test_add_task_creates_task(self):
+        with (
+            saved_db(make_db()) as saved,
+            patch("server.db.new_id", return_value="new-id"),
+        ):
+            result = add_task("List A", "New task")
 
-    def test_add_creates_task(self):
-        db = make_db()
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_add(["Work", "New task"])
+        assert_ok(result)
 
-        self.assertEqual(len(saved["tasks"]), 1)
         task = saved["tasks"][0]
+        self.assertEqual(task["id"], "new-id")
         self.assertEqual(task["name"], "New task")
         self.assertEqual(task["listId"], "list-1")
         self.assertIsNone(task["due"])
         self.assertIsNone(task["done"])
 
-    def test_add_with_due_date(self):
-        db = make_db()
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_add(["Work", "New task", "2026-05-01"])
+    def test_add_task_with_due_date(self):
+        with (
+            saved_db(make_db()) as saved,
+            patch("server.db.new_id", return_value="new-id"),
+        ):
+            result = add_task("List A", "New task", "2026-05-01")
 
+        assert_ok(result)
         self.assertEqual(saved["tasks"][0]["due"], "2026-05-01")
 
-    def test_add_list_only(self):
-        db = make_db()
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_add(["NewList"])
+    def test_add_task_rejects_duplicate_name_in_same_list(self):
+        with saved_db(make_db(TASK_1)):
+            result = add_task("List A", "Task A")
 
-        list_names = [l["name"] for l in saved["lists"]]
-        self.assertIn("NewList", list_names)
-        self.assertEqual(len(saved["tasks"]), 0)
+        assert_error(result, "already exists")
 
-    def test_add_autocreates_list(self):
-        db = make_db(lists=[LIST_1])
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_add(["BrandNewList", "Some task"])
+    def test_add_task_rejects_unknown_list(self):
+        with saved_db(make_db()):
+            result = add_task("Missing List", "New task")
 
-        list_names = [l["name"] for l in saved["lists"]]
-        self.assertIn("BrandNewList", list_names)
+        assert_error(result, "not found")
 
-    def test_add_duplicate_errors(self):
-        db = make_db(TASK_1)
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_add(["Work", "Write report"])
+    def test_add_task_rejects_empty_name(self):
+        with saved_db(make_db()):
+            result = add_task("List A", "")
 
-    def test_add_invalid_date_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_add(["Work", "Task", "not-a-date"])
+        assert_error(result, "name is required")
 
-    # --- done ---
+    def test_add_task_rejects_invalid_due_date(self):
+        with saved_db(make_db()):
+            result = add_task("List A", "New task", "not-a-date")
 
-    def test_done_stamps_today(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.services.tasks.date") as mock_date:
-            mock_date.today.return_value.isoformat.return_value = "2026-04-26"
-            cmd_done(["Work", "Write report"])
+        assert_error(result, "invalid date")
 
-        self.assertEqual(saved["tasks"][0]["done"], "2026-04-26")
 
-    def test_done_unknown_list_errors(self):
-        db = make_db(TASK_1)
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_done(["NoSuchList", "Write report"])
+class TaskEditTest(unittest.TestCase):
 
-    def test_done_unknown_task_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_done(["Work", "No such task"])
+    def test_edit_task_renames_task(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = edit_task("List A", "Task A", "Renamed task")
 
-    def test_done_already_done_errors(self):
-        db = make_db(TASK_DONE)
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_done(["Work", "Done task"])
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["name"], "Renamed task")
 
-    # --- undo ---
+    def test_edit_task_changes_due_when_requested(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = edit_task(
+                "List A",
+                "Task A",
+                "Task A",
+                "2026-06-01",
+                update_due=True,
+            )
 
-    def test_undo_clears_done(self):
-        db = make_db(TASK_DONE)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_undo(["Work", "Done task"])
-
-        self.assertIsNone(saved["tasks"][0]["done"])
-
-    def test_undo_on_pending_errors(self):
-        db = make_db(TASK_1)
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_undo(["Work", "Write report"])
-
-    # --- edit ---
-
-    def test_edit_renames(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_edit(["Work", "Write report", "Write final report"])
-
-        self.assertEqual(saved["tasks"][0]["name"], "Write final report")
-
-    def test_edit_changes_due(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_edit(["Work", "Write report", "Write report", "2026-06-01"])
-
+        assert_ok(result)
         self.assertEqual(saved["tasks"][0]["due"], "2026-06-01")
 
-    def test_edit_omitting_date_preserves_due(self):
-        task = {**TASK_1, "due": "2026-05-01"}
-        db = make_db(task)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_edit(["Work", "Write report", "Renamed"])
+    def test_edit_task_clears_due_when_requested(self):
+        task = task_record(id="task-1", name="Task A", list_id="list-1", due="2026-05-01")
 
+        with saved_db(make_db(task)) as saved:
+            result = edit_task(
+                "List A",
+                "Task A",
+                "Task A",
+                None,
+                update_due=True,
+            )
+
+        assert_ok(result)
+        self.assertIsNone(saved["tasks"][0]["due"])
+
+    def test_edit_task_preserves_due_when_not_requested(self):
+        task = task_record(id="task-1", name="Task A", list_id="list-1", due="2026-05-01")
+
+        with saved_db(make_db(task)) as saved:
+            result = edit_task("List A", "Task A", "Renamed task")
+
+        assert_ok(result)
         self.assertEqual(saved["tasks"][0]["due"], "2026-05-01")
 
-    def test_edit_unknown_task_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_edit(["Work", "Ghost", "New name"])
+    def test_edit_task_rejects_duplicate_name(self):
+        task_2 = task_record(id="task-2", name="Task B", list_id="list-1")
 
-    def test_edit_renames_list(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_edit(["Work", "Career"])
+        with saved_db(make_db(TASK_1, task_2)):
+            result = edit_task("List A", "Task A", "Task B")
 
-        list_names = [l["name"] for l in saved["lists"]]
-        self.assertIn("Career", list_names)
-        self.assertNotIn("Work", list_names)
+        assert_error(result, "already exists")
 
-    def test_edit_renames_group(self):
-        group = {"id": "group-1", "name": "MyGroup"}
-        data = {
-            "groups": [group],
-            "lists": [LIST_1, LIST_2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_edit(["MyGroup", "NewGroup"])
+    def test_edit_task_rejects_unknown_task(self):
+        with saved_db(make_db()):
+            result = edit_task("List A", "Ghost task", "New name")
 
-        self.assertEqual(saved["groups"][0]["name"], "NewGroup")
+        assert_error(result, "not found")
 
-    def test_edit_rename_list_unknown_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_edit(["NoSuchList", "NewName"])
+    def test_edit_task_rejects_empty_new_name(self):
+        with saved_db(make_db(TASK_1)):
+            result = edit_task("List A", "Task A", "")
 
-    # --- move ---
+        assert_error(result, "name is required")
 
-    def test_move_changes_list(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_move(["Work", "Write report", "Personal"])
 
+class TaskMoveDeleteTest(unittest.TestCase):
+
+    def test_move_task_changes_list(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = move_task("List A", "Task A", "List B")
+
+        assert_ok(result)
         self.assertEqual(saved["tasks"][0]["listId"], "list-2")
 
-    def test_move_autocreates_dest_list(self):
-        db = make_db(TASK_1, lists=[LIST_1])
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_move(["Work", "Write report", "NewList"])
+    def test_move_task_rejects_duplicate_in_destination(self):
+        task_2 = task_record(id="task-2", name="Task A", list_id="list-2")
 
-        list_names = [l["name"] for l in saved["lists"]]
-        self.assertIn("NewList", list_names)
+        with saved_db(make_db(TASK_1, task_2)):
+            result = move_task("List A", "Task A", "List B")
 
-    def test_move_unknown_task_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_move(["Work", "Ghost", "Personal"])
+        assert_error(result, "already exists")
 
-    def test_move_list_to_group(self):
-        group = {"id": "group-1", "name": "MyGroup"}
-        data = {
-            "groups": [group],
-            "lists": [LIST_1, LIST_2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_move(["Work", "MyGroup"])
+    def test_move_task_rejects_unknown_task(self):
+        with saved_db(make_db()):
+            result = move_task("List A", "Ghost task", "List B")
 
-        work = next(l for l in saved["lists"] if l["name"] == "Work")
-        self.assertEqual(work["groupId"], "group-1")
+        assert_error(result, "not found")
 
-    def test_move_list_autocreates_group(self):
-        db = make_db(lists=[LIST_1, LIST_2])
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)), \
-             patch("server.db.new_id", return_value="new-id"):
-            cmd_move(["Work", "BrandNewGroup"])
+    def test_move_task_rejects_unknown_destination_list(self):
+        with saved_db(make_db(TASK_1)):
+            result = move_task("List A", "Task A", "Missing List")
 
-        self.assertEqual(len(saved["groups"]), 1)
-        self.assertEqual(saved["groups"][0]["name"], "BrandNewGroup")
-        work = next(l for l in saved["lists"] if l["name"] == "Work")
-        self.assertEqual(work["groupId"], "new-id")
+        assert_error(result, "not found")
 
-    def test_move_list_ungroup(self):
-        group = {"id": "group-1", "name": "MyGroup"}
-        lst = {**LIST_1, "groupId": "group-1"}
-        data = {
-            "groups": [group],
-            "lists": [lst, LIST_2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_move(["Work", ""])
+    def test_delete_task_removes_task(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = delete_task("List A", "Task A")
 
-        work = next(l for l in saved["lists"] if l["name"] == "Work")
-        self.assertIsNone(work["groupId"])
+        assert_ok(result)
+        self.assertEqual(saved["tasks"], [])
 
-    def test_move_list_ungroup_removes_empty_group(self):
-        group = {"id": "group-1", "name": "MyGroup"}
-        lst = {**LIST_1, "groupId": "group-1"}
-        data = {
-            "groups": [group],
-            "lists": [lst, LIST_2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_move(["Work", ""])
+    def test_delete_task_rejects_unknown_task(self):
+        with saved_db(make_db()):
+            result = delete_task("List A", "Ghost task")
 
-        self.assertEqual(len(saved["groups"]), 0)
+        assert_error(result, "not found")
 
-    def test_move_list_unknown_list_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_move(["NoSuchList", "MyGroup"])
 
-    # --- del ---
+class TaskCompletionTest(unittest.TestCase):
 
-    def test_del_removes_task(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_delete(["Work", "Write report"])
+    def test_done_task_stamps_today(self):
+        with (
+            saved_db(make_db(TASK_1)) as saved,
+            patch("server.services.utils.date") as mock_date,
+            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.db.new_id", return_value="entry-1"),
+        ):
+            mock_date.today.return_value.isoformat.return_value = TODAY
+            result = done_task("List A", "Task A")
 
-        self.assertEqual(len(saved["tasks"]), 0)
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["done"], TODAY)
 
-    def test_del_unknown_task_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_delete(["Work", "Ghost"])
+    def test_done_task_adds_daysheet_entry(self):
+        with (
+            saved_db(make_db(TASK_1)) as saved,
+            patch("server.services.utils.date") as mock_date,
+            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.db.new_id", return_value="entry-1"),
+        ):
+            mock_date.today.return_value.isoformat.return_value = TODAY
+            result = done_task("List A", "Task A")
 
-    def test_del_list_removes_list_and_tasks(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_delete(["Work"])
+        assert_ok(result)
 
-        list_names = [l["name"] for l in saved["lists"]]
-        self.assertNotIn("Work", list_names)
-        self.assertEqual(len(saved["tasks"]), 0)
+        entry = saved["daysheet"][0]
+        self.assertEqual(entry["id"], "entry-1")
+        self.assertEqual(entry["type"], DaysheetEntryType.DONE)
+        self.assertEqual(entry["text"], "Task A")
+        self.assertEqual(entry["datetime"], NOW_DT)
 
-    def test_del_list_keeps_other_lists(self):
-        db = make_db(TASK_1)
-        saved = {}
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_delete(["Work"])
+    def test_done_task_removes_continue_entry_for_today(self):
+        entry = daysheet_entry(
+            id="entry-1",
+            datetime=NOW_DT,
+            type=DaysheetEntryType.CONTINUE,
+            text="Task A",
+        )
 
-        list_names = [l["name"] for l in saved["lists"]]
-        self.assertIn("Personal", list_names)
+        with (
+            saved_db(make_db(TASK_1, daysheet=[entry])) as saved,
+            patch("server.services.utils.date") as mock_date,
+            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.db.new_id", return_value="entry-2"),
+        ):
+            mock_date.today.return_value.isoformat.return_value = TODAY
+            result = done_task("List A", "Task A")
 
-    def test_del_group_ungroups_lists(self):
-        group = {"id": "group-1", "name": "MyGroup"}
-        lst = {**LIST_1, "groupId": "group-1"}
-        data = {
-            "groups": [group],
-            "lists": [lst, LIST_2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_delete(["MyGroup"])
+        assert_ok(result)
 
-        self.assertEqual(len(saved["groups"]), 0)
-        self.assertIsNone(saved["lists"][0]["groupId"])
-        self.assertEqual(len(saved["lists"]), 2)
+        types = [entry["type"] for entry in saved["daysheet"]]
+        self.assertNotIn(DaysheetEntryType.CONTINUE, types)
+        self.assertIn(DaysheetEntryType.DONE, types)
 
-    def test_del_group_prefers_group_over_list_same_name(self):
-        group = {"id": "group-1", "name": "Work"}
-        lst_grouped = {**LIST_1, "groupId": "group-1"}
-        data = {
-            "groups": [group],
-            "lists": [lst_grouped, LIST_2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_delete(["Work"])
+    def test_done_task_rejects_already_done_task(self):
+        with saved_db(make_db(TASK_DONE)):
+            result = done_task("List A", "Task B")
 
-        self.assertEqual(len(saved["groups"]), 0)
-        self.assertEqual(len(saved["lists"]), 2)
+        assert_error(result, "already done")
 
-    def test_del_list_removes_empty_group(self):
-        group = {"id": "group-1", "name": "MyGroup"}
-        lst = {**LIST_1, "groupId": "group-1"}
-        data = {
-            "groups": [group],
-            "lists": [lst, LIST_2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_delete(["Work"])
+    def test_undo_task_clears_done(self):
+        with saved_db(make_db(TASK_DONE)) as saved:
+            result = undo_task("List A", "Task B")
 
-        self.assertEqual(len(saved["groups"]), 0)
+        assert_ok(result)
+        self.assertIsNone(saved["tasks"][0]["done"])
 
-    def test_del_list_keeps_group_if_other_lists_remain(self):
-        group = {"id": "group-1", "name": "MyGroup"}
-        lst1 = {**LIST_1, "groupId": "group-1"}
-        lst2 = {**LIST_2, "groupId": "group-1"}
-        data = {
-            "groups": [group],
-            "lists": [lst1, lst2],
-            "tasks": [],
-            "daysheet": [],
-        }
-        saved = {}
-        with patch("server.db.load", return_value=data), \
-             patch("server.db.save", side_effect=lambda d: saved.update(d)):
-            cmd_delete(["Work"])
+    def test_undo_task_rejects_pending_task(self):
+        with saved_db(make_db(TASK_1)):
+            result = undo_task("List A", "Task A")
 
-        self.assertEqual(len(saved["groups"]), 1)
-
-    def test_del_unknown_list_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_delete(["NoSuchList"])
+        assert_error(result, "not done")
 
 
 if __name__ == "__main__":

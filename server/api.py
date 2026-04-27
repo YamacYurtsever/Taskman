@@ -1,71 +1,70 @@
-import io
-import re
-from contextlib import redirect_stderr, redirect_stdout
 from datetime import date, datetime
-from pathlib import Path
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request
 
 from server import config, db
-from server.services.daysheet import cmd_continue, cmd_log
-from server.services.tasks import cmd_add, cmd_delete, cmd_done, cmd_undo
 from server.constants import DATE_FORMAT, DaysheetEntryType
+from server.services.daysheet import add_log, continue_task
+from server.services.tasks import (
+    add_task,
+    delete_task,
+    done_task,
+    edit_task,
+    move_task,
+    undo_task,
+)
+from server.services.utils import (
+    ServiceError,
+    delete_list,
+    find_group,
+    find_list,
+    require_name,
+)
 
-_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
 
-STATIC_DIR = Path(__file__).parent.parent / "client"
-DIST_DIR = STATIC_DIR / "dist"
+# ─────────────────────────── Response Helpers ───────────────────────────
+
+def ok(message=""):
+    return jsonify({"ok": True, "message": message})
 
 
-def _run(fn, args):
-    """Invoke a CLI command function, capturing output and SystemExit."""
-    out, err = io.StringIO(), io.StringIO()
-    try:
-        with redirect_stdout(out), redirect_stderr(err):
-            fn(args)
-    except SystemExit:
-        msg = _ANSI_RE.sub("", err.getvalue()).strip() or "command failed"
-        msg = msg.removeprefix("taskman:").strip()
-        return False, msg
-    return True, _ANSI_RE.sub("", out.getvalue()).strip()
+def fail(message, status=400):
+    return jsonify({"ok": False, "message": message}), status
 
+
+def respond(result):
+    ok_, message = result
+    return jsonify({"ok": ok_, "message": message}), 200 if ok_ else 400
+
+
+# ─────────────────────────── App Factory ───────────────────────────
 
 def create_app():
-    app = Flask(__name__, static_folder=None)
+    app = Flask(__name__)
 
-    @app.get("/")
-    def index():
-        if DIST_DIR.exists():
-            return send_from_directory(DIST_DIR, "index.html")
-        return send_from_directory(STATIC_DIR, "index.html")
-
-    @app.get("/<path:path>")
-    def catch_all(path):
-        candidate = DIST_DIR / path
-        if candidate.exists() and candidate.is_file():
-            return send_from_directory(DIST_DIR, path)
-        if DIST_DIR.exists():
-            return send_from_directory(DIST_DIR, "index.html")
-        return send_from_directory(STATIC_DIR, "index.html")
+    # ─────────────────────────── Config / State ───────────────────────────
 
     @app.get("/api/config")
     def get_config():
         cfg = config.load()
         calendars = cfg.get("calendars", [])
         tz = cfg.get("calendarTimezone", "UTC")
-        if calendars:
-            parts = []
-            for c in calendars:
-                if isinstance(c, dict):
-                    parts.append(f"src={c['id']}")
-                    if c.get("color"):
-                        parts.append(f"color={c['color'].replace('#', '%23')}")
-                else:
-                    parts.append(f"src={c}")
-            cal_url = f"https://calendar.google.com/calendar/embed?{'&'.join(parts)}&ctz={tz}&mode=WEEK"
-        else:
-            cal_url = ""
-        return jsonify({"calendarUrl": cal_url})
+
+        parts = []
+        for calendar in calendars:
+            if isinstance(calendar, dict):
+                parts.append(f"src={calendar['id']}")
+                if calendar.get("color"):
+                    parts.append(f"color={calendar['color'].replace('#', '%23')}")
+            else:
+                parts.append(f"src={calendar}")
+
+        calendar_url = (
+            f"https://calendar.google.com/calendar/embed?{'&'.join(parts)}&ctz={tz}&mode=WEEK"
+            if parts else ""
+        )
+
+        return jsonify({"calendarUrl": calendar_url})
 
     @app.get("/api/state")
     def get_state():
@@ -77,242 +76,296 @@ def create_app():
             "today": date.today().isoformat(),
         })
 
+    # ─────────────────────────── Daysheet Reads ───────────────────────────
+
     @app.get("/api/daysheet")
     def get_daysheet():
         target = request.args.get("date") or date.today().isoformat()
+
         try:
             datetime.strptime(target, DATE_FORMAT)
         except ValueError:
             return jsonify({"error": f"invalid date '{target}'"}), 400
 
         data = db.load()
-        list_by_id = {l["id"]: l for l in data["lists"]}
-        group_by_id = {g["id"]: g for g in data["groups"]}
+        lists = {lst["id"]: lst for lst in data["lists"]}
+        groups = {grp["id"]: grp for grp in data["groups"]}
+
         entries = sorted(
             (e for e in data["daysheet"] if e["datetime"][:10] == target),
             key=lambda e: e["datetime"],
         )
+
         enriched = []
-        for e in entries:
-            lst = list_by_id.get(e["listId"])
-            gid = lst["groupId"] if lst else None
+        for entry in entries:
+            lst = lists.get(entry["listId"])
+            group_id = lst["groupId"] if lst else None
+
             enriched.append({
-                **e,
+                **entry,
                 "listName": lst["name"] if lst else "?",
-                "sectionId": f"group:{gid}" if gid else f"list:{e['listId']}",
-                "sectionName": group_by_id[gid]["name"] if gid else (lst["name"] if lst else "?"),
-                "inGroup": bool(gid),
+                "sectionId": f"group:{group_id}" if group_id else f"list:{entry['listId']}",
+                "sectionName": groups[group_id]["name"] if group_id else (lst["name"] if lst else "?"),
+                "inGroup": bool(group_id),
             })
+
         return jsonify({"date": target, "entries": enriched})
 
-    def _action(fn, args):
-        ok, msg = _run(fn, args)
-        status = 200 if ok else 400
-        return jsonify({"ok": ok, "message": msg}), status
+    # ─────────────────────────── Task Routes ───────────────────────────
 
     @app.post("/api/add")
     def api_add():
         body = request.get_json(force=True) or {}
-        args = [body.get("list", ""), body.get("name", "")]
-        if body.get("due"):
-            args.append(body["due"])
-        return _action(cmd_add, args)
+        return respond(add_task(
+            body.get("list", ""),
+            body.get("name", ""),
+            body.get("due"),
+        ))
 
-    @app.post("/api/add-list")
-    def api_add_list():
+    @app.post("/api/edit")
+    def api_edit():
         body = request.get_json(force=True) or {}
-        return _action(cmd_add, [body.get("list", "")])
-
-    @app.post("/api/move-task")
-    def api_move_task():
-        body = request.get_json(force=True) or {}
-        list_name = body.get("list", "")
-        task_name = body.get("name", "")
-        new_list_name = body.get("newList", "")
-        data = db.load()
-        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
-        if not lst:
-            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
-        task = next((t for t in data["tasks"] if t["listId"] == lst["id"] and t["name"] == task_name), None)
-        if not task:
-            return jsonify({"ok": False, "message": f"task '{task_name}' not found"}), 400
-        new_lst = next((l for l in data["lists"] if l["name"] == new_list_name), None)
-        if not new_lst:
-            return jsonify({"ok": False, "message": f"list '{new_list_name}' not found"}), 400
-        if any(t["name"] == task_name and t["listId"] == new_lst["id"] for t in data["tasks"]):
-            return jsonify({"ok": False, "message": f"task '{task_name}' already exists in '{new_list_name}'"}), 400
-        task["listId"] = new_lst["id"]
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/move-list")
-    def api_move_list():
-        body = request.get_json(force=True) or {}
-        list_name = body.get("list", "")
-        group_name = body.get("group", None)
-        data = db.load()
-        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
-        if not lst:
-            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
-        if group_name == "":
-            lst["groupId"] = None
-        else:
-            grp = next((g for g in data["groups"] if g["name"] == group_name), None)
-            if not grp:
-                return jsonify({"ok": False, "message": f"group '{group_name}' not found"}), 400
-            lst["groupId"] = grp["id"]
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/rename-list")
-    def api_rename_list():
-        body = request.get_json(force=True) or {}
-        list_name = body.get("list", "")
-        new_name = (body.get("newName") or "").strip()
-        if not new_name:
-            return jsonify({"ok": False, "message": "name is required"}), 400
-        data = db.load()
-        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
-        if not lst:
-            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
-        lst["name"] = new_name
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/delete-list")
-    def api_delete_list():
-        body = request.get_json(force=True) or {}
-        list_name = body.get("list", "")
-        data = db.load()
-        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
-        if not lst:
-            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
-        group_id = lst["groupId"]
-        data["tasks"] = [t for t in data["tasks"] if t["listId"] != lst["id"]]
-        data["daysheet"] = [e for e in data["daysheet"] if e["listId"] != lst["id"]]
-        data["lists"] = [l for l in data["lists"] if l["id"] != lst["id"]]
-        if group_id and not any(l["groupId"] == group_id for l in data["lists"]):
-            data["groups"] = [g for g in data["groups"] if g["id"] != group_id]
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/rename-group")
-    def api_rename_group():
-        body = request.get_json(force=True) or {}
-        group_name = body.get("group", "")
-        new_name = (body.get("newName") or "").strip()
-        if not new_name:
-            return jsonify({"ok": False, "message": "name is required"}), 400
-        data = db.load()
-        group = next((g for g in data["groups"] if g["name"] == group_name), None)
-        if not group:
-            return jsonify({"ok": False, "message": f"group '{group_name}' not found"}), 400
-        group["name"] = new_name
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/delete-group")
-    def api_delete_group():
-        body = request.get_json(force=True) or {}
-        group_name = body.get("group", "")
-        data = db.load()
-        group = next((g for g in data["groups"] if g["name"] == group_name), None)
-        if not group:
-            return jsonify({"ok": False, "message": f"group '{group_name}' not found"}), 400
-        for lst in data["lists"]:
-            if lst["groupId"] == group["id"]:
-                lst["groupId"] = None
-        data["groups"] = [g for g in data["groups"] if g["id"] != group["id"]]
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/done")
-    def api_done():
-        body = request.get_json(force=True) or {}
-        return _action(cmd_done, [body.get("list", ""), body.get("name", "")])
-
-    @app.post("/api/undo")
-    def api_undo():
-        body = request.get_json(force=True) or {}
-        return _action(cmd_undo, [body.get("list", ""), body.get("name", "")])
+        return respond(edit_task(
+            body.get("list", ""),
+            body.get("name", ""),
+            body.get("newName"),
+            body.get("due"),
+            "due" in body,
+        ))
 
     @app.post("/api/delete")
     def api_delete():
         body = request.get_json(force=True) or {}
-        args = [body.get("list", "")]
-        if body.get("name"):
-            args.append(body["name"])
-        return _action(cmd_delete, args)
+        return respond(delete_task(
+            body.get("list", ""),
+            body.get("name", ""),
+        ))
+
+    @app.post("/api/move-task")
+    def api_move_task():
+        body = request.get_json(force=True) or {}
+        return respond(move_task(
+            body.get("list", ""),
+            body.get("name", ""),
+            body.get("newList", ""),
+        ))
+
+    @app.post("/api/done")
+    def api_done():
+        body = request.get_json(force=True) or {}
+        return respond(done_task(
+            body.get("list", ""),
+            body.get("name", ""),
+        ))
+
+    @app.post("/api/undo")
+    def api_undo():
+        body = request.get_json(force=True) or {}
+        return respond(undo_task(
+            body.get("list", ""),
+            body.get("name", ""),
+        ))
+
+    # ─────────────────────────── List Routes ───────────────────────────
+
+    @app.post("/api/add-list")
+    def api_add_list():
+        body = request.get_json(force=True) or {}
+
+        try:
+            list_name = require_name(body.get("list"))
+
+            data = db.load()
+            if find_list(data, list_name):
+                raise ServiceError(f"list '{list_name}' already exists")
+
+            data["lists"].append({
+                "id": db.new_id(),
+                "name": list_name,
+                "groupId": None,
+            })
+
+            db.save(data)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
+
+    @app.post("/api/rename-list")
+    def api_rename_list():
+        body = request.get_json(force=True) or {}
+
+        try:
+            list_name = body.get("list", "")
+            new_name = require_name(body.get("newName"))
+
+            data = db.load()
+
+            lst = find_list(data, list_name)
+            if not lst:
+                raise ServiceError(f"list '{list_name}' not found")
+
+            existing = find_list(data, new_name)
+            if existing and existing["id"] != lst["id"]:
+                raise ServiceError(f"list '{new_name}' already exists")
+
+            lst["name"] = new_name
+            db.save(data)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
+
+    @app.post("/api/delete-list")
+    def api_delete_list():
+        body = request.get_json(force=True) or {}
+
+        try:
+            list_name = body.get("list", "")
+
+            data = db.load()
+            lst = find_list(data, list_name)
+            if not lst:
+                raise ServiceError(f"list '{list_name}' not found")
+
+            delete_list(data, lst)
+
+            db.save(data)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
+
+    @app.post("/api/move-list")
+    def api_move_list():
+        body = request.get_json(force=True) or {}
+
+        try:
+            list_name = body.get("list", "")
+            group_name = body.get("group", None)
+
+            data = db.load()
+
+            lst = find_list(data, list_name)
+            if not lst:
+                raise ServiceError(f"list '{list_name}' not found")
+
+            if group_name == "":
+                lst["groupId"] = None
+            else:
+                group = find_group(data, group_name)
+                if not group:
+                    raise ServiceError(f"group '{group_name}' not found")
+                lst["groupId"] = group["id"]
+
+            db.save(data)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
+
+    # ─────────────────────────── Group Routes ───────────────────────────
+
+    @app.post("/api/rename-group")
+    def api_rename_group():
+        body = request.get_json(force=True) or {}
+
+        try:
+            group_name = body.get("group", "")
+            new_name = require_name(body.get("newName"))
+
+            data = db.load()
+
+            group = find_group(data, group_name)
+            if not group:
+                raise ServiceError(f"group '{group_name}' not found")
+
+            existing = find_group(data, new_name)
+            if existing and existing["id"] != group["id"]:
+                raise ServiceError(f"group '{new_name}' already exists")
+
+            group["name"] = new_name
+            db.save(data)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
+
+    @app.post("/api/delete-group")
+    def api_delete_group():
+        body = request.get_json(force=True) or {}
+
+        try:
+            group_name = body.get("group", "")
+
+            data = db.load()
+
+            group = find_group(data, group_name)
+            if not group:
+                raise ServiceError(f"group '{group_name}' not found")
+
+            for lst in data["lists"]:
+                if lst["groupId"] == group["id"]:
+                    lst["groupId"] = None
+
+            data["groups"] = [g for g in data["groups"] if g["id"] != group["id"]]
+
+            db.save(data)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
+
+    # ─────────────────────────── Daysheet Routes ───────────────────────────
 
     @app.post("/api/log")
     def api_log():
         body = request.get_json(force=True) or {}
-        return _action(cmd_log, [body.get("list", ""), body.get("text", "")])
+        return respond(add_log(
+            body.get("list", ""),
+            body.get("text", ""),
+        ))
+
+    @app.post("/api/continue")
+    def api_continue():
+        body = request.get_json(force=True) or {}
+        return respond(continue_task(
+            body.get("list", ""),
+            body.get("task", ""),
+        ))
 
     @app.post("/api/daysheet/edit")
     def api_daysheet_edit():
         body = request.get_json(force=True) or {}
-        entry_id = body.get("id", "")
-        new_text = (body.get("text") or "").strip()
-        if not new_text:
-            return jsonify({"ok": False, "message": "text is required"}), 400
-        data = db.load()
-        entry = next((e for e in data["daysheet"] if e["id"] == entry_id), None)
-        if not entry:
-            return jsonify({"ok": False, "message": "entry not found"}), 400
-        if entry["type"] != DaysheetEntryType.LOG:
-            return jsonify({"ok": False, "message": "only log entries can be edited"}), 400
-        entry["text"] = new_text
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
+
+        try:
+            entry_id = body.get("id", "")
+            new_text = require_name(body.get("text"), "text")
+
+            data = db.load()
+
+            entry = next((e for e in data["daysheet"] if e["id"] == entry_id), None)
+            if not entry:
+                raise ServiceError("entry not found")
+
+            if entry["type"] != DaysheetEntryType.LOG:
+                raise ServiceError("only log entries can be edited")
+
+            entry["text"] = new_text
+
+            db.save(data)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
 
     @app.post("/api/daysheet/delete")
     def api_daysheet_delete():
         body = request.get_json(force=True) or {}
         entry_id = body.get("id", "")
+
         data = db.load()
+
         before = len(data["daysheet"])
         data["daysheet"] = [e for e in data["daysheet"] if e["id"] != entry_id]
+
         if len(data["daysheet"]) == before:
-            return jsonify({"ok": False, "message": "entry not found"}), 400
+            return fail("entry not found")
+
         db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/edit")
-    def api_edit():
-        body = request.get_json(force=True) or {}
-        list_name = body.get("list", "")
-        name = body.get("name", "")
-        new_name = body.get("newName") or name
-
-        data = db.load()
-        lst = next((l for l in data["lists"] if l["name"] == list_name), None)
-        if not lst:
-            return jsonify({"ok": False, "message": f"list '{list_name}' not found"}), 400
-        task = next((t for t in data["tasks"] if t["listId"] == lst["id"] and t["name"] == name), None)
-        if not task:
-            return jsonify({"ok": False, "message": f"task '{name}' not found in '{list_name}'"}), 400
-        if new_name != name and any(t["name"] == new_name and t["listId"] == lst["id"] for t in data["tasks"]):
-            return jsonify({"ok": False, "message": f"task '{new_name}' already exists in '{list_name}'"}), 400
-        task["name"] = new_name
-        if "due" in body:
-            task["due"] = body["due"] or None
-        db.save(data)
-        return jsonify({"ok": True, "message": ""})
-
-    @app.post("/api/continue")
-    def api_continue():
-        body = request.get_json(force=True) or {}
-        return _action(cmd_continue, [body.get("list", ""), body.get("task", "")])
+        return ok()
 
     return app
-
-
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="taskman web frontend")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=5050)
-    parser.add_argument("--debug", action="store_true")
-    args = parser.parse_args()
-    create_app().run(host=args.host, port=args.port, debug=args.debug)

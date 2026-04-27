@@ -17,7 +17,7 @@ After completing each milestone item:
 After changes to `server/`, advise the user to restart the web server:
 
 ```bash
-python -m server
+flask --app server run -p 5050
 ```
 
 After changes to the frontend source, advise the user to rebuild:
@@ -35,13 +35,12 @@ Then hard-refresh with Cmd+Shift+R.
 ```
 taskman/
   server/               Flask app and all backend logic
-    api.py              App factory, all routes, main() entry point
-    __init__.py         Re-exports create_app and main from api.py
-    __main__.py         Entry point for python -m server
+    api.py              App factory, response helpers, and all routes
+    __init__.py         Re-exports create_app from api.py
     services/           Business logic called by routes
       daysheet.py       Log and continue entry operations
       tasks.py          Task CRUD operations
-      utils.py          Shared helpers (find, require, db mutations)
+      utils.py          Service decorator, errors, date helpers, find/require helpers, DB mutations
     db.py               JSON persistence (~/.taskman/db.json)
     config.py           Config loader (~/.taskman/config.json)
     constants.py        Shared constants and DaysheetEntryType
@@ -50,7 +49,7 @@ taskman/
       test_daysheet.py  Daysheet service tests
       test_tasks.py     Task service tests
       test_utils.py     Utility function tests
-      helpers.py        Shared test fixtures
+      utils.py          Shared test fixtures and DB patching helpers
     pytest.ini          Pytest config (pythonpath, testpaths)
   client/               Vite + React + TypeScript frontend
     src/
@@ -73,11 +72,16 @@ taskman/
 
 ### Implementation Notes
 
-- The Flask server exposes a REST API; some endpoints delegate to service functions, others mutate the DB directly for complex operations.
-- Service functions in `server/services/` use a CLI-style `args` list interface and raise `SystemExit` on error — the `_run()` helper in `server/api.py` captures both.
+- The Flask server exposes a REST API from `create_app()` in `server/api.py`.
+- Task and daysheet routes delegate to service functions in `server/services/`; list/group and daysheet-entry edit/delete routes currently mutate the DB directly in `server/api.py`.
+- Service functions use typed parameters, raise `ServiceError` for validation/domain errors, and are wrapped with `service()` from `server/services/utils.py` to return `(ok: bool, message: str)`.
+- API routes use `respond()` for service results and `ok()` / `fail()` for direct route mutations.
 - There is no schema migration layer. Any new task fields must be backward-compatible with existing JSON records.
-- The frontend is built with Vite and served as static files from `client/dist/`. In dev mode, Vite proxies `/api` to the Flask server on port 5050.
-- Routing uses React Router (`BrowserRouter`). Flask serves `index.html` for all non-API, non-asset paths via a catch-all route that falls back to the file if it exists in `dist/`.
+- `server/db.py` creates `~/.taskman/db.json` from `EMPTY_DB` if missing and resets to `EMPTY_DB` if the JSON is corrupt.
+- `server/config.py` creates `~/.taskman/config.json` from defaults if missing, then overlays stored values onto defaults.
+- The Flask server currently exposes API routes only; it does not serve the frontend bundle.
+- The frontend is built with Vite. In dev mode, Vite proxies `/api` to the Flask server on port 5050.
+- Routing uses React Router (`BrowserRouter`).
 - Styles use CSS Modules per component (`.module.css` co-located with each `.tsx`). Global tokens and the shared `.task-btn` utility live in `styles/base.css`.
 
 ---

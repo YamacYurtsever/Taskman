@@ -4,16 +4,27 @@ import uuid
 from server.constants import DB_PATH, EMPTY_DB
 
 
+# ─────────────────────────── Load / Save ───────────────────────────
+
 def load() -> dict:
     if not DB_PATH.exists():
         DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        DB_PATH.write_text(json.dumps(EMPTY_DB, indent=2))
-    return json.loads(DB_PATH.read_text())
+        save(dict(EMPTY_DB))
+        return dict(EMPTY_DB)
+
+    try:
+        return json.loads(DB_PATH.read_text())
+    except json.JSONDecodeError:
+        # fallback if file is corrupted
+        save(dict(EMPTY_DB))
+        return dict(EMPTY_DB)
 
 
-def save(db: dict) -> None:
-    DB_PATH.write_text(json.dumps(db, indent=2))
+def save(data: dict) -> None:
+    DB_PATH.write_text(json.dumps(data, indent=2))
 
+
+# ─────────────────────────── ID Generation ───────────────────────────
 
 def new_id() -> str:
     return str(uuid.uuid4())

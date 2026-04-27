@@ -1,1 +1,1 @@
-from server.api import create_app, main
+from server.api import create_app

@@ -2,158 +2,253 @@ import unittest
 from unittest.mock import patch
 
 from server.constants import DaysheetEntryType
-from server.services.daysheet import cmd_log, cmd_continue
-from server.tests.helpers import daysheet_entry, db_record, list_record, saved_db, task_record
+from server.services.tasks import (
+    add_task,
+    delete_task,
+    done_task,
+    edit_task,
+    move_task,
+    undo_task,
+)
+from server.tests.utils import (
+    NOW_DT,
+    TASK_1,
+    TASK_DONE,
+    TODAY,
+    assert_error,
+    assert_ok,
+    daysheet_entry,
+    make_db,
+    saved_db,
+    task_record,
+)
 
-LIST_1 = list_record(id="list-1", name="COMP3131")
-LIST_2 = list_record(id="list-2", name="Work")
-TASK_1 = task_record(id="task-1", name="LEC 01", list_id="list-1")
-TASK_DONE = task_record(id="task-2", name="LEC 02", list_id="list-1", done="2026-04-26")
 
-TODAY = "2026-04-26"
-NOW_DT = "2026-04-26T10:00:00"
+class TaskCreateTest(unittest.TestCase):
+
+    def test_add_task_creates_task(self):
+        with (
+            saved_db(make_db()) as saved,
+            patch("server.db.new_id", return_value="new-id"),
+        ):
+            result = add_task("List A", "New task")
+
+        assert_ok(result)
+
+        task = saved["tasks"][0]
+        self.assertEqual(task["id"], "new-id")
+        self.assertEqual(task["name"], "New task")
+        self.assertEqual(task["listId"], "list-1")
+        self.assertIsNone(task["due"])
+        self.assertIsNone(task["done"])
+
+    def test_add_task_with_due_date(self):
+        with (
+            saved_db(make_db()) as saved,
+            patch("server.db.new_id", return_value="new-id"),
+        ):
+            result = add_task("List A", "New task", "2026-05-01")
+
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["due"], "2026-05-01")
+
+    def test_add_task_rejects_duplicate_name_in_same_list(self):
+        with saved_db(make_db(TASK_1)):
+            result = add_task("List A", "Task A")
+
+        assert_error(result, "already exists")
+
+    def test_add_task_rejects_unknown_list(self):
+        with saved_db(make_db()):
+            result = add_task("Missing List", "New task")
+
+        assert_error(result, "not found")
+
+    def test_add_task_rejects_empty_name(self):
+        with saved_db(make_db()):
+            result = add_task("List A", "")
+
+        assert_error(result, "name is required")
+
+    def test_add_task_rejects_invalid_due_date(self):
+        with saved_db(make_db()):
+            result = add_task("List A", "New task", "not-a-date")
+
+        assert_error(result, "invalid date")
 
 
-def make_db(*daysheet_entries, tasks=None, lists=None):
-    return db_record(
-        lists=lists or [LIST_1, LIST_2],
-        tasks=tasks or [TASK_1],
-        daysheet=daysheet_entries,
-    )
+class TaskEditTest(unittest.TestCase):
+
+    def test_edit_task_renames_task(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = edit_task("List A", "Task A", "Renamed task")
+
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["name"], "Renamed task")
+
+    def test_edit_task_changes_due_when_requested(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = edit_task("List A", "Task A", "Task A", "2026-06-01", update_due=True)
+
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["due"], "2026-06-01")
+
+    def test_edit_task_clears_due_when_requested(self):
+        task = task_record(due="2026-05-01")
+
+        with saved_db(make_db(task)) as saved:
+            result = edit_task("List A", "Task A", "Task A", None, update_due=True)
+
+        assert_ok(result)
+        self.assertIsNone(saved["tasks"][0]["due"])
+
+    def test_edit_task_preserves_due_when_not_requested(self):
+        task = task_record(due="2026-05-01")
+
+        with saved_db(make_db(task)) as saved:
+            result = edit_task("List A", "Task A", "Renamed task")
+
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["due"], "2026-05-01")
+
+    def test_edit_task_rejects_duplicate_name(self):
+        task_2 = task_record(id="task-2", name="Task B", list_id="list-1")
+
+        with saved_db(make_db(TASK_1, task_2)):
+            result = edit_task("List A", "Task A", "Task B")
+
+        assert_error(result, "already exists")
+
+    def test_edit_task_rejects_unknown_task(self):
+        with saved_db(make_db()):
+            result = edit_task("List A", "Ghost task", "New name")
+
+        assert_error(result, "not found")
+
+    def test_edit_task_rejects_empty_new_name(self):
+        with saved_db(make_db(TASK_1)):
+            result = edit_task("List A", "Task A", "")
+
+        assert_error(result, "name is required")
 
 
-class LogTest(unittest.TestCase):
+class TaskMoveDeleteTest(unittest.TestCase):
 
-    def test_log_adds_entry(self):
-        db = make_db()
-        with saved_db(db) as saved, \
-             patch("server.db.new_id", return_value="new-id"), \
-             patch("server.services.daysheet._now", return_value=NOW_DT):
-            cmd_log(["COMP3131", "Talked with tutor"])
+    def test_move_task_changes_list(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = move_task("List A", "Task A", "List B")
 
-        self.assertEqual(len(saved["daysheet"]), 1)
-        e = saved["daysheet"][0]
-        self.assertEqual(e["type"], "log")
-        self.assertEqual(e["text"], "Talked with tutor")
-        self.assertEqual(e["listId"], "list-1")
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["listId"], "list-2")
 
-    def test_log_unknown_list_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_log(["NoSuchList", "Some text"])
+    def test_move_task_rejects_duplicate_in_destination(self):
+        duplicate = task_record(id="task-2", name="Task A", list_id="list-2")
 
-    def test_log_edit_updates_text(self):
-        entry = daysheet_entry(id="e-1", datetime=NOW_DT, text="Old text")
-        db = make_db(entry)
-        with saved_db(db) as saved, \
-             patch("server.services.daysheet.date") as mock_date:
+        with saved_db(make_db(TASK_1, duplicate)):
+            result = move_task("List A", "Task A", "List B")
+
+        assert_error(result, "already exists")
+
+    def test_move_task_rejects_unknown_task(self):
+        with saved_db(make_db()):
+            result = move_task("List A", "Ghost task", "List B")
+
+        assert_error(result, "not found")
+
+    def test_move_task_rejects_unknown_destination_list(self):
+        with saved_db(make_db(TASK_1)):
+            result = move_task("List A", "Task A", "Missing List")
+
+        assert_error(result, "not found")
+
+    def test_delete_task_removes_task(self):
+        with saved_db(make_db(TASK_1)) as saved:
+            result = delete_task("List A", "Task A")
+
+        assert_ok(result)
+        self.assertEqual(saved["tasks"], [])
+
+    def test_delete_task_rejects_unknown_task(self):
+        with saved_db(make_db()):
+            result = delete_task("List A", "Ghost task")
+
+        assert_error(result, "not found")
+
+
+class TaskCompletionTest(unittest.TestCase):
+
+    def test_done_task_stamps_today(self):
+        with (
+            saved_db(make_db(TASK_1)) as saved,
+            patch("server.services.utils.date") as mock_date,
+            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.db.new_id", return_value="entry-1"),
+        ):
             mock_date.today.return_value.isoformat.return_value = TODAY
-            cmd_log(["edit", "COMP3131", "Old text", "New text"])
+            result = done_task("List A", "Task A")
 
-        self.assertEqual(saved["daysheet"][0]["text"], "New text")
+        assert_ok(result)
+        self.assertEqual(saved["tasks"][0]["done"], TODAY)
 
-    def test_log_edit_not_found_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"), \
-             patch("server.services.daysheet.date") as mock_date:
+    def test_done_task_adds_daysheet_entry(self):
+        with (
+            saved_db(make_db(TASK_1)) as saved,
+            patch("server.services.utils.date") as mock_date,
+            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.db.new_id", return_value="entry-1"),
+        ):
             mock_date.today.return_value.isoformat.return_value = TODAY
-            with self.assertRaises(SystemExit):
-                cmd_log(["edit", "COMP3131", "Ghost", "New text"])
+            result = done_task("List A", "Task A")
 
-    def test_log_delete_removes_entry(self):
-        entry = daysheet_entry(id="e-1", datetime=NOW_DT, text="Some text")
-        db = make_db(entry)
-        with saved_db(db) as saved, \
-             patch("server.services.daysheet.date") as mock_date:
-            mock_date.today.return_value.isoformat.return_value = TODAY
-            cmd_log(["delete", "COMP3131", "Some text"])
+        assert_ok(result)
 
-        self.assertEqual(len(saved["daysheet"]), 0)
+        entry = saved["daysheet"][0]
+        self.assertEqual(entry["id"], "entry-1")
+        self.assertEqual(entry["type"], DaysheetEntryType.DONE)
+        self.assertEqual(entry["text"], "Task A")
+        self.assertEqual(entry["datetime"], NOW_DT)
 
-    def test_log_delete_not_found_errors(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"), \
-             patch("server.services.daysheet.date") as mock_date:
-            mock_date.today.return_value.isoformat.return_value = TODAY
-            with self.assertRaises(SystemExit):
-                cmd_log(["delete", "COMP3131", "Ghost"])
-
-
-class ContinueTest(unittest.TestCase):
-
-    def test_continue_adds_entry(self):
-        db = make_db()
-        with saved_db(db) as saved, \
-             patch("server.db.new_id", return_value="new-id"), \
-             patch("server.services.daysheet._now", return_value=NOW_DT), \
-             patch("server.services.daysheet.date") as mock_date:
-            mock_date.today.return_value.isoformat.return_value = TODAY
-            cmd_continue(["COMP3131", "LEC 01"])
-
-        self.assertEqual(len(saved["daysheet"]), 1)
-        e = saved["daysheet"][0]
-        self.assertEqual(e["type"], "continue")
-        self.assertEqual(e["text"], "LEC 01")
-
-    def test_continue_requires_task_to_exist(self):
-        db = make_db()
-        with patch("server.db.load", return_value=db), patch("server.db.save"):
-            with self.assertRaises(SystemExit):
-                cmd_continue(["COMP3131", "Ghost task"])
-
-    def test_continue_blocked_if_done_today(self):
-        done_entry = daysheet_entry(
-            id="e-1", datetime=NOW_DT, type=DaysheetEntryType.DONE, text="LEC 01"
+    def test_done_task_removes_continue_entry_for_today(self):
+        entry = daysheet_entry(
+            id="entry-1",
+            datetime=NOW_DT,
+            type=DaysheetEntryType.CONTINUE,
+            text="Task A",
         )
-        db = make_db(done_entry)
-        with patch("server.db.load", return_value=db), \
-             patch("server.db.save"), \
-             patch("server.services.daysheet.date") as mock_date:
+
+        with (
+            saved_db(make_db(TASK_1, daysheet=[entry])) as saved,
+            patch("server.services.utils.date") as mock_date,
+            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.db.new_id", return_value="entry-2"),
+        ):
             mock_date.today.return_value.isoformat.return_value = TODAY
-            with self.assertRaises(SystemExit):
-                cmd_continue(["COMP3131", "LEC 01"])
+            result = done_task("List A", "Task A")
 
+        assert_ok(result)
 
-class DoneWritesDaysheetTest(unittest.TestCase):
+        types = [entry["type"] for entry in saved["daysheet"]]
+        self.assertNotIn(DaysheetEntryType.CONTINUE, types)
+        self.assertIn(DaysheetEntryType.DONE, types)
 
-    def test_done_adds_daysheet_entry(self):
-        from server.services.tasks import cmd_done
-        db = db_record(lists=[LIST_1], tasks=[TASK_1])
-        with saved_db(db) as saved, \
-             patch("server.db.new_id", return_value="new-id"), \
-             patch("server.services.tasks.date") as mock_date, \
-             patch("server.services.tasks.datetime") as mock_dt, \
-             patch("server.services.tasks._play_sound"):
-            mock_date.today.return_value.isoformat.return_value = TODAY
-            mock_dt.now.return_value.strftime.return_value = NOW_DT
-            cmd_done(["COMP3131", "LEC 01"])
+    def test_done_task_rejects_already_done_task(self):
+        with saved_db(make_db(TASK_DONE)):
+            result = done_task("List A", "Task B")
 
-        self.assertEqual(len(saved["daysheet"]), 1)
-        e = saved["daysheet"][0]
-        self.assertEqual(e["type"], "done")
-        self.assertEqual(e["text"], "LEC 01")
+        assert_error(result, "already done")
 
-    def test_done_removes_continue_entry(self):
-        from server.services.tasks import cmd_done
-        cont_entry = daysheet_entry(
-            id="e-1", datetime=NOW_DT, type=DaysheetEntryType.CONTINUE, text="LEC 01"
-        )
-        db = db_record(lists=[LIST_1], tasks=[TASK_1], daysheet=[cont_entry])
-        with saved_db(db) as saved, \
-             patch("server.db.new_id", return_value="new-id"), \
-             patch("server.services.tasks.date") as mock_date, \
-             patch("server.services.tasks.datetime") as mock_dt, \
-             patch("server.services.tasks._play_sound"):
-            mock_date.today.return_value.isoformat.return_value = TODAY
-            mock_dt.now.return_value.strftime.return_value = NOW_DT
-            cmd_done(["COMP3131", "LEC 01"])
+    def test_undo_task_clears_done(self):
+        with saved_db(make_db(TASK_DONE)) as saved:
+            result = undo_task("List A", "Task B")
 
-        types = [e["type"] for e in saved["daysheet"]]
-        self.assertNotIn("continue", types)
-        self.assertIn("done", types)
+        assert_ok(result)
+        self.assertIsNone(saved["tasks"][0]["done"])
+
+    def test_undo_task_rejects_pending_task(self):
+        with saved_db(make_db(TASK_1)):
+            result = undo_task("List A", "Task A")
+
+        assert_error(result, "not done")
 
 
 if __name__ == "__main__":

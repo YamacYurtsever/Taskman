@@ -1,71 +1,87 @@
-from datetime import date, datetime
 from server import db
-from server.constants import DATE_FORMAT, DaysheetEntryType
+from server.constants import DaysheetEntryType
 from server.services.utils import (
-    _err, _now, _entry_date,
-    _require_list, _require_task,
-    _add_daysheet_entry, _find_daysheet_entry,
-    _has_daysheet_entry, _remove_daysheet_entries,
+    ServiceError,
+    add_daysheet_entry,
+    find_daysheet_entry,
+    has_daysheet_entry,
+    now,
+    remove_daysheet_entries,
+    require_list,
+    require_name,
+    require_task,
+    service,
+    today,
 )
 
 
-def cmd_log(args):
-    if not args:
-        _err('usage: taskman log "list" "text"')
+# ─────────────────────────── Logs ───────────────────────────
 
-    if args[0] == "edit":
-        if len(args) < 4:
-            _err('usage: taskman log edit "list" "text" "new_text"')
-        list_name, text, new_text = args[1], args[2], args[3]
-        data = db.load()
-        lst = _require_list(data, list_name)
-        today = date.today().isoformat()
-        entry = _find_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, today)
-        if not entry:
-            _err(f"log entry '{text}' not found")
-        entry["text"] = new_text
-        db.save(data)
-        print(f"~ [{list_name}] {new_text}")
-        return
-
-    if args[0] in ("delete", "del"):
-        if len(args) < 3:
-            _err('usage: taskman log delete "list" "text"')
-        list_name, text = args[1], args[2]
-        data = db.load()
-        lst = _require_list(data, list_name)
-        today = date.today().isoformat()
-        if not _remove_daysheet_entries(data, lst["id"], DaysheetEntryType.LOG, text, today):
-            _err(f"log entry '{text}' not found")
-        db.save(data)
-        print(f"- [{list_name}] {text}")
-        return
-
-    if len(args) < 2:
-        _err('usage: taskman log "list" "text"')
-    list_name, text = args[0], args[1]
-    data = db.load()
-    lst = _require_list(data, list_name)
-    _add_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, _now())
-    db.save(data)
-    print(f"+ [{list_name}] {text}")
-
-
-def cmd_continue(args):
-    if len(args) < 2:
-        _err('usage: taskman continue "list" "task"')
-    list_name, task_name = args[0], args[1]
+@service
+def add_log(list_name: str, text: str):
+    text = require_name(text, "text")
 
     data = db.load()
-    lst = _require_list(data, list_name)
-    _require_task(data, lst, task_name)
+    lst = require_list(data, list_name)
 
-    today = date.today().isoformat()
-    if _has_daysheet_entry(data, lst["id"], DaysheetEntryType.DONE, task_name, today):
-        _err(f"'{task_name}' was already finished today")
-    if _has_daysheet_entry(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, today):
-        _err(f"'{task_name}' was already continued today")
+    add_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, now())
 
-    _add_daysheet_entry(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, _now())
     db.save(data)
-    print(f"↻ [{list_name}] {task_name}")
+
+
+@service
+def edit_log(list_name: str, text: str, new_text: str):
+    text = require_name(text, "text")
+    new_text = require_name(new_text, "new text")
+
+    data = db.load()
+    lst = require_list(data, list_name)
+
+    entry = find_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, today())
+    if not entry:
+        raise ServiceError(f"log entry '{text}' not found")
+
+    entry["text"] = new_text
+    db.save(data)
+
+
+@service
+def delete_log(list_name: str, text: str):
+    text = require_name(text, "text")
+
+    data = db.load()
+    lst = require_list(data, list_name)
+
+    deleted = remove_daysheet_entries(
+        data,
+        lst["id"],
+        DaysheetEntryType.LOG,
+        text,
+        today(),
+    )
+
+    if not deleted:
+        raise ServiceError(f"log entry '{text}' not found")
+
+    db.save(data)
+
+
+# ─────────────────────────── Continue Entries ───────────────────────────
+
+@service
+def continue_task(list_name: str, task_name: str):
+    task_name = require_name(task_name, "task")
+
+    data = db.load()
+    lst = require_list(data, list_name)
+    require_task(data, lst, task_name)
+
+    if has_daysheet_entry(data, lst["id"], DaysheetEntryType.DONE, task_name, today()):
+        raise ServiceError(f"'{task_name}' was already finished today")
+
+    if has_daysheet_entry(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, today()):
+        raise ServiceError(f"'{task_name}' was already continued today")
+
+    add_daysheet_entry(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, now())
+
+    db.save(data)
