@@ -400,20 +400,17 @@ body {
   border-color: var(--muted);
 }
 
-.new-list-input.hidden {
-  display: none;
-}
-
 .new-list-input input {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-sm);
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
   color: var(--text);
   font: inherit;
   font-size: var(--fs-xs);
-  padding: var(--sp-sm);
   outline: none;
+  padding: 1px 0;
 }
 
 #main {

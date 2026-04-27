@@ -356,27 +356,30 @@ function renderSidebar() {
   const ungrouped = sortByName(lists.filter(l => !seen.has(l.id)));
   ungrouped.forEach(l => tasksSectionBody.append(listBtn(l)));
 
-  // New List input
-  const inputRow = el('div', { class: 'new-list-input hidden' });
-  const input = el('input', { type: 'text', placeholder: MSG.listName, autocomplete: 'off' });
-  const submit = async () => {
-    const name = input.value.trim();
-    if (!name) return;
-    input.value = '';
-    inputRow.classList.add('hidden');
-    await act(API.addList, { list: name });
-  };
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') submit();
-    if (e.key === 'Escape') { input.value = ''; inputRow.classList.add('hidden'); }
-  });
-  input.addEventListener('blur', () => { if (!input.value.trim()) inputRow.classList.add('hidden'); });
-  inputRow.append(input);
-  tasksSectionBody.append(inputRow);
-  tasksSectionBody.append(el('button', {
+  // New List button — replaces itself with an inline input row on click
+  let newListBtn;
+  newListBtn = el('button', {
     class: 'new-list-btn',
-    on: { click: () => { inputRow.classList.remove('hidden'); input.focus(); } },
-  }, MSG.newList));
+    on: { click: () => {
+      const input = el('input', { type: 'text', placeholder: MSG.listName, autocomplete: 'off' });
+      const saveBtn = el('button', { class: 'lni-action sav', title: 'Add',
+        on: { click: async () => {
+          const name = input.value.trim();
+          if (name) await act(API.addList, { list: name });
+          else renderSidebar();
+        }},
+      }, icon(IC.check, 10));
+      const inputRow = el('div', { class: 'new-list-input lni-rename-row list-nav-item' }, input,
+        el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn)),
+      );
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') saveBtn.click();
+        if (e.key === 'Escape') renderSidebar();
+      });
+      newListBtn.replaceWith(inputRow);
+      input.focus();
+    }},
+  }, MSG.newList);
 
   nav.append(el('div', { class: 'nav-section' }, tasksHeader, tasksSectionBody));
 }
