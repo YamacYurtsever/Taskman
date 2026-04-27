@@ -246,11 +246,10 @@ function renderSidebar() {
           if (ev.key === 'Enter') save();
           if (ev.key === 'Escape') refresh();
         });
-        const saveBtn   = el('button', { class: 'lni-action sav', title: 'Save',   on: { click: save            } }, icon(IC.check,  10));
-        const cancelBtn = el('button', { class: 'lni-action lni-del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 10));
+        const saveBtn = el('button', { class: 'lni-action sav', title: 'Save', on: { click: save } }, icon(IC.check, 10));
         item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-rename-row' },
           input,
-          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, cancelBtn)),
+          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn)),
         ));
         input.focus(); input.select();
       }}
@@ -265,11 +264,10 @@ function renderSidebar() {
           ...sortByName(groups).map(g => el('option', { value: g.name }, g.name)),
         );
         sel.value = currentGroup?.name || '';
-        const saveBtn   = el('button', { class: 'lni-action sav', title: 'Save',   on: { click: () => act(API.moveList, { list: list.name, group: sel.value }) } }, icon(IC.check,  10));
-        const cancelBtn = el('button', { class: 'lni-action lni-del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 10));
+        const saveBtn = el('button', { class: 'lni-action sav', title: 'Save', on: { click: () => act(API.moveList, { list: list.name, group: sel.value }) } }, icon(IC.check, 10));
         item.replaceWith(el('div', { class: 'list-nav-item nav-list lni-move-row' },
           sel,
-          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, cancelBtn)),
+          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn)),
         ));
         sel.focus();
       }}
@@ -337,11 +335,10 @@ function renderSidebar() {
           if (ev.key === 'Enter') save();
           if (ev.key === 'Escape') refresh();
         });
-        const saveBtn   = el('button', { class: 'lni-action sav', title: 'Save',   on: { click: save            } }, icon(IC.check,  10));
-        const cancelBtn = el('button', { class: 'lni-action lni-del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 10));
+        const saveBtn = el('button', { class: 'lni-action sav', title: 'Save', on: { click: save } }, icon(IC.check, 10));
         groupHeader.replaceWith(el('div', { class: 'list-nav-item nav-group-header lni-rename-row' },
           input,
-          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn, cancelBtn)),
+          el('div', { class: 'lni-right' }, el('div', { class: 'lni-actions' }, saveBtn)),
         ));
         input.focus(); input.select();
       }}
@@ -427,11 +424,10 @@ function taskRow(task, listName) {
         if (e.key === 'Escape') refresh();
       });
       const saveBtn   = el('button', { class: 'task-btn sav', title: 'Save',   on: { click: save            } }, icon(IC.check,  11));
-      const cancelBtn = el('button', { class: 'task-btn del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 11));
       const editRow = el('div', { class: 'task-row task-edit-row' },
         el('div', { class: 'task-left' }),
         el('div', { class: 'task-edit-body' }, nameIn, dueIn),
-        el('div', { class: 'task-right' }, saveBtn, cancelBtn),
+        el('div', { class: 'task-right' }, saveBtn),
       );
       row.replaceWith(editRow);
       nameIn.focus();
@@ -447,10 +443,9 @@ function taskRow(task, listName) {
         ...otherLists.map(l => el('option', { value: l.name }, l.name)),
       );
       const saveBtn   = el('button', { class: 'task-btn sav', title: 'Save',   on: { click: () => { if (sel.value) act(API.moveTask, { list: listName, name: task.name, newList: sel.value }); } } }, icon(IC.check,  11));
-      const cancelBtn = el('button', { class: 'task-btn del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 11));
       row.replaceWith(el('div', { class: 'task-row task-move-row' },
         sel,
-        el('div', { class: 'task-right' }, saveBtn, cancelBtn),
+        el('div', { class: 'task-right' }, saveBtn),
       ));
       sel.focus();
     }}
@@ -705,11 +700,10 @@ function renderDaysheetView() {
                   if (ev.key === 'Escape') refresh();
                 });
                 const saveBtn   = el('button', { class: 'task-btn sav timeline-del', title: 'Save',   on: { click: save            } }, icon(IC.check,  11));
-                const cancelBtn = el('button', { class: 'task-btn del timeline-del', title: 'Cancel', on: { click: () => refresh() } }, icon(IC.delete, 11));
                 const editRow = el('div', { class: 'timeline-entry timeline-edit-row' },
                   el('span', { class: 'timeline-time' }, e.datetime.slice(11, 16)),
                   editIn,
-                  el('div', { class: 'timeline-actions' }, saveBtn, cancelBtn),
+                  el('div', { class: 'timeline-actions' }, saveBtn),
                 );
                 entry.replaceWith(editRow);
                 editIn.focus();
