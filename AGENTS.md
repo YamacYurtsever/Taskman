@@ -1,6 +1,6 @@
 # Taskman
 
-A minimal terminal task manager built for personal daily use. Tasks are organized into lists, and lists can be optionally grouped. Each task has a name, a parent list, and an optional due date. The primary workflow is adding tasks to lists, viewing what's due today or this week (with overdue tasks always surfaced), and marking things done. Data is stored in a flat JSON file at `~/.taskman/db.json`.
+A minimal web-based task manager built for personal daily use. Tasks are organized into lists, and lists can be optionally grouped. Each task has a name, a parent list, and an optional due date. Data is stored in a flat JSON file at `~/.taskman/db.json`.
 
 ---
 
@@ -8,81 +8,70 @@ A minimal terminal task manager built for personal daily use. Tasks are organize
 
 After completing each milestone item:
 
-- Add unit tests for any new commands or logic
-- Run `python -m pytest tests/ -v` and confirm all pass
-- Run `python -m vulture src tests --min-confidence 80` and confirm it has no findings
+- Add unit tests for any new API endpoints or service logic
+- Run `python -m pytest server/ -v` and confirm all pass
+- Run `python -m vulture server --min-confidence 80` and confirm it has no findings
 - Check off the item in the milestones section
 - Run `git add . && git commit -m "<description>"`
 
-After changes to `src/web/server.py`, `src/taskman/config.py`, or the built frontend, advise the user to restart the web server manually:
+After changes to `server/` or `server/config.py`, advise the user to restart the web server:
 
 ```bash
-taskman web
+python -m server
 ```
 
-Then advise the user to hard-refresh with Cmd+Shift+R.
+After changes to the frontend source, advise the user to rebuild:
+
+```bash
+cd client && npm run build
+```
+
+Then hard-refresh with Cmd+Shift+R.
 
 ---
 
-### Current Implementation Notes
+### Project Structure
 
-- Runtime packages use a `src/` layout:
-  - `src/taskman/` contains core taskman logic, persistence, config, constants, and command behavior.
-  - `src/cli/` contains the terminal interface and dispatches to `src/taskman/commands/`.
-  - `src/web/` contains the Flask web interface and static client.
-- The CLI entry point is `src/cli/main.py`.
-- Command behavior lives in `src/taskman/commands/`.
-- JSON persistence is centralized in `src/taskman/db.py`, currently using `~/.taskman/db.json`.
-- The web app is a Flask server in `src/web/server.py` plus a Vite React TypeScript frontend in `src/web/client/`.
-- The web server mostly wraps CLI command functions for simple actions, but some list/group/task edit endpoints mutate the JSON data directly.
-- There is no schema migration layer yet. Any new task fields must be backward-compatible with existing JSON records.
-- Frontend dependencies are managed by npm, and the production frontend is built with `npm run build`.
+```
+taskman/
+  server/               Flask app and all backend logic
+    __init__.py         App factory and API routes
+    __main__.py         Entry point for python -m server
+    services/           Business logic called by routes
+      daysheet.py       Log and continue entry operations
+      tasks.py          Task CRUD operations
+      utils.py          Shared helpers (find, require, db mutations)
+    db.py               JSON persistence (~/.taskman/db.json)
+    config.py           Config loader (~/.taskman/config.json)
+    constants.py        Shared constants and DaysheetEntryType
+    tests/              Pytest test suite
+      test_api.py       Flask route tests
+      test_daysheet.py  Daysheet service tests
+      test_tasks.py     Task service tests
+      test_utils.py     Utility function tests
+      helpers.py        Shared test fixtures
+    pytest.ini          Pytest config (pythonpath, testpaths)
+  client/               Vite + React + TypeScript frontend
+    src/
+      App.tsx           Root component and state
+      views/            CalendarView, DaysheetView, TasksView
+      components/       Sidebar, Topbar, ThemeToggle, InlineAdd, icons
+      lib/              api.ts, types.ts, utils.ts
+    static/             Static assets (logo, etc.)
+    index.html
+    vite.config.ts
+    tsconfig.json
+    package.json
+```
 
 ---
 
-### Implemented CLI Commands
+### Implementation Notes
 
-##### Tasks
-
-| Command                                                  | Description                                      |
-| -------------------------------------------------------- | ------------------------------------------------ |
-| `taskman add "list" ["name"] [date]`                     | Add a task to a list, or just create the list    |
-| `taskman done "list" "name"`                             | Mark a task as completed                         |
-| `taskman undo "list" "name"`                             | Mark a completed task as pending                 |
-| `taskman edit ("list"\|"group") "new_name"`          | Rename a list or group                           |
-| `taskman edit "list" "name" "new_name" [new_date]`   | Rename a task and/or update its due date         |
-| `taskman move "list" "group"`                            | Assign list to a group (creates group if new)    |
-| `taskman move "list" ""`                                 | Remove list from its group                       |
-| `taskman move "list" "name" "new_list"`                  | Move a task to another list                      |
-| `taskman delete ("group" \| "list" ["name"])`                         | Delete group (ungroup), list, or task    |
-
-##### View
-
-| Command                                  | Description                                             |
-| ---------------------------------------- | ------------------------------------------------------- |
-| `taskman ls ["list" \| "group"]`         | All pending tasks, optionally filtered by list or group |
-| `taskman ls ["list" \| "group"] --day`   | Overdue + due today                                     |
-| `taskman ls ["list" \| "group"] --week`  | Overdue + due within 7 days                             |
-| `taskman ls ["list" \| "group"] --done`  | Completed tasks, most recent first                      |
-
-##### Daysheets
-
-| Command                                     | Description                                                  |
-| ------------------------------------------- | ------------------------------------------------------------ |
-| `taskman log "list" "text"`                 | Freeform entry into a list's day sheet                       |
-| `taskman log edit "list" "text" "new_text"` | Edits daysheet entry                                         |
-| `taskman log delete "list" "text"`          | Deletes daysheet entry                                       |
-| `taskman continue "list" "task"`            | Logs continued task under a list                             |
-| `taskman daysheet [date]`                   | View a day's sheet (default today)                           |
-
-##### Shell Functions
-
-| Function                   | Expands to                |
-| -------------------------- | ------------------------- |
-| `tls ["list" \| "group"]`  | `taskman ls`              |
-| `tlsw ["list" \| "group"]` | `taskman ls --week`       |
-| `tlsd ["list" \| "group"]` | `taskman ls --day`        |
-| `tds [date]`               | `taskman daysheet [date]` |
+- The Flask server exposes a REST API; some endpoints delegate to service functions, others mutate the DB directly for complex operations.
+- Service functions in `server/services/` use a CLI-style `args` list interface and raise `SystemExit` on error — the `_run()` helper in `server/__init__.py` captures both.
+- There is no schema migration layer. Any new task fields must be backward-compatible with existing JSON records.
+- The frontend is built with Vite and served as static files from `client/dist/`. In dev mode, Vite proxies `/api` to the Flask server on port 5050.
 
 ---
 
@@ -90,37 +79,10 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 
 ```json
 {
-  "groups": [
-    {
-      "id": "uuid",
-      "name": "UNSW"
-    }
-  ],
-  "lists": [
-    {
-      "id": "uuid",
-      "name": "COMP3131",
-      "groupId": "uuid | null"
-    }
-  ],
-  "tasks": [
-    {
-      "id": "uuid",
-      "name": "Finish Assignment 5",
-      "listId": "uuid",
-      "due": "2026-04-30 | null",
-      "done": "2026-04-26 | null"
-    }
-  ],
-  "daysheet": [
-    {
-      "id": "uuid",
-      "datetime": "2026-04-26T14:32:05",
-      "listId": "uuid",
-      "type": "log | continue | done",
-      "text": "Talked with Baba"
-    }
-  ]
+  "groups": [{ "id": "uuid", "name": "UNSW" }],
+  "lists":  [{ "id": "uuid", "name": "COMP3131", "groupId": "uuid | null" }],
+  "tasks":  [{ "id": "uuid", "name": "Finish Assignment 5", "listId": "uuid", "due": "2026-04-30 | null", "done": "2026-04-26 | null" }],
+  "daysheet": [{ "id": "uuid", "datetime": "2026-04-26T14:32:05", "listId": "uuid", "type": "log | continue | done", "text": "Talked with Baba" }]
 }
 ```
 
@@ -129,87 +91,44 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 ### Tech Stack
 
 - **Backend:** Python, Flask
-- **Frontend:** Vite + React + TypeScript, with static assets built by `npm run build`
+- **Frontend:** Vite + React + TypeScript
 - **Storage:** JSON flat file (`~/.taskman/db.json`)
-- **Tests:** `python -m pytest tests/ -v`
-- **Frontend build:** `npm run build`
-- **Dead code check:** `python -m vulture src tests --min-confidence 80`
-- **CI:** GitHub Actions workflow in `.github/workflows/ci.yml` installs Python and npm dependencies, builds the frontend, then runs tests and Vulture
+- **Tests:** `python -m pytest server/ -v`
+- **Frontend build:** `cd client && npm run build`
+- **Dead code check:** `python -m vulture server --min-confidence 80`
+- **CI:** `.github/workflows/ci.yml` — installs deps, builds frontend, runs tests and Vulture
 
 ---
 
 ### Milestones
 
-##### Milestone 1 — Core
+##### Milestone 1 — Server
 
-- [x] Project setup
-- [x] `src/` package layout with core logic in `src/taskman/`
-- [x] JSON persistence in `src/taskman/db.py`
-- [x] Shared constants in `src/taskman/constants.py`
-- [x] Command behavior organized under `src/taskman/commands/`
+- [x] Flask server with REST API in `server/__init__.py`
+- [x] Service layer in `server/services/`
+- [x] JSON persistence in `server/db.py`
+- [x] Config loader in `server/config.py`
 
-##### Milestone 2 — CLI Frontend
+##### Milestone 2 — Client
 
-- [x] CLI entry point in `src/cli/main.py`
-- [x] Task commands: `add`, `done`, `undo`, `edit`, `move`, `delete`
-- [x] Viewing commands: `taskman ls`
-- [x] Daysheet commands `log`, `continue`, `daysheet`
-- [x] Shell functions: `tls`, `tlsd`, `tlsw`, `tds`
-- [x] Completion sound and visual feedback on `taskman done`
-
-##### Milestone 3 — Web Frontend
-
-###### Infrastructure
-- [x] Flask server (`src/web/server.py`) with REST endpoints for task/list/group/daysheet operations
-- [x] Serve static frontend from `src/web/client/`
-- [x] Live updates without full page reload
-
-###### View
 - [x] Cards view: all lists/groups with pending tasks, 4-column responsive grid
 - [x] Focused view: single list with pending + completed tasks
 - [x] Daysheet view: day sheet with date navigation
 - [x] Filter pills: All / Week / Day
-- [x] Sidebar: Daysheet + Tasks nav, groups, lists, alphabetical with Others last
-
-###### Tasks
-- [x] Add task
-- [x] Mark done / undo (checkbox)
-- [x] Delete task
-- [x] Continue task (logs to daysheet)
-- [x] Rename task / update due date
-- [x] Move task to another list
-
-###### Lists & Groups
-- [x] Create list
-- [x] Rename list
-- [x] Delete list
-- [x] Rename group
-- [x] Delete group
+- [x] Sidebar: Calendar + Daysheet + Tasks nav, groups, lists, alphabetical with Others last
+- [x] Add / mark done / undo / delete / rename / move tasks
+- [x] Create / rename / delete lists and groups
 - [x] Move list to group / ungroup
+- [x] Add / edit / delete daysheet log entries
+- [x] Continue task (logs to daysheet)
+- [x] Light/dark mode toggle (persisted to `localStorage`)
 
-###### Daysheet
-- [x] Add log entry
-- [x] Continue task (from task cards)
-- [x] Delete entry
-- [x] Edit log entry (`taskman log edit`)
+##### Milestone 3 — Google Calendar
 
-###### Light / Dark Mode
-- [x] Light/dark mode toggle (persisted to `localStorage`, toggled via button in topbar)
-
-###### Responsiveness
-
-- [ ] Sidebar collapses to a full page from a burger icon
-- [ ] Focused view and daysheet fill full width on mobile
-- [ ] Calendar iframe scales to viewport width, with day view instead of week.
-
-##### Milestone 4 — Google Calendar
-
-- [x] Web: Google Calendar iframe embedded in taskman (week view by default)
-- [x] Sidebar nav entry (above Daysheet) to access the calendar view
-- [x] Multi-calendar support: calendars configured in `~/.taskman/config.json` as an array of `{ id, color }` objects
-- [x] Per-calendar color override via Google Calendar embed `color` param
-- [x] iframe loaded once at boot and kept in DOM — switching to Calendar view shows/hides it instantly
-- [x] Config file (`~/.taskman/config.json`) with `calendars` array and `calendarTimezone`; built-in defaults in `src/taskman/config.py`
+- [x] Google Calendar iframe embedded (week view by default)
+- [x] Multi-calendar support via `~/.taskman/config.json`
+- [x] Per-calendar color override via embed `color` param
+- [x] iframe kept in DOM — switching views shows/hides it instantly
 
 ###### Calendar Config (`~/.taskman/config.json`)
 
@@ -217,37 +136,36 @@ Then advise the user to hard-refresh with Cmd+Shift+R.
 {
   "calendars": [
     { "id": "you@gmail.com", "color": "#B39DDB" },
-    { "id": "other-calendar-id@group.calendar.google.com", "color": "#E67C73" }
+    { "id": "other@group.calendar.google.com", "color": "#E67C73" }
   ],
   "calendarTimezone": "America/Sydney"
 }
 ```
 
-Google Calendar embed color codes (predefined palette):
-`#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` Wisteria · `#039BE5` Peacock · `#3F51B5` Blueberry · `#7986CB` Lavender · `#8E24AA` Grape · `#F6BF26` Banana · `#F4511E` Tangerine · `#0B8043` Basil · `#D50000` Tomato · `#616161` Graphite
+Google Calendar embed colors: `#E67C73` Flamingo · `#33B679` Sage · `#B39DDB` Wisteria · `#039BE5` Peacock · `#3F51B5` Blueberry · `#7986CB` Lavender · `#8E24AA` Grape · `#F6BF26` Banana · `#F4511E` Tangerine · `#0B8043` Basil · `#D50000` Tomato · `#616161` Graphite
+
+##### Milestone 4 — Responsiveness
+
+- [ ] Sidebar collapses to a full-page overlay from a burger icon
+- [ ] Focused view and daysheet fill full width on mobile
+- [ ] Calendar iframe scales to viewport width, day view on mobile
 
 ##### Milestone 5 — Task Descriptions
 
-- [ ] Add `description` field to task schema (`db.json`)
-- [ ] Backfill missing `description` fields for existing tasks
-- [ ] CLI: `taskman describe "list" "task" ["description"]` — prints description if no text given, sets it otherwise
-- [ ] CLI: `taskman ls "list"` focused view shows a hint symbol next to tasks that have a description
-- [ ] Web API: endpoint to read/update a task description
-- [ ] Web: small icon on task row (cards + focused view) when a description exists
-- [ ] Web: one task view component showing task info (name, list, due date) at the top and an editable description textarea below; updates saved debounced as you type; Escape closes it
-- [ ] Web: clicking a task name in focused view mounts the task view as a side panel to the right when there is enough horizontal space, or replaces the main content area when there isn't
-- [ ] Web: raw URLs in the description are rendered as clickable links
+- [ ] Add `description` field to task schema (backward-compatible)
+- [ ] API endpoint to read/write a task description
+- [ ] Small icon on task rows when a description exists
+- [ ] Task detail panel: name, list, due date at top; editable textarea below; debounced save; Escape closes
+- [ ] Opens as side panel when wide enough, replaces main content on mobile
+- [ ] Raw URLs in descriptions rendered as clickable links
 
 ##### Milestone 6 — Authentication
 
-- [ ] Introduce a user/account model that can support both local personal use and future hosted deployment
-- [ ] Add web authentication flow with login, logout, and authenticated session handling
-- [ ] Protect task, list, group, daysheet, and calendar endpoints behind authentication when auth is enabled
-- [ ] Keep local single-user mode backward-compatible for CLI-first usage
-- [ ] Add configuration for auth mode, secrets, redirect URLs, and deployment-specific settings without committing secrets
-- [ ] Add OAuth provider support for external accounts and integrations
-- [ ] Store OAuth tokens securely enough for the deployment mode, with refresh support where providers allow it
-- [ ] Web: account/settings area for managing connected providers and authenticated integrations
-- [ ] Web: calendar picker can use authenticated provider data when available, while preserving manual calendar config as an advanced fallback
-- [ ] Prepare persistence boundaries so the JSON file can later be replaced by a deployed database
-- [ ] Document local auth setup, OAuth provider setup, and deployment-oriented configuration in README
+- [ ] User/account model supporting local single-user and future hosted deployment
+- [ ] Web auth flow: login, logout, session handling
+- [ ] All API endpoints protected when auth is enabled
+- [ ] Auth config: mode, secrets, redirect URLs (no committed secrets)
+- [ ] OAuth provider support with token refresh
+- [ ] Google OAuth: pull the user's calendars automatically, replacing the manual `config.json` calendar list
+- [ ] Account/settings UI for managing connected providers and calendar selection
+- [ ] Persistence boundaries ready for a deployed database

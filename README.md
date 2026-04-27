@@ -1,74 +1,31 @@
 # Taskman
 
-A minimal terminal task manager for personal daily use. Tasks live in lists, lists can be grouped, and everything is stored in a flat JSON file at `~/.taskman/db.json`.
+A minimal web-based task manager for personal daily use. Tasks live in lists, lists can be grouped, and everything is stored in a flat JSON file at `~/.taskman/db.json`.
 
 ---
 
-## Install
+## Setup
+
+Install Python dependencies:
 
 ```bash
-pip install -e .
+pip install flask
 ```
 
----
-
-## Usage
-
-### Tasks
+Build the frontend once before serving:
 
 ```bash
-taskman add "list" ["name"] [date]              # Add a task (date: YYYY-MM-DD), or just create the list
-taskman done "list" "name"                      # Mark done
-taskman undo "list" "name"                      # Mark pending
-taskman edit ("list"|"group") "new_name"        # Rename a list or group
-taskman edit "list" "name" "new_name" [date]    # Rename a task and/or update its due date
-taskman move "list" "group"                     # Assign list to a group (creates group if new)
-taskman move "list" ""                          # Remove list from its group
-taskman move "list" "name" "new_list"           # Move task to another list
-taskman delete ("group"|"list" ["name"])        # Delete a group, list, or task
-```
-
-### Viewing
-
-```bash
-taskman ls [list|group]                         # All pending tasks
-taskman ls [list|group] --day                   # Overdue + due today
-taskman ls [list|group] --week                  # Overdue + due this week
-taskman ls [list|group] --done                  # Completed tasks, most recent first
-```
-
-### Day Sheets
-
-```bash
-taskman log "list" "text"                       # Add a freeform log entry
-taskman log edit "list" "text" "new_text"       # Edit a log entry
-taskman log delete "list" "text"                # Delete a log entry
-taskman continue "list" "task"                  # Log a continued task (once per day)
-taskman daysheet [date]                         # View day sheet (default: today)
-```
-
-### Shell Aliases
-
-```bash
-tls [list|group]                                # taskman ls
-tlsd [list|group]                               # taskman ls --day
-tlsw [list|group]                               # taskman ls --week
-tds [date]                                      # taskman daysheet
-```
-
----
-
-## Web UI
-
-Install and build the frontend once before serving it through Flask:
-
-```bash
+cd client
 npm install
 npm run build
 ```
 
+---
+
+## Running
+
 ```bash
-taskman web
+python -m server
 ```
 
 Opens a local web interface at `http://127.0.0.1:5050` with:
@@ -82,15 +39,17 @@ Opens a local web interface at `http://127.0.0.1:5050` with:
 - Light/dark mode
 
 ```bash
-taskman web --port 8080 --debug
+python -m server --port 8080 --debug
 ```
 
-For frontend development, run Flask for the API and Vite for the React app:
+For frontend development, run Flask for the API and Vite for the React app in parallel:
 
 ```bash
-taskman web
-npm run dev
+python -m server
+cd client && npm run dev
 ```
+
+---
 
 ### Calendar Config
 
