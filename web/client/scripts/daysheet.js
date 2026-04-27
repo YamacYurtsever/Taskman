@@ -1,6 +1,6 @@
-'use strict';
+import { state, el, icon, MSG, API, IC, sortByName, todayStr, act, refresh } from './core.js';
 
-function renderDaysheetView() {
+export function renderDaysheetView() {
   const main = document.getElementById('main');
   main.replaceChildren();
 

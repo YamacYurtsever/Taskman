@@ -1,6 +1,7 @@
-'use strict';
+import { state, el, icon, MSG, API, IC, sortByName, pendingFor, act, refresh } from './core.js';
+import { render } from './app.js';
 
-function renderSidebar() {
+export function renderSidebar() {
   const nav = document.getElementById('list-nav');
   nav.replaceChildren();
   if (!state.data) return;

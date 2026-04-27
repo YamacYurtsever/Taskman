@@ -1,6 +1,11 @@
-'use strict';
+import './theme.js';
+import { state, api, API, refresh, registerRender } from './core.js';
+import { renderSidebar } from './sidebar.js';
+import { renderCardsView, renderFocusedView, renderCalendarView } from './tasks.js';
+import { renderDaysheetView } from './daysheet.js';
+import { renderTopbar } from './topbar.js';
 
-function render() {
+export function render() {
   renderTopbar();
   renderSidebar();
   const isCalendar = state.view === 'calendar';
@@ -14,6 +19,8 @@ function render() {
   if (state.selectedList) renderFocusedView(state.selectedList);
   else renderCardsView();
 }
+
+registerRender(render);
 
 (async () => {
   const cfg = await api('GET', API.config);

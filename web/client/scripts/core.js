@@ -1,8 +1,4 @@
-'use strict';
-
-// ─────────────────────────── State ────────────────────────────
-
-const state = {
+export const state = {
   view: 'tasks',
   filter: 'all',
   selectedList: null,
@@ -15,13 +11,13 @@ const state = {
   expandedCards: new Set(),
 };
 
-function todayStr() {
+export function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-// ──────────────────────── DOM helpers ─────────────────────────
+// ── DOM helpers ──
 
-function el(tag, props, ...children) {
+export function el(tag, props, ...children) {
   const node = document.createElement(tag);
   if (props) {
     for (const [k, v] of Object.entries(props)) {
@@ -38,20 +34,9 @@ function el(tag, props, ...children) {
   return node;
 }
 
-function icon(d, size = 13) {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('width', size); svg.setAttribute('height', size);
-  svg.setAttribute('viewBox', '0 0 16 16'); svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '1.8');
-  svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round');
-  svg.innerHTML = d;
-  return svg;
-}
+// ── Constants ──
 
-// ──────────────────────── Constants ───────────────────────────
-
-const MSG = {
+export const MSG = {
   noTasks:    'No tasks',
   noEntries:  'No entries',
   addTask:    'Add task…',
@@ -67,7 +52,7 @@ const MSG = {
   noCalUrl:   'No calendars configured. Add a "calendars" array and "calendarTimezone" to ~/.taskman/config.json.',
 };
 
-const API = {
+export const API = {
   config:         '/api/config',
   state:          '/api/state',
   daysheet:       '/api/daysheet',
@@ -89,7 +74,7 @@ const API = {
   daysheetEdit:   '/api/daysheet/edit',
 };
 
-const IC = {
+export const IC = {
   tasks:    '<rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5.5 8l2 2L10.5 6"/>',
   daysheet: '<path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h4M6 9h4M6 12h2"/>',
   check:    '<path d="M3 8.5l3 3L13 5"/>',
@@ -103,9 +88,9 @@ const IC = {
   move:     '<path d="M3 8h10M9 4l4 4-4 4"/>',
 };
 
-// ──────────────────────────── API ─────────────────────────────
+// ── Network ──
 
-async function api(method, path, body) {
+export async function api(method, path, body) {
   const opts = { method };
   if (body != null) {
     opts.headers = { 'Content-Type': 'application/json' };
@@ -119,7 +104,11 @@ async function api(method, path, body) {
   } catch { console.log('Request failed'); return null; }
 }
 
-async function refresh() {
+// render() is defined in app.js; registered here to avoid a circular import
+let _render = () => {};
+export function registerRender(fn) { _render = fn; }
+
+export async function refresh() {
   if (state.view === 'daysheet') {
     const [ds, data] = await Promise.all([
       api('GET', `${API.daysheet}?date=${state.daysheetDate}`),
@@ -130,11 +119,10 @@ async function refresh() {
   } else {
     state.data = await api('GET', API.state);
   }
-  render();
-  renderSidebar();
+  _render();
 }
 
-async function act(path, body) {
+export async function act(path, body) {
   const res = await api('POST', path, body);
   if (res?.ok) {
     state.data = null;
@@ -143,9 +131,9 @@ async function act(path, body) {
   }
 }
 
-// ──────────────────────── Data helpers ────────────────────────
+// ── Data helpers ──
 
-function sortByName(arr) {
+export function sortByName(arr) {
   return [...arr].sort((a, b) => {
     if (/^others?$/i.test(a.name)) return 1;
     if (/^others?$/i.test(b.name)) return -1;
@@ -153,7 +141,7 @@ function sortByName(arr) {
   });
 }
 
-function pendingFor(listId) {
+export function pendingFor(listId) {
   const { tasks, today } = state.data;
   const todayD = new Date(today);
   const pending = tasks.filter(t => t.listId === listId && !t.done);
@@ -171,13 +159,13 @@ function pendingFor(listId) {
   ];
 }
 
-function doneFor(listId) {
+export function doneFor(listId) {
   return state.data.tasks
     .filter(t => t.listId === listId && t.done)
     .sort((a, b) => b.done.localeCompare(a.done));
 }
 
-function formatDue(due) {
+export function formatDue(due) {
   const today = state.data.today;
   const dueD = new Date(due);
   const todayD = new Date(today);
@@ -189,9 +177,7 @@ function formatDue(due) {
   return { label: dueD.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), cls: '' };
 }
 
-// ─────────────────────── Inline add row ───────────────────────
-
-function inlineAdd(listName, onAdd) {
+export function inlineAdd(listName, onAdd) {
   const nameIn = el('input', { type: 'text', placeholder: MSG.addTask });
   const dueIn  = el('input', { type: 'date' });
   const submit = () => {

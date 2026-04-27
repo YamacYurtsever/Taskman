@@ -1,6 +1,7 @@
-'use strict';
+import { state, el } from './core.js';
+import { render } from './app.js';
 
-function renderTopbar() {
+export function renderTopbar() {
   const bar = document.getElementById('filter-bar');
   bar.replaceChildren();
   if (state.view !== 'tasks') return;

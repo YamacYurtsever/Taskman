@@ -1,8 +1,10 @@
-'use strict';
+import { state, el, icon, MSG, API, IC, sortByName, pendingFor, doneFor, formatDue, inlineAdd, act, refresh } from './core.js';
+import { render } from './app.js';
+import { renderSidebar } from './sidebar.js';
 
 // ────────────────────────── Task row ──────────────────────────
 
-function taskRow(task, listName) {
+export function taskRow(task, listName) {
   const due = task.due ? formatDue(task.due) : null;
   let row;
 
@@ -93,7 +95,7 @@ function taskRow(task, listName) {
 
 const CARD_LIMIT = 10;
 
-function renderCard(list) {
+export function renderCard(list) {
   const pending = pendingFor(list.id);
   if (!pending.length) return null;
 
@@ -128,7 +130,7 @@ function renderCard(list) {
   );
 }
 
-function renderCardsView() {
+export function renderCardsView() {
   const main = document.getElementById('main');
   main.replaceChildren();
   const { groups, lists } = state.data;
@@ -178,7 +180,7 @@ function renderCardsView() {
 
 // ───────────────── Focused view (single list) ─────────────────
 
-function renderFocusedView(listId) {
+export function renderFocusedView(listId) {
   const { lists } = state.data;
   const list = lists.find(l => l.id === listId);
   if (!list) { state.selectedList = null; renderCardsView(); return; }
@@ -227,7 +229,7 @@ function renderFocusedView(listId) {
 
 // ──────────────────────── Calendar view ───────────────────────
 
-function renderCalendarView() {
+export function renderCalendarView() {
   const main = document.getElementById('main');
   main.replaceChildren();
   if (!state.calendarUrl) {
