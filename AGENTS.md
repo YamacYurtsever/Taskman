@@ -49,7 +49,7 @@ taskman/
     constants.py        Shared constants and DaysheetEntryType
     tests/              Pytest test suite
       test_api.py       Flask route tests
-      test_auth.py      Auth, login, OAuth, and settings route tests
+      test_auth.py      Auth, login, OAuth, and config route tests
       test_daysheet.py  Daysheet service tests
       test_tasks.py     Task service tests
       test_utils.py     Utility function tests
@@ -62,7 +62,7 @@ taskman/
       App.module.css    Layout styles (content wrapper, main, detail panel, calendar iframe)
       main.tsx          React entry point, imports global styles
       action-button.css Shared global action-button styles (`.action-btn`)
-      views/            Route-level screens: CalendarView, DaysheetView, CardsView, FocusedView, LoginView, SettingsView
+      views/            Route-level screens: CalendarView, DaysheetView, CardsView, FocusedView, LoginView
       components/       Reusable UI
         Sidebar/        Sidebar shell, nav, list/group rows, shared sidebar types
         tasks/          TaskRow, TaskCard, TaskDetail, AddTaskForm, shared task types/styles
@@ -105,7 +105,6 @@ taskman/
 | `/list/:listId` | Focused view for a single list |
 | `/daysheet` | Day sheet with date navigation |
 | `/calendar` | Embedded Google Calendar |
-| `/settings` | Connected Google account, timezone (protected) |
 | `/login` | "Sign in with Google" (public) |
 
 ---
@@ -201,40 +200,56 @@ Google OAuth is the sole login method — no local password. The OAuth flow both
 
 ###### Setup & config
 
-- [ ] `requirements.txt` — `flask-session`, `google-auth-oauthlib`, `google-api-python-client`
-- [ ] `server/constants.py` — add `SESSIONS_PATH = TASKMAN_DIR / "sessions"`
-- [ ] `server/config.py` — add `save()`; extend `DEFAULTS` with `secretKey`, `googleRefreshToken`, `googleEmail`
-- [ ] `.github/workflows/ci.yml` — install from `requirements.txt` instead of inline pip list
-- [ ] `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` read from environment; never committed
+- [x] `requirements.txt` — `flask-session`, `google-auth-oauthlib`, `google-api-python-client`
+- [x] `server/constants.py` — add `SESSIONS_PATH = TASKMAN_DIR / "sessions"`
+- [x] `server/config.py` — add `save()`; extend `DEFAULTS` with `secretKey`, `googleRefreshToken`, `googleEmail`
+- [x] `.github/workflows/ci.yml` — install from `requirements.txt` instead of inline pip list
+- [x] `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` read from environment; never committed
 
 ###### Backend
 
-- [ ] `server/api.py` — `flask-session` setup; auto-generate `secretKey` and persist to `config.json` on first run
-- [ ] `server/api.py` — `require_auth` decorator (checks `session["authenticated"]`); applied to all `/api/*` except oauth/callback and auth/status
-- [ ] `server/api.py` — `GET /api/auth/status` → `{authenticated}` (public)
-- [ ] `server/api.py` — `GET /api/oauth/start` → return Google consent URL; `GET /api/oauth/callback` → store refresh token + email, set session, redirect to `/`; `POST /api/logout`; set `OAUTHLIB_INSECURE_TRANSPORT=1` in dev; use `access_type="offline"&prompt="consent"`
-- [ ] `server/api.py` — `GET /api/config` updated to fetch calendar list from Google Calendar API using stored refresh token, falling back to manual `config.json` entries on error
-- [ ] `server/api.py` — `GET /api/settings` → `{googleEmail, calendarTimezone}`; `POST /api/settings/timezone`
+- [x] `server/api.py` — `flask-session` setup; auto-generate `secretKey` and persist to `config.json` on first run
+- [x] `server/api.py` — `require_auth` decorator (checks `session["authenticated"]`); applied to all `/api/*` except oauth/callback and auth/status
+- [x] `server/api.py` — `GET /api/auth/status` → `{authenticated}` (public)
+- [x] `server/api.py` — `GET /api/oauth/start` → return Google consent URL; `GET /api/oauth/callback` → store refresh token + email, set session, redirect to `/`; `POST /api/logout`; set `OAUTHLIB_INSECURE_TRANSPORT=1` in dev; use `access_type="offline"&prompt="consent"`
+- [x] `server/api.py` — `GET /api/config` updated to fetch calendar list from Google Calendar API using stored refresh token
 
 ###### Backend — tests
 
-- [ ] `server/tests/utils.py` — add `saved_config` context manager (mirrors `saved_db`)
-- [ ] `server/tests/test_api.py` — seed `session["authenticated"] = True` in `setUp` so existing tests pass through `require_auth`
-- [ ] `server/tests/test_auth.py` — auth status, OAuth start/callback/logout, settings GET/timezone, config calendar fallback
+- [x] `server/tests/utils.py` — add `saved_config` context manager (mirrors `saved_db`)
+- [x] `server/tests/test_api.py` — seed `session["authenticated"] = True` in `setUp` so existing tests pass through `require_auth`
+- [x] `server/tests/test_auth.py` — auth status, OAuth start/callback/logout, config calendar fetch
 
 ###### Frontend
 
-- [ ] `client/src/lib/types.ts` — `AuthStatusResponse`, `SettingsResponse`
-- [ ] `client/src/lib/api.ts` — auth/OAuth/settings entries in `API`; `setUnauthorizedHandler` for global 401 redirect
-- [ ] `client/src/lib/utils.ts` — add `settings` to `MSG`
-- [ ] `client/src/views/LoginView.tsx` + `LoginView.module.css` — "Sign in with Google" button only; calls `/api/oauth/start` and redirects to the returned URL
-- [ ] `client/src/views/SettingsView.tsx` + `SettingsView.module.css` — connected Google account, disconnect button, timezone selector
-- [ ] `client/src/App.tsx` — rename `App` → `AuthenticatedApp`; new `App` checks auth status and renders `LoginView` or `AuthenticatedApp`; `RequireAuth` wrapper; add `/settings` route inside authenticated shell
-- [ ] `client/src/components/Sidebar/Sidebar.tsx` — Settings nav item at the bottom
-- [ ] `client/src/hooks/useAppData.ts` — expose `logout` function
+- [x] `client/src/lib/types.ts` — `AuthStatusResponse`
+- [x] `client/src/lib/api.ts` — auth/OAuth entries in `API`; `setUnauthorizedHandler` for global 401 redirect
+- [x] `client/src/views/LoginView.tsx` + `LoginView.module.css` — "Sign in with Google" button only; calls `/api/oauth/start` and redirects to the returned URL
+- [x] `client/src/App.tsx` — rename `App` → `AuthenticatedApp`; new `App` checks auth status and renders `LoginView` or `AuthenticatedApp`; add a single logout button in the authenticated layout
+- [x] `client/src/hooks/useAppData.ts` — expose `logout` function
 
 ###### Google OAuth setup note
 
 Requires a Google Cloud project with the Calendar API enabled and an OAuth 2.0 credential. Set the authorised redirect URI to `http://127.0.0.1:5050/api/oauth/callback`. Export `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` before starting the server.
 
-##### Milestone 6 — Deploy
+##### Milestone 6 — Ownership & Multi-user
+
+Each authenticated Google user sees only their own data. Currently all data is shared in a single flat JSON file.
+
+###### Backend
+
+- [ ] `server/db.py` — scope `DB_PATH` per user (e.g. `~/.taskman/users/<email>/db.json`); derive path from `session["email"]` passed into `db.load()` / `db.save()`
+- [ ] `server/config.py` — keep a single shared `config.json` for server-level settings (`secretKey`, OAuth credentials); move per-user state (`googleRefreshToken`, `googleEmail`, calendars) into the per-user DB or a per-user config file
+- [ ] `server/api.py` — pass authenticated user's email into all `db.load()` / `db.save()` calls; store `email` in session on OAuth callback
+- [ ] `server/api.py` — `GET /api/config` fetches calendar list using the requesting user's own refresh token
+
+###### Backend — tests
+
+- [ ] Update `saved_db` / `saved_config` fixtures and all route tests to account for per-user DB paths
+- [ ] Add multi-user isolation tests (two users cannot read each other's data)
+
+###### Frontend
+
+- [ ] No frontend changes required — API contract is unchanged
+
+##### Milestone 7 — Deploy

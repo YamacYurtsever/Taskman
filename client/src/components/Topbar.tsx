@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import type { TaskFilter } from '../lib/types';
-import { MenuIcon } from './icons';
+import { MenuIcon, SignOutIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 import styles from './Topbar.module.css';
 
@@ -9,6 +9,7 @@ type TopbarProps = {
   setFilter: (filter: TaskFilter) => void;
   showMenuButton: boolean;
   onMenuClick: () => void;
+  onLogout?: () => void;
 };
 
 const filters: TaskFilter[] = ['all', 'week', 'day'];
@@ -16,7 +17,7 @@ const filters: TaskFilter[] = ['all', 'week', 'day'];
 const label = (f: TaskFilter) =>
   f[0].toUpperCase() + f.slice(1);
 
-const Topbar = ({ filter, setFilter, showMenuButton, onMenuClick }: TopbarProps) => {
+const Topbar = ({ filter, setFilter, showMenuButton, onMenuClick, onLogout }: TopbarProps) => {
   const { pathname } = useLocation();
 
   const showFilter =
@@ -48,7 +49,14 @@ const Topbar = ({ filter, setFilter, showMenuButton, onMenuClick }: TopbarProps)
         </div>
       )}
 
-      <ThemeToggle />
+      <div className={styles.rightControls}>
+        <ThemeToggle />
+        {onLogout && (
+          <button className={styles.logoutBtn} title="Sign out" onClick={onLogout}>
+            <SignOutIcon size={14} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };

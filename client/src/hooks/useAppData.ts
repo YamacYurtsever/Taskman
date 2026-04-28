@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import type { StateResponse } from '../lib/types';
 
+
 export const useAppData = () => {
   const [data, setData] = useState<StateResponse | null>(null);
   const [calendarUrl, setCalendarUrl] = useState('');
@@ -30,5 +31,9 @@ export const useAppData = () => {
     refresh();
   }, [refresh]);
 
-  return { data, calendarUrl, act, refresh };
+  const logout = useCallback(async () => {
+    await api.logout();
+  }, []);
+
+  return { data, calendarUrl, act, refresh, logout };
 };

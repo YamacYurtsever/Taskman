@@ -1,11 +1,16 @@
 import type {
   ApiResult,
+  AuthStatusResponse,
   ConfigResponse,
   DaysheetResponse,
   StateResponse,
 } from './types';
 
 const API = {
+  authStatus: '/api/auth/status',
+  oauthStart: '/api/oauth/start',
+  logout: '/api/logout',
+
   config: '/api/config',
   state: '/api/state',
   daysheet: '/api/daysheet',
@@ -31,6 +36,12 @@ const API = {
   taskDescription: '/api/task-description',
 } as const;
 
+let unauthorizedHandler: (() => void) | null = null;
+
+const setUnauthorizedHandler = (handler: () => void) => {
+  unauthorizedHandler = handler;
+};
+
 const request = async <T>(
   method: string,
   path: string,
@@ -47,6 +58,11 @@ const request = async <T>(
     const res = await fetch(path, opts);
     const json = await res.json().catch(() => null);
 
+    if (res.status === 401) {
+      unauthorizedHandler?.();
+      return null;
+    }
+
     if (!res.ok) {
       console.log(json?.message || json?.error || 'Request failed');
       return null;
@@ -60,6 +76,10 @@ const request = async <T>(
 };
 
 const api = {
+  authStatus: () => request<AuthStatusResponse>('GET', API.authStatus),
+  oauthStart: () => request<{ url: string }>('GET', API.oauthStart),
+  logout: () => request<ApiResult>('POST', API.logout),
+
   config: () => request<ConfigResponse>('GET', API.config),
   state: () => request<StateResponse>('GET', API.state),
   daysheet: (date: string) =>
@@ -71,4 +91,5 @@ export {
   API,
   request,
   api,
+  setUnauthorizedHandler,
 };
