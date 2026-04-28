@@ -1,50 +1,250 @@
 .page {
+  position: relative;
   flex: 1;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(24px, 4vw, 48px);
+  background: linear-gradient(
+    135deg,
+    var(--bg),
+    color-mix(in srgb, var(--primary) 80%, var(--accent-bg))
+  );
+}
+
+.mesh {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--yellow) 10%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  width: min(1100px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  align-items: center;
+  gap: clamp(24px, 5vw, 56px);
+}
+
+.copyBlock {
+  max-width: 560px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-lg);
-  background: var(--bg);
+  gap: 16px;
+  animation: loginFloatIn 1s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.eyebrow {
+  width: fit-content;
+  padding: 8px 16px;
+  border: var(--border-w) solid color-mix(in srgb, var(--accent) 15%, var(--border));
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--primary) 85%, transparent);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-1);
   margin: 0;
-  letter-spacing: -0.02em;
+  color: var(--text-1);
+  font-size: clamp(3rem, 8vw, 6rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
 }
 
 .tagline {
-  font-size: var(--fs);
-  color: var(--text-2);
+  max-width: 32rem;
   margin: 0;
+  color: var(--text-2);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+}
+
+.featureRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp);
+  padding-top: var(--sp-sm);
+}
+
+.featurePill {
+  padding: 10px 16px;
+  border: var(--border-w) solid color-mix(in srgb, var(--accent) 15%, var(--border));
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--primary) 90%, transparent);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(24px, 3vw, 32px);
+  border: var(--border-w-strong) solid color-mix(in srgb, var(--accent) 15%, var(--border));
+  border-radius: 32px;
+  background: linear-gradient(
+    180deg,
+    var(--primary),
+    color-mix(in srgb, var(--primary-bg) 90%, white)
+  );
+  box-shadow: 0 24px 64px rgb(20 17 14 / 0.12);
+  animation: loginFloatIn 1s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.cardGlow {
+  position: absolute;
+  inset: -24% auto auto 50%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--accent-bg),
+    transparent 70%
+  );
+  filter: blur(12px);
+  opacity: 1;
+  pointer-events: none;
+  animation: cardGlowFloat 10s ease-in-out infinite alternate;
+}
+
+.cardHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp);
+  margin-bottom: var(--sp-lg);
+}
+
+.cardKicker {
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.cardText {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 1rem;
 }
 
 .signInBtn {
-  margin-top: var(--sp);
-  padding: 10px 20px;
-  display: flex;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 64px;
+  padding: 0 24px;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp);
-  background: var(--primary);
-  border: var(--border-w) solid var(--border);
-  border-radius: var(--r);
-  color: var(--text-1);
+  border: var(--border-w-strong) solid color-mix(in srgb, var(--accent) 25%, var(--border));
+  border-radius: 20px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, white 75%, var(--accent)),
+    color-mix(in srgb, var(--accent-bg) 60%, white)
+  );
+  color: #1d2235;
   font: inherit;
-  font-size: var(--fs);
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: background var(--animation-d), border-color var(--animation-d);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--accent) 20%, transparent);
+  transition: transform 240ms ease, box-shadow 240ms ease;
 }
 
 .signInBtn:hover {
-  background: var(--primary-bg);
-  border-color: var(--text-3);
+  transform: scale(1.05);
+}
+
+.signInBtn:active {
+  transform: scale(1);
 }
 
 .signInBtn:focus-visible {
   outline: var(--outline-w) solid var(--accent);
-  outline-offset: var(--outline-offset);
+}
+
+@keyframes loginFloatIn {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cardGlowFloat {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-8px, 16px) scale(1.1);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: var(--sp-lg);
+    justify-items: center;
+  }
+
+  .copyBlock {
+    max-width: none;
+    align-items: center;
+    text-align: center;
+  }
+
+  .title {
+    font-size: clamp(3rem, 16vw, 5rem);
+  }
+
+  .tagline {
+    max-width: 30rem;
+  }
+
+  .featureRow {
+    justify-content: center;
+  }
+
+  .card {
+    width: min(420px, 100%);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 16px;
+  }
+
+  .card {
+    width: min(380px, 100%);
+    border-radius: 24px;
+  }
+
+  .featureRow {
+    gap: 8px;
+  }
+
+  .featurePill {
+    padding: 8px 12px;
+  }
 }
