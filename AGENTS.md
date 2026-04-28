@@ -280,13 +280,13 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 
 ###### Ops / deploy assets
 
-- [ ] Add a production WSGI entrypoint and document the DigitalOcean Ubuntu `gunicorn` command used to run the Flask app
-- [ ] Add deploy assets under a repo-owned location (for example `deploy/`) for a `systemd` service and an `nginx` site config that proxies to Gunicorn and serves HTTPS on the VPS
-- [ ] Document required production environment variables (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TASKMAN_BASE_URL`, and any Flask environment settings) and where they are loaded from
-- [ ] Document Google OAuth production setup for the public DigitalOcean-hosted domain: authorised origin(s), authorised redirect URI, and the need to update them when the public domain changes
-- [ ] Document Let’s Encrypt setup and HTTPS renewal on the VPS
-- [ ] Document persistence and backup expectations for `~/.taskman/` on the VPS so deploys do not overwrite user DB/config/session data
-- [ ] Keep deployment removable by documenting a future `TASKMAN_DIR` override or export/import path so the same data can be moved back to a local machine without rewriting the schema
+- [x] Add a production WSGI entrypoint and document the DigitalOcean Ubuntu `gunicorn` command used to run the Flask app
+- [x] Add deploy assets under a repo-owned location (for example `deploy/`) for a `systemd` service and an `nginx` site config that proxies to Gunicorn and serves HTTPS on the VPS
+- [x] Document required production environment variables (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TASKMAN_BASE_URL`, and any Flask environment settings) and where they are loaded from
+- [x] Document Google OAuth production setup for the public DigitalOcean-hosted domain: authorised origin(s), authorised redirect URI, and the need to update them when the public domain changes
+- [x] Document Let’s Encrypt setup and HTTPS renewal on the VPS
+- [x] Document persistence and backup expectations for `~/.taskman/` on the VPS so deploys do not overwrite user DB/config/session data
+- [x] Keep deployment removable by documenting a future `TASKMAN_DIR` override or export/import path so the same data can be moved back to a local machine without rewriting the schema
 
 ###### CI
 

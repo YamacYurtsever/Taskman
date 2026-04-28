@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 from pathlib import Path
 
@@ -7,7 +8,8 @@ from pathlib import Path
 FRONTEND_URL = "http://127.0.0.1:5173"
 DEV_API_BASE = "http://127.0.0.1:5050"
 
-TASKMAN_DIR = Path.home() / ".taskman"
+_taskman_dir_env = os.environ.get("TASKMAN_DIR")
+TASKMAN_DIR = Path(_taskman_dir_env) if _taskman_dir_env else Path.home() / ".taskman"
 USERS_PATH = TASKMAN_DIR / "users"
 CONFIG_PATH = TASKMAN_DIR / "config.json"
 DB_PATH = TASKMAN_DIR / "db.json"

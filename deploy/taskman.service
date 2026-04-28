@@ -1,0 +1,19 @@
+[Unit]
+Description=Taskman
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/taskman
+EnvironmentFile=/home/ubuntu/taskman/.env
+ExecStart=/home/ubuntu/taskman/.venv/bin/gunicorn \
+    --workers 2 \
+    --bind 127.0.0.1:8000 \
+    --timeout 60 \
+    wsgi:app
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
