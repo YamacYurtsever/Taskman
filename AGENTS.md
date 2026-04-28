@@ -257,7 +257,7 @@ Each authenticated Google user sees only their own data.
 
 ##### Milestone 7 — Deploy
 
-Assume a simple production deployment on a single domain, with the built frontend and Flask API served together behind a reverse proxy. The main goals are: no hardcoded localhost URLs, secure session cookies in production, and a documented repeatable deploy flow.
+Assume a simple production deployment on a single HTTPS domain, with the built frontend and Flask API served together behind a reverse proxy. The goal is to use Taskman across devices, including opening it in Safari on iPhone and saving it to the home screen. The main goals are: no hardcoded localhost URLs, secure session cookies in production, reliable same-origin auth across devices, and a documented repeatable deploy flow.
 
 ###### Backend
 
@@ -271,6 +271,7 @@ Assume a simple production deployment on a single domain, with the built fronten
 
 - [ ] `client/src/lib/api.ts` / Vite config — keep `/api` same-origin in production and retain the existing dev proxy behavior locally
 - [ ] `client` build output — verify direct navigation to `/tasks`, `/daysheet`, `/calendar`, and `/list/:listId` works through the production SPA fallback
+- [ ] Add minimal installability support for Safari / home-screen usage: `manifest.webmanifest`, app icons, and iOS-friendly metadata in the built frontend shell
 
 ###### Ops / deploy assets
 
@@ -292,4 +293,4 @@ Assume a simple production deployment on a single domain, with the built fronten
 - [ ] `python -m vulture server --min-confidence 80`
 - [ ] `cd client && npm run lint`
 - [ ] `cd client && npm run build`
-- [ ] Manual production smoke test: login, task CRUD, daysheet add/edit/delete, calendar load, logout, hard refresh on a nested route
+- [ ] Manual production smoke test on desktop and iPhone Safari: login, task CRUD, daysheet add/edit/delete, calendar load, logout, hard refresh on a nested route, and home-screen launch behavior
