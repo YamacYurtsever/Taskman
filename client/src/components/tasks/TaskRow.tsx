@@ -146,6 +146,8 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
           <button className="action-btn edt" title="Rename" onClick={() => setMode('edit')}>
             <EditIcon />
           </button>
+        </div>
+        <div className={styles.taskEditActions}>
           <button
             className="action-btn dup"
             title="Duplicate"
@@ -153,18 +155,18 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
           >
             <DuplicateIcon />
           </button>
+          <button
+            className="action-btn del"
+            title="Delete"
+            onClick={() => {
+              if (confirm(`Delete "${task.name}"?`)) {
+                act(API.delete, { list: listName, name: task.name });
+              }
+            }}
+          >
+            <DeleteIcon />
+          </button>
         </div>
-        <button
-          className="action-btn del"
-          title="Delete"
-          onClick={() => {
-            if (confirm(`Delete "${task.name}"?`)) {
-              act(API.delete, { list: listName, name: task.name });
-            }
-          }}
-        >
-          <DeleteIcon />
-        </button>
       </div>
     </div>
   );
