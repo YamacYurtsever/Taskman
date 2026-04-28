@@ -261,16 +261,22 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 
 ###### Backend
 
-- [ ] `server/constants.py` / `server/services/auth.py` — replace hardcoded `FRONTEND_URL` and OAuth `REDIRECT_URI` with environment-driven production URLs (for example `TASKMAN_BASE_URL`) while keeping local development defaults
-- [ ] `server/api.py` — serve the built `client/dist` bundle in production with an SPA fallback route, while preserving Vite dev mode for local development
-- [ ] `server/api.py` — tighten production session config (`SESSION_COOKIE_SECURE`, `SESSION_COOKIE_SAMESITE`, `SESSION_COOKIE_HTTPONLY`) and only enable `OAUTHLIB_INSECURE_TRANSPORT=1` in local development
-- [ ] `server/config.py` / startup path — fail clearly when required production env vars are missing instead of surfacing vague OAuth/runtime failures
+- [x] `server/constants.py` / `server/services/auth.py` — replace hardcoded `FRONTEND_URL` and OAuth `REDIRECT_URI` with environment-driven production URLs (for example `TASKMAN_BASE_URL`) while keeping local development defaults
+- [x] `server/api.py` — serve the built `client/dist` bundle in production with an SPA fallback route, while preserving Vite dev mode for local development
+- [x] `server/api.py` — tighten production session config (`SESSION_COOKIE_SECURE`, `SESSION_COOKIE_SAMESITE`, `SESSION_COOKIE_HTTPONLY`) and only enable `OAUTHLIB_INSECURE_TRANSPORT=1` in local development
+- [x] `server/config.py` / startup path — fail clearly when required production env vars are missing instead of surfacing vague OAuth/runtime failures
+
+###### Backend — tests
+
+- [x] Add tests for environment-driven frontend/callback URL generation
+- [x] Add tests for production frontend serving / SPA fallback behavior
+- [x] Add tests for production session config branches
 
 ###### Frontend
 
-- [ ] `client/src/lib/api.ts` / Vite config — keep `/api` same-origin in production and retain the existing dev proxy behavior locally
-- [ ] `client` build output — verify direct navigation to `/tasks`, `/daysheet`, `/calendar`, and `/list/:listId` works through the production SPA fallback
-- [ ] Add minimal installability support for Safari / home-screen usage: `manifest.webmanifest`, app icons, and iOS-friendly metadata in the built frontend shell
+- [x] `client/src/lib/api.ts` / Vite config — keep `/api` same-origin in production and retain the existing dev proxy behavior locally
+- [x] `client` build output — verify direct navigation to `/tasks`, `/daysheet`, `/calendar`, and `/list/:listId` works through the production SPA fallback
+- [x] Add minimal installability support for Safari / home-screen usage: `manifest.webmanifest`, app icons, and iOS-friendly metadata in the built frontend shell
 
 ###### Ops / deploy assets
 
@@ -281,12 +287,6 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 - [ ] Document Let’s Encrypt setup and HTTPS renewal on the VPS
 - [ ] Document persistence and backup expectations for `~/.taskman/` on the VPS so deploys do not overwrite user DB/config/session data
 - [ ] Keep deployment removable by documenting a future `TASKMAN_DIR` override or export/import path so the same data can be moved back to a local machine without rewriting the schema
-
-###### Backend — tests
-
-- [ ] Add tests for environment-driven frontend/callback URL generation
-- [ ] Add tests for production frontend serving / SPA fallback behavior
-- [ ] Add tests for production session config branches
 
 ###### CI
 
@@ -300,22 +300,4 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 - [ ] `cd client && npm run build`
 - [ ] Manual production smoke test on desktop and iPhone Safari: login, task CRUD, daysheet add/edit/delete, calendar load, logout, hard refresh on a nested route, and home-screen launch behavior
 
-##### Milestone 8 — Sound
-
-Add a small, intentional sound layer that makes the app feel calm and meditative rather than noisy. Keep the palette minimal, soft, and user-controlled.
-
-###### Frontend
-
-- [ ] Add a global sound toggle in the UI and persist the preference
-- [ ] Add gentle sound cues for a few high-signal actions only, such as task completion, undo, add, and daysheet save
-- [ ] Keep sounds low-volume, short, and non-intrusive; no autoplay and no sound on every click
-- [ ] Make audio unlock work reliably on Safari/iPhone with a first-gesture initialization path
-- [ ] Add a minimal sound asset loading strategy that works cleanly with the existing Vite build
-
-###### Backend
-
-- [ ] No backend changes required unless sound preferences are later stored server-side
-
-###### Tests
-
-- [ ] Add frontend tests for sound preference persistence and action-to-sound wiring where practical
+##### Others — Falvour - Rename & Sounds - Meditask? - Batch Addition?
