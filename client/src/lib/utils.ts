@@ -46,7 +46,7 @@ const stop = (fn: () => void) => (e: MouseEvent) => {
 
 const pendingFor = (data: StateResponse, listId: string, filter: TaskFilter) => {
   const today = new Date(data.today);
-  const pending = data.tasks.filter(t => t.listId === listId && !t.done);
+  const pending = data.tasks.filter(t => t.listId === listId && !t.doneAt);
 
   if (filter === 'day') {
     return pending
@@ -71,8 +71,8 @@ const pendingFor = (data: StateResponse, listId: string, filter: TaskFilter) => 
 
 const doneFor = (data: StateResponse, listId: string) =>
   data.tasks
-    .filter(t => t.listId === listId && t.done)
-    .sort((a, b) => (b.done ?? '').localeCompare(a.done ?? ''));
+    .filter(t => t.listId === listId && t.doneAt)
+    .sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
 
 const formatDue = (due: string, today: string) => {
   const dueDate = new Date(due);

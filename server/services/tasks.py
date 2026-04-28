@@ -4,24 +4,26 @@ from server.services.utils import (
     ServiceError,
     add_daysheet_entry,
     find_task,
-    now,
+    migrate_user_data,
     parse_date,
     remove_daysheet_entries,
     require_list,
     require_name,
     require_task,
     service,
-    today,
+    today_in_timezone,
+    utc_now,
 )
 
 
 # ─────────────────────────── Create / Edit ───────────────────────────
 
 @service
-def add_task(list_name: str, task_name: str, due: str | None = None, email: str | None = None):
+def add_task(list_name: str, task_name: str, due: str | None = None, email: str | None = None, tz_name: str = "UTC"):
     task_name = require_name(task_name)
 
     data = db.load(email)
+    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
 
     if find_task(data, lst["id"], task_name):
@@ -32,7 +34,7 @@ def add_task(list_name: str, task_name: str, due: str | None = None, email: str 
         "name": task_name,
         "listId": lst["id"],
         "due": parse_date(due) if due else None,
-        "done": None,
+        "doneAt": None,
         "description": "",
     })
 
@@ -47,12 +49,14 @@ def edit_task(
     due: str | None = None,
     update_due: bool = False,
     email: str | None = None,
+    tz_name: str = "UTC",
 ):
     if new_name is None:
         new_name = task_name
     new_name = require_name(new_name)
 
     data = db.load(email)
+    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
@@ -70,8 +74,9 @@ def edit_task(
 # ─────────────────────────── Delete / Move ───────────────────────────
 
 @service
-def delete_task(list_name: str, task_name: str, email: str | None = None):
+def delete_task(list_name: str, task_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
+    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
@@ -81,8 +86,9 @@ def delete_task(list_name: str, task_name: str, email: str | None = None):
 
 
 @service
-def move_task(list_name: str, task_name: str, new_list_name: str, email: str | None = None):
+def move_task(list_name: str, task_name: str, new_list_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
+    migrate_user_data(data, tz_name)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
@@ -99,21 +105,26 @@ def move_task(list_name: str, task_name: str, new_list_name: str, email: str | N
 # ─────────────────────────── Completion State ───────────────────────────
 
 @service
-def done_task(list_name: str, task_name: str, email: str | None = None):
+def done_task(list_name: str, task_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
+    migrate_user_data(data, tz_name)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
-    if task["done"]:
+    if task["doneAt"]:
         raise ServiceError(f"task '{task_name}' is already done")
+
+    today = today_in_timezone(tz_name)
+    completed_at = utc_now()
 
     remove_daysheet_entries(
         data,
         lst["id"],
         DaysheetEntryType.CONTINUE,
+        tz_name,
         task_name,
-        today(),
+        today,
     )
 
     add_daysheet_entry(
@@ -121,17 +132,18 @@ def done_task(list_name: str, task_name: str, email: str | None = None):
         lst["id"],
         DaysheetEntryType.DONE,
         task_name,
-        now(),
+        completed_at,
     )
 
-    task["done"] = today()
+    task["doneAt"] = completed_at
 
     db.save(data, email)
 
 
 @service
-def set_task_description(list_name: str, task_name: str, description: str, email: str | None = None):
+def set_task_description(list_name: str, task_name: str, description: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
+    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
     task["description"] = description
@@ -139,15 +151,16 @@ def set_task_description(list_name: str, task_name: str, description: str, email
 
 
 @service
-def undo_task(list_name: str, task_name: str, email: str | None = None):
+def undo_task(list_name: str, task_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
+    migrate_user_data(data, tz_name)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
-    if not task["done"]:
+    if not task["doneAt"]:
         raise ServiceError(f"task '{task_name}' is not done")
 
-    task["done"] = None
+    task["doneAt"] = None
 
     db.save(data, email)

@@ -28,7 +28,12 @@ from server.services.utils import (
     delete_list,
     find_group,
     find_list,
+    local_date_from_storage,
+    local_time_from_storage,
+    migrate_user_data,
     require_name,
+    require_timezone,
+    today_in_timezone,
 )
 
 
@@ -78,6 +83,19 @@ def create_app(test_config=None):
                 return fail("not authenticated", 401)
             return f(*args, **kwargs)
         return wrapper
+
+
+    def user_config_and_timezone(email: str):
+        cfg = config.load(email)
+        tz_name = require_timezone(cfg.get("calendarTimezone", "UTC"))
+        return cfg, tz_name
+
+
+    def load_user_data(email: str, tz_name: str):
+        data = db.load(email)
+        if migrate_user_data(data, tz_name):
+            db.save(data, email)
+        return data
 
 
     @app.get("/api/auth/status")
@@ -137,19 +155,44 @@ def create_app(test_config=None):
             user_calendars,
         )
 
-        return jsonify({"calendarUrl": calendar_url, "userCalendars": user_calendars})
+        return jsonify({
+            "calendarUrl": calendar_url,
+            "calendarTimezone": cfg.get("calendarTimezone", "UTC"),
+            "userCalendars": user_calendars,
+        })
+
+    @app.post("/api/config/timezone")
+    @require_auth
+    def set_timezone():
+        email = session["email"]
+        body = request.get_json(force=True) or {}
+
+        try:
+            tz_name = require_timezone(require_name(body.get("timezone"), "timezone"))
+            cfg = config.load(email)
+            cfg["calendarTimezone"] = tz_name
+            config.save(cfg, email)
+
+            data = db.load(email)
+            if migrate_user_data(data, tz_name):
+                db.save(data, email)
+
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
 
     @app.get("/api/state")
     @require_auth
     def get_state():
         email = session["email"]
-        data = db.load(email)
-        tasks = [{**t, "description": t.get("description", "")} for t in data["tasks"]]
+        _, tz_name = user_config_and_timezone(email)
+        data = load_user_data(email, tz_name)
+        tasks = [{**t, "description": t.get("description", ""), "doneAt": t.get("doneAt")} for t in data["tasks"]]
         return jsonify({
             "groups": data["groups"],
             "lists": data["lists"],
             "tasks": tasks,
-            "today": date.today().isoformat(),
+            "today": today_in_timezone(tz_name),
         })
 
     # ─────────────────────────── Daysheet Reads ───────────────────────────
@@ -158,19 +201,20 @@ def create_app(test_config=None):
     @require_auth
     def get_daysheet():
         email = session["email"]
-        target = request.args.get("date") or date.today().isoformat()
+        _, tz_name = user_config_and_timezone(email)
+        target = request.args.get("date") or today_in_timezone(tz_name)
 
         try:
             datetime.strptime(target, DATE_FORMAT)
         except ValueError:
             return jsonify({"error": f"invalid date '{target}'"}), 400
 
-        data = db.load(email)
+        data = load_user_data(email, tz_name)
         lists = {lst["id"]: lst for lst in data["lists"]}
         groups = {grp["id"]: grp for grp in data["groups"]}
 
         entries = sorted(
-            (e for e in data["daysheet"] if e["datetime"][:10] == target),
+            (e for e in data["daysheet"] if local_date_from_storage(e["datetime"], tz_name) == target),
             key=lambda e: e["datetime"],
         )
 
@@ -181,6 +225,7 @@ def create_app(test_config=None):
 
             enriched.append({
                 **entry,
+                "localTime": local_time_from_storage(entry["datetime"], tz_name),
                 "listName": lst["name"] if lst else "?",
                 "sectionId": f"group:{group_id}" if group_id else f"list:{entry['listId']}",
                 "sectionName": groups[group_id]["name"] if group_id else (lst["name"] if lst else "?"),
@@ -195,18 +240,21 @@ def create_app(test_config=None):
     @require_auth
     def api_add():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(add_task(
             body.get("list", ""),
             body.get("name", ""),
             body.get("due"),
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/edit")
     @require_auth
     def api_edit():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(edit_task(
             body.get("list", ""),
@@ -215,63 +263,74 @@ def create_app(test_config=None):
             body.get("due"),
             "due" in body,
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/delete")
     @require_auth
     def api_delete():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(delete_task(
             body.get("list", ""),
             body.get("name", ""),
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/move-task")
     @require_auth
     def api_move_task():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(move_task(
             body.get("list", ""),
             body.get("name", ""),
             body.get("newList", ""),
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/done")
     @require_auth
     def api_done():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(done_task(
             body.get("list", ""),
             body.get("name", ""),
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/undo")
     @require_auth
     def api_undo():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(undo_task(
             body.get("list", ""),
             body.get("name", ""),
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/task-description")
     @require_auth
     def api_task_description():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(set_task_description(
             body.get("list", ""),
             body.get("name", ""),
             body.get("description", ""),
             email=email,
+            tz_name=tz_name,
         ))
 
     # ─────────────────────────── List Routes ───────────────────────────
@@ -436,22 +495,26 @@ def create_app(test_config=None):
     @require_auth
     def api_log():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(add_log(
             body.get("list", ""),
             body.get("text", ""),
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/continue")
     @require_auth
     def api_continue():
         email = session["email"]
+        _, tz_name = user_config_and_timezone(email)
         body = request.get_json(force=True) or {}
         return respond(continue_task(
             body.get("list", ""),
             body.get("task", ""),
             email=email,
+            tz_name=tz_name,
         ))
 
     @app.post("/api/daysheet/edit")

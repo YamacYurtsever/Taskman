@@ -39,7 +39,7 @@ type LogFormProps = {
 };
 
 const DaysheetView = ({ data, act, refresh }: DaysheetViewProps) => {
-  const [date, setDate] = useState(todayStr());
+  const [date, setDate] = useState(data?.today ?? todayStr());
   const [daysheet, setDaysheet] = useState<DaysheetResponse | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,6 +50,12 @@ const DaysheetView = ({ data, act, refresh }: DaysheetViewProps) => {
   useEffect(() => {
     fetchDaysheet(date);
   }, [date, fetchDaysheet]);
+
+  useEffect(() => {
+    if (data?.today && !daysheet) {
+      setDate(data.today);
+    }
+  }, [data?.today, daysheet]);
 
   const localAct = useCallback(
     async (path: string, body: unknown) => {
@@ -168,7 +174,7 @@ const TimelineEntry = ({ entry, inGroup, act, refresh }: TimelineEntryProps) => 
   if (editing) {
     return (
       <div className={`${styles.timelineEntry} ${styles.timelineEditRow}`}>
-        <span className={styles.timelineTime}>{entry.datetime.slice(11, 16)}</span>
+        <span className={styles.timelineTime}>{entry.localTime}</span>
 
         <input
           autoFocus
@@ -193,7 +199,7 @@ const TimelineEntry = ({ entry, inGroup, act, refresh }: TimelineEntryProps) => 
 
   return (
     <div className={styles.timelineEntry}>
-      <span className={styles.timelineTime}>{entry.datetime.slice(11, 16)}</span>
+      <span className={styles.timelineTime}>{entry.localTime}</span>
 
       <span className={styles.timelineText}>
         {entryPrefix(entry.type)}

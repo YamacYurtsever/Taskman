@@ -36,6 +36,11 @@ class RequireAuthTest(unittest.TestCase):
     def setUp(self):
         self.app = create_app(TEST_CONFIG)
         self.client = self.app.test_client()
+        self.config_patcher = patch("server.config.load", return_value={"calendarTimezone": "UTC"})
+        self.config_patcher.start()
+
+    def tearDown(self):
+        self.config_patcher.stop()
 
     def test_protected_route_rejects_unauthenticated(self):
         res = self.client.get("/api/state")

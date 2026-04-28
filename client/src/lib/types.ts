@@ -16,7 +16,7 @@ type Task = {
   name: string;
   listId: string;
   due: string | null;
-  done: string | null;
+  doneAt: string | null;
   description: string;
 };
 
@@ -29,11 +29,13 @@ type StateResponse = {
 
 type ConfigResponse = {
   calendarUrl: string;
+  calendarTimezone: string;
 };
 
 type DaysheetEntry = {
   id: string;
   datetime: string;
+  localTime: string;
   listId: string;
   type: 'log' | 'continue' | 'done';
   text: string;

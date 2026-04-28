@@ -40,7 +40,7 @@ class TaskCreateTest(unittest.TestCase):
         self.assertEqual(task["name"], "New task")
         self.assertEqual(task["listId"], "list-1")
         self.assertIsNone(task["due"])
-        self.assertIsNone(task["done"])
+        self.assertIsNone(task["doneAt"])
 
     def test_add_task_with_due_date(self):
         with (
@@ -180,24 +180,22 @@ class TaskCompletionTest(unittest.TestCase):
     def test_done_task_stamps_today(self):
         with (
             saved_db(make_db(TASK_1)) as saved,
-            patch("server.services.utils.date") as mock_date,
-            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.services.tasks.today_in_timezone", return_value=TODAY),
+            patch("server.services.tasks.utc_now", return_value=NOW_DT),
             patch("server.db.new_id", return_value="entry-1"),
         ):
-            mock_date.today.return_value.isoformat.return_value = TODAY
             result = done_task("List A", "Task A")
 
         assert_ok(result)
-        self.assertEqual(saved["tasks"][0]["done"], TODAY)
+        self.assertEqual(saved["tasks"][0]["doneAt"], NOW_DT)
 
     def test_done_task_adds_daysheet_entry(self):
         with (
             saved_db(make_db(TASK_1)) as saved,
-            patch("server.services.utils.date") as mock_date,
-            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.services.tasks.today_in_timezone", return_value=TODAY),
+            patch("server.services.tasks.utc_now", return_value=NOW_DT),
             patch("server.db.new_id", return_value="entry-1"),
         ):
-            mock_date.today.return_value.isoformat.return_value = TODAY
             result = done_task("List A", "Task A")
 
         assert_ok(result)
@@ -218,11 +216,10 @@ class TaskCompletionTest(unittest.TestCase):
 
         with (
             saved_db(make_db(TASK_1, daysheet=[entry])) as saved,
-            patch("server.services.utils.date") as mock_date,
-            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.services.tasks.today_in_timezone", return_value=TODAY),
+            patch("server.services.tasks.utc_now", return_value=NOW_DT),
             patch("server.db.new_id", return_value="entry-2"),
         ):
-            mock_date.today.return_value.isoformat.return_value = TODAY
             result = done_task("List A", "Task A")
 
         assert_ok(result)
@@ -242,7 +239,7 @@ class TaskCompletionTest(unittest.TestCase):
             result = undo_task("List A", "Task B")
 
         assert_ok(result)
-        self.assertIsNone(saved["tasks"][0]["done"])
+        self.assertIsNone(saved["tasks"][0]["doneAt"])
 
     def test_undo_task_rejects_pending_task(self):
         with saved_db(make_db(TASK_1)):

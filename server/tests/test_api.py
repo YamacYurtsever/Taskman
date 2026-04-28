@@ -16,6 +16,7 @@ from server.tests.utils import (
     db_record,
     make_db,
     saved_db,
+    saved_config,
     task_record,
 )
 
@@ -25,9 +26,14 @@ class ApiTest(unittest.TestCase):
     def setUp(self):
         self.app = create_app(TEST_CONFIG)
         self.client = self.app.test_client()
+        self.config_patcher = patch("server.config.load", return_value={"calendarTimezone": "UTC"})
+        self.config_patcher.start()
         with self.client.session_transaction() as sess:
             sess["authenticated"] = True
             sess["email"] = "user@gmail.com"
+
+    def tearDown(self):
+        self.config_patcher.stop()
 
     # ─────────────────────────── Helpers ───────────────────────────
 
@@ -58,8 +64,22 @@ class ApiTest(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertIn("calendarUrl", res.get_json())
+        self.assertEqual(res.get_json()["calendarTimezone"], "Australia/Sydney")
         self.assertIn("calendar-id", res.get_json()["calendarUrl"])
         self.assertIn("Australia/Sydney", res.get_json()["calendarUrl"])
+
+    def test_set_timezone_updates_user_config(self):
+        cfg = {"calendarTimezone": "UTC"}
+
+        with (
+            saved_config(cfg) as saved,
+            patch("server.db.load", return_value=make_db()),
+            patch("server.db.save"),
+        ):
+            res = self.post("/api/config/timezone", {"timezone": "Australia/Sydney"})
+
+        self.assert_ok(res)
+        self.assertEqual(saved["calendarTimezone"], "Australia/Sydney")
 
     def test_get_state_returns_db_state(self):
         with saved_db(make_db(TASK_1, TASK_DONE, groups=[GROUP_1])):
@@ -105,6 +125,7 @@ class ApiTest(unittest.TestCase):
 
         entry = body["entries"][0]
         self.assertEqual(entry["text"], "Today entry")
+        self.assertEqual(entry["localTime"], "10:30")
         self.assertEqual(entry["listName"], "List A")
         self.assertEqual(entry["sectionId"], "group:group-1")
         self.assertEqual(entry["sectionName"], "Group")
@@ -262,11 +283,10 @@ class ApiTest(unittest.TestCase):
     def test_done_task(self):
         with (
             saved_db(make_db(TASK_1)) as saved,
-            patch("server.services.utils.date") as mock_date,
-            patch("server.services.tasks.now", return_value=NOW_DT),
+            patch("server.services.tasks.today_in_timezone", return_value=TODAY),
+            patch("server.services.tasks.utc_now", return_value=NOW_DT),
             patch("server.db.new_id", return_value="entry-1"),
         ):
-            mock_date.today.return_value.isoformat.return_value = TODAY
             res = self.post("/api/done", {
                 "list": "List A",
                 "name": "Task A",
@@ -274,7 +294,7 @@ class ApiTest(unittest.TestCase):
 
         self.assert_ok(res)
 
-        self.assertEqual(saved["tasks"][0]["done"], TODAY)
+        self.assertEqual(saved["tasks"][0]["doneAt"], NOW_DT)
         self.assertEqual(saved["daysheet"][0]["type"], DaysheetEntryType.DONE)
 
     def test_done_task_rejects_already_done_task(self):
@@ -294,7 +314,7 @@ class ApiTest(unittest.TestCase):
             })
 
         self.assert_ok(res)
-        self.assertIsNone(saved["tasks"][0]["done"])
+        self.assertIsNone(saved["tasks"][0]["doneAt"])
 
     def test_task_description_updates_description(self):
         with saved_db(make_db(TASK_1)) as saved:
@@ -323,7 +343,7 @@ class ApiTest(unittest.TestCase):
             "name": "Task A",
             "listId": "list-1",
             "due": None,
-            "done": None,
+            "doneAt": None,
         }
 
         with saved_db(make_db(task_without_desc)):
@@ -472,7 +492,7 @@ class ApiTest(unittest.TestCase):
     def test_add_log_entry(self):
         with (
             saved_db(make_db(TASK_1)) as saved,
-            patch("server.services.daysheet.now", return_value=NOW_DT),
+            patch("server.services.daysheet.utc_now", return_value=NOW_DT),
             patch("server.db.new_id", return_value="entry-1"),
         ):
             res = self.post("/api/log", {
@@ -490,11 +510,10 @@ class ApiTest(unittest.TestCase):
     def test_continue_task(self):
         with (
             saved_db(make_db(TASK_1)) as saved,
-            patch("server.services.utils.date") as mock_date,
-            patch("server.services.daysheet.now", return_value=NOW_DT),
+            patch("server.services.daysheet.today_in_timezone", return_value=TODAY),
+            patch("server.services.daysheet.utc_now", return_value=NOW_DT),
             patch("server.db.new_id", return_value="entry-1"),
         ):
-            mock_date.today.return_value.isoformat.return_value = TODAY
             res = self.post("/api/continue", {
                 "list": "List A",
                 "task": "Task A",

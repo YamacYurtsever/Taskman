@@ -1,7 +1,8 @@
-from datetime import date, datetime
+from datetime import datetime, time, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from server import db
-from server.constants import DATE_FORMAT, DATE_INPUT_FORMATS, DATETIME_FORMAT
+from server.constants import DATE_FORMAT, DATE_INPUT_FORMATS
 
 
 # ─────────────────────────── Errors & Validation ───────────────────────────
@@ -30,6 +31,11 @@ def require_name(value, field="name"):
 
 # ─────────────────────────── Date / Time ───────────────────────────
 
+UTC_SUFFIX = "Z"
+UTC_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+LEGACY_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+
 def parse_date(s):
     for fmt in DATE_INPUT_FORMATS:
         try:
@@ -39,16 +45,93 @@ def parse_date(s):
     raise ServiceError(f"invalid date '{s}' — expected YYYY-MM-DD")
 
 
-def now():
-    return datetime.now().strftime(DATETIME_FORMAT)
+def require_timezone(tz_name: str) -> str:
+    try:
+        ZoneInfo(tz_name)
+    except ZoneInfoNotFoundError as e:
+        raise ServiceError(f"invalid timezone '{tz_name}'") from e
+    return tz_name
 
 
-def today():
-    return date.today().isoformat()
+def utc_now() -> str:
+    return datetime.now(timezone.utc).strftime(UTC_DATETIME_FORMAT)
 
 
-def entry_date(entry):
-    return entry["datetime"][:10]
+def today_in_timezone(tz_name: str) -> str:
+    tz = ZoneInfo(require_timezone(tz_name))
+    return datetime.now(timezone.utc).astimezone(tz).date().isoformat()
+
+
+def parse_utc_datetime(value: str) -> datetime:
+    if value.endswith(UTC_SUFFIX):
+        return datetime.strptime(value, UTC_DATETIME_FORMAT).replace(tzinfo=timezone.utc)
+
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        raise ValueError("naive datetime")
+    return parsed.astimezone(timezone.utc)
+
+
+def parse_legacy_local_datetime(value: str, tz_name: str) -> datetime:
+    tz = ZoneInfo(require_timezone(tz_name))
+    return datetime.strptime(value, LEGACY_DATETIME_FORMAT).replace(tzinfo=tz)
+
+
+def local_datetime_from_storage(value: str, tz_name: str) -> datetime:
+    tz = ZoneInfo(require_timezone(tz_name))
+    try:
+        return parse_utc_datetime(value).astimezone(tz)
+    except ValueError:
+        return parse_legacy_local_datetime(value, tz_name)
+
+
+def local_date_from_storage(value: str, tz_name: str) -> str:
+    return local_datetime_from_storage(value, tz_name).date().isoformat()
+
+
+def local_time_from_storage(value: str, tz_name: str) -> str:
+    return local_datetime_from_storage(value, tz_name).strftime("%H:%M")
+
+
+def legacy_datetime_to_utc(value: str, tz_name: str) -> str:
+    return parse_legacy_local_datetime(value, tz_name).astimezone(timezone.utc).strftime(UTC_DATETIME_FORMAT)
+
+
+def legacy_done_date_to_utc(value: str, tz_name: str) -> str:
+    tz = ZoneInfo(require_timezone(tz_name))
+    local_date = datetime.strptime(value, DATE_FORMAT).date()
+    # Legacy completion dates had no time-of-day. Anchor them at local noon so
+    # the derived local date remains stable for most timezone conversions.
+    local_dt = datetime.combine(local_date, time(hour=12), tzinfo=tz)
+    return local_dt.astimezone(timezone.utc).strftime(UTC_DATETIME_FORMAT)
+
+
+def is_legacy_local_timestamp(value: str) -> bool:
+    return len(value) == 19 and value[10] == "T" and not value.endswith(UTC_SUFFIX)
+
+
+def migrate_user_data(data: dict, tz_name: str) -> bool:
+    changed = False
+
+    for task in data["tasks"]:
+        if "description" not in task:
+            task["description"] = ""
+            changed = True
+
+        if "doneAt" not in task or (task.get("doneAt") is None and task.get("done")):
+            task["doneAt"] = legacy_done_date_to_utc(task["done"], tz_name) if task.get("done") else None
+            changed = True
+
+        if "done" in task:
+            task.pop("done", None)
+            changed = True
+
+    for entry in data["daysheet"]:
+        if is_legacy_local_timestamp(entry["datetime"]):
+            entry["datetime"] = legacy_datetime_to_utc(entry["datetime"], tz_name)
+            changed = True
+
+    return changed
 
 
 # ─────────────────────────── Find Helpers ───────────────────────────
@@ -68,21 +151,21 @@ def find_task(data, list_id, name):
     )
 
 
-def find_daysheet_entry(data, list_id, entry_type, text, entry_day):
+def find_daysheet_entry(data, list_id, entry_type, text, entry_day, tz_name):
     return next(
         (
             e for e in data["daysheet"]
             if e["listId"] == list_id
             and e["type"] == entry_type
             and e["text"] == text
-            and entry_date(e) == entry_day
+            and local_date_from_storage(e["datetime"], tz_name) == entry_day
         ),
         None,
     )
 
 
-def has_daysheet_entry(data, list_id, entry_type, text, entry_day):
-    return find_daysheet_entry(data, list_id, entry_type, text, entry_day) is not None
+def has_daysheet_entry(data, list_id, entry_type, text, entry_day, tz_name):
+    return find_daysheet_entry(data, list_id, entry_type, text, entry_day, tz_name) is not None
 
 
 # ─────────────────────────── Require Helpers ───────────────────────────
@@ -122,7 +205,7 @@ def get_or_create_group(data, name):
 def add_daysheet_entry(data, list_id, entry_type, text, timestamp=None):
     data["daysheet"].append({
         "id": db.new_id(),
-        "datetime": timestamp or now(),
+        "datetime": timestamp or utc_now(),
         "listId": list_id,
         "type": entry_type,
         "text": text,
@@ -154,7 +237,7 @@ def delete_list(data, lst):
     prune_empty_group(data, group_id)
 
 
-def remove_daysheet_entries(data, list_id, entry_type, text=None, entry_day=None):
+def remove_daysheet_entries(data, list_id, entry_type, tz_name, text=None, entry_day=None):
     before = len(data["daysheet"])
 
     data["daysheet"] = [
@@ -163,7 +246,7 @@ def remove_daysheet_entries(data, list_id, entry_type, text=None, entry_day=None
             e["listId"] == list_id
             and e["type"] == entry_type
             and (text is None or e["text"] == text)
-            and (entry_day is None or entry_date(e) == entry_day)
+            and (entry_day is None or local_date_from_storage(e["datetime"], tz_name) == entry_day)
         )
     ]
 

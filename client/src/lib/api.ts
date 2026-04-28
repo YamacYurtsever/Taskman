@@ -12,6 +12,7 @@ const API = {
   logout: '/api/logout',
 
   config: '/api/config',
+  configTimezone: '/api/config/timezone',
   state: '/api/state',
   daysheet: '/api/daysheet',
 
@@ -81,6 +82,7 @@ const api = {
   logout: () => request<ApiResult>('POST', API.logout),
 
   config: () => request<ConfigResponse>('GET', API.config),
+  setTimezone: (timezone: string) => request<ApiResult>('POST', API.configTimezone, { timezone }),
   state: () => request<StateResponse>('GET', API.state),
   daysheet: (date: string) =>
     request<DaysheetResponse>('GET', `${API.daysheet}?date=${encodeURIComponent(date)}`),

@@ -20,16 +20,25 @@ export const useAppData = () => {
   }, []);
 
   useEffect(() => {
-    api.config().then(config => {
-      if (config?.calendarUrl) {
-        setCalendarUrl(config.calendarUrl);
-      }
-    });
-  }, []);
+    const syncConfig = async () => {
+      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      let config = await api.config();
+      if (!config) return;
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+      if (browserTimezone && browserTimezone !== config.calendarTimezone) {
+        const res = await api.setTimezone(browserTimezone);
+        if (res?.ok) {
+          config = await api.config();
+          if (!config) return;
+        }
+      }
+
+      setCalendarUrl(config.calendarUrl || '');
+      setData(await api.state());
+    };
+
+    syncConfig();
+  }, []);
 
   const logout = useCallback(async () => {
     await api.logout();

@@ -90,13 +90,13 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
   }
 
   return (
-    <div className={cx(styles.taskRow, task.done && styles.done)}>
+    <div className={cx(styles.taskRow, task.doneAt && styles.done)}>
       <div className={styles.taskLeft}>
         <div
           className={styles.taskCheck}
-          title={task.done ? 'Mark pending' : 'Mark done'}
+          title={task.doneAt ? 'Mark pending' : 'Mark done'}
           onClick={() =>
-            task.done
+            task.doneAt
               ? act(API.undo, { list: listName, name: task.name })
               : act(API.done, { list: listName, name: task.name })
           }
@@ -115,7 +115,7 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
             <path d="M3 8.5l3 3L13 5" />
           </svg>
         </div>
-        {!task.done && (
+        {!task.doneAt && (
           <button
             className="action-btn cnt"
             title="Log continue"

@@ -115,8 +115,8 @@ taskman/
 {
   "groups":   [{ "id": "uuid", "name": "UNSW" }],
   "lists":    [{ "id": "uuid", "name": "COMP3131", "groupId": "uuid | null" }],
-  "tasks":    [{ "id": "uuid", "name": "Finish Assignment 5", "listId": "uuid", "due": "2026-04-30 | null", "done": "2026-04-26 | null", "description": "" }],
-  "daysheet": [{ "id": "uuid", "datetime": "2026-04-26T14:32:05", "listId": "uuid", "type": "log | continue | done", "text": "Talked with Baba" }]
+  "tasks":    [{ "id": "uuid", "name": "Finish Assignment 5", "listId": "uuid", "due": "2026-04-30 | null", "doneAt": "2026-04-26T04:32:05Z | null", "description": "" }],
+  "daysheet": [{ "id": "uuid", "datetime": "2026-04-26T04:32:05Z", "listId": "uuid", "type": "log | continue | done", "text": "Talked with Baba" }]
 }
 ```
 
@@ -253,3 +253,39 @@ Each authenticated Google user sees only their own data. Currently all data is s
 - [x] No frontend changes required — API contract is unchanged
 
 ##### Milestone 7 — Deploy
+
+##### Extra Milestone — Timezone Correctness (UTC Model)
+
+Store absolute event times in UTC and treat timezone as a per-user rendering and grouping concern. This milestone adopts Option B: replace local-only completion dates with UTC completion timestamps.
+
+###### Backend
+
+- [x] `server/api.py` — add a protected timezone update route so the client can persist the browser timezone into the authenticated user's config
+- [x] `server/config.py` — keep `calendarTimezone` as the canonical per-user timezone used by backend date/time logic
+- [x] `server/services/utils.py` — replace server-local `today()` / `now()` helpers with UTC/timezone-aware helpers based on `zoneinfo`
+- [x] `server/services/daysheet.py` — write new daysheet entry timestamps in UTC ISO format and compare entry days by converting UTC timestamps into the user's timezone
+- [x] `server/services/tasks.py` — stop writing local `done` dates; write UTC completion timestamps instead and derive local completion dates from the user's timezone
+- [x] `server/api.py` — update daysheet reads to group and filter by the user's local day derived from stored UTC timestamps rather than raw string slicing
+- [x] `server/api.py` / `server/services/*` — load the authenticated user's timezone once at the route boundary and pass it into service calls that create or compare dates
+
+###### Data model
+
+- [x] `~/.taskman/users/<email>/db.json` — migrate `daysheet[].datetime` from naive local timestamps to UTC timestamps
+- [x] `~/.taskman/users/<email>/db.json` — replace task `done: YYYY-MM-DD | null` with `doneAt: <UTC timestamp> | null`
+- [x] Backward compatibility — read both legacy `done` and new `doneAt` during rollout until all existing task records are migrated
+
+###### Migration
+
+- [x] One-time migration — interpret legacy naive daysheet timestamps in the user's configured timezone, convert them to UTC, and write them back
+- [x] One-time migration — convert legacy task `done` dates into `doneAt` UTC timestamps using the user's configured timezone
+- [ ] After migration — remove fallback handling for legacy local timestamp formats once all existing records have been rewritten
+
+###### Backend — tests
+
+- [x] Add unit tests for UTC timestamp writes, timezone-aware "today" comparisons, and local-day grouping in daysheet reads
+- [x] Add migration tests covering legacy naive `daysheet[].datetime` and legacy task `done` values
+
+###### Frontend
+
+- [x] `client/src/*` — read browser timezone with `Intl.DateTimeFormat().resolvedOptions().timeZone` and persist it to the backend when it changes
+- [x] `client/src/lib/types.ts` / consumers — update task types and UI assumptions from `done` to `doneAt`

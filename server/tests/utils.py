@@ -31,15 +31,18 @@ def list_record(id="list-1", name="List A", group_id=None):
     }
 
 
-def task_record(id="task-1", name="Task A", list_id="list-1", due=None, done=None, description=""):
-    return {
+def task_record(id="task-1", name="Task A", list_id="list-1", due=None, done=None, done_at=None, description=""):
+    task = {
         "id": id,
         "name": name,
         "listId": list_id,
         "due": due,
-        "done": done,
+        "doneAt": done_at,
         "description": description,
     }
+    if done is not None:
+        task["done"] = done
+    return task
 
 
 def daysheet_entry(
@@ -64,10 +67,10 @@ GROUP_1 = group_record(id="group-1", name="Group")
 LIST_1 = list_record(id="list-1", name="List A")
 LIST_2 = list_record(id="list-2", name="List B")
 TASK_1 = task_record(id="task-1", name="Task A", list_id="list-1")
-TASK_DONE = task_record(id="task-2", name="Task B", list_id="list-1", done="2026-04-25")
+TASK_DONE = task_record(id="task-2", name="Task B", list_id="list-1", done_at="2026-04-25T01:00:00Z")
 
 TODAY = "2026-04-26"
-NOW_DT = "2026-04-26T10:00:00"
+NOW_DT = "2026-04-26T10:00:00Z"
 
 
 # ─────────────────────────── DB Fixtures ───────────────────────────

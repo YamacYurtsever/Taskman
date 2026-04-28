@@ -87,15 +87,8 @@ def complete_oauth(request_url: str, expected_state: str | None, received_state:
 
 
 def persist_user_auth(email: str, refresh_token: str) -> None:
-    shared_cfg = config.load()
-    user_cfg = {
-        key: shared_cfg.get(key)
-        for key in config.USER_DEFAULTS
-    }
-    shared_only_cfg = {
-        key: shared_cfg.get(key)
-        for key in config.SERVER_DEFAULTS
-    }
+    shared_only_cfg = config.load()
+    user_cfg = config.load(email)
     user_cfg["googleRefreshToken"] = refresh_token
     user_cfg["googleEmail"] = email
 

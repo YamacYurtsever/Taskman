@@ -9,9 +9,12 @@ from server.services.utils import (
     delete_list,
     find_daysheet_entry,
     has_daysheet_entry,
+    legacy_done_date_to_utc,
+    local_date_from_storage,
+    migrate_user_data,
     remove_daysheet_entries,
     service,
-    today,
+    today_in_timezone,
 )
 from server.tests.utils import (
     daysheet_entry,
@@ -38,11 +41,12 @@ class ServiceUtilsTest(unittest.TestCase):
         self.assertEqual(succeeds(), (True, ""))
         self.assertEqual(fails(), (False, "bad input"))
 
-    def test_today_returns_current_iso_date(self):
-        with patch("server.services.utils.date") as mock_date:
-            mock_date.today.return_value.isoformat.return_value = "2026-04-26"
+    def test_today_in_timezone_returns_current_iso_date(self):
+        with patch("server.services.utils.datetime") as mock_datetime:
+            mock_now = mock_datetime.now.return_value
+            mock_now.astimezone.return_value.date.return_value.isoformat.return_value = "2026-04-26"
 
-            self.assertEqual(today(), "2026-04-26")
+            self.assertEqual(today_in_timezone("Australia/Sydney"), "2026-04-26")
 
     # ─────────────────────────── Group / List Deletion ───────────────────────────
 
@@ -105,6 +109,7 @@ class ServiceUtilsTest(unittest.TestCase):
                 DaysheetEntryType.CONTINUE,
                 "Task A",
                 "2026-04-26",
+                "UTC",
             )
         )
 
@@ -115,6 +120,7 @@ class ServiceUtilsTest(unittest.TestCase):
                 DaysheetEntryType.CONTINUE,
                 "Task A",
                 "2026-04-26",
+                "UTC",
             ),
             data["daysheet"][0],
         )
@@ -123,9 +129,28 @@ class ServiceUtilsTest(unittest.TestCase):
             data,
             "list-1",
             DaysheetEntryType.CONTINUE,
+            "UTC",
             "Task A",
             "2026-04-26",
         )
 
         self.assertEqual(removed, 1)
         self.assertEqual(data["daysheet"], [])
+
+    def test_migrate_user_data_converts_legacy_fields(self):
+        data = db_record(
+            tasks=[task_record(done="2026-04-26")],
+            daysheet=[daysheet_entry(datetime="2026-04-26T10:00:00")],
+        )
+
+        changed = migrate_user_data(data, "Australia/Sydney")
+
+        self.assertTrue(changed)
+        self.assertNotIn("done", data["tasks"][0])
+        self.assertIn("doneAt", data["tasks"][0])
+        self.assertEqual(local_date_from_storage(data["tasks"][0]["doneAt"], "Australia/Sydney"), "2026-04-26")
+        self.assertTrue(data["daysheet"][0]["datetime"].endswith("Z"))
+
+    def test_legacy_done_date_to_utc_preserves_local_day(self):
+        done_at = legacy_done_date_to_utc("2026-04-26", "Australia/Sydney")
+        self.assertEqual(local_date_from_storage(done_at, "Australia/Sydney"), "2026-04-26")
