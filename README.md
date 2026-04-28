@@ -5,7 +5,7 @@ A minimal web-based task manager for personal daily use. Tasks live in lists, li
 Live deployment: [https://taskman.website](https://taskman.website)
 Production deployment notes in [deploy/README.md](deploy/README.md).
 
-[![Watch the video](https://youtube.com)](https://youtu.be/GQA1hNfkblE)
+[![Watch the Taskman demo video](Thumbnail.png)](https://youtu.be/GQA1hNfkblE)
 
 ---
 
