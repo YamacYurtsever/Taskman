@@ -157,9 +157,13 @@ The JSON schema is identical across environments — no migration needed.
 ## Updating
 
 ```bash
-cd ~/taskman
+sudo systemctl stop taskman
+cd /home/ubuntu/taskman
 git pull
 .venv/bin/pip install -r requirements.txt
-cd client && npm install && npm run build && cd ..
-sudo systemctl restart taskman
+cd client
+npm install
+npm run build
+cd ..
+sudo systemctl start taskman
 ```
