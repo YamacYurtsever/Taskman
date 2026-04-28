@@ -3,8 +3,9 @@
 A minimal web-based task manager for personal daily use. Tasks live in lists, lists can be grouped, and each authenticated user has their own JSON data under `~/.taskman/users/<email>/`.
 
 Live deployment: [https://taskman.website](https://taskman.website)
+Production deployment notes in [deploy/README.md](deploy/README.md).
 
-Production deployment notes live in [deploy/README.md](deploy/README.md).
+[![Watch the video](https://youtube.com)](https://youtu.be/GQA1hNfkblE)
 
 ---
 
