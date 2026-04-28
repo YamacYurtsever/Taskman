@@ -290,14 +290,14 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 
 ###### CI
 
-- [ ] Update `.github/workflows/ci.yml` to keep deployment-critical checks in CI, including backend tests, Vulture, frontend lint/build, and any new production-serving tests added for Milestone 7
+- [x] Update `.github/workflows/ci.yml` to keep deployment-critical checks in CI, including backend tests, Vulture, frontend lint/build, and any new production-serving tests added for Milestone 7
 
 ###### Deploy verification
 
-- [ ] `python -m pytest server/ -v`
-- [ ] `python -m vulture server --min-confidence 80`
-- [ ] `cd client && npm run lint`
-- [ ] `cd client && npm run build`
+- [x] `python -m pytest server/ -v`
+- [x] `python -m vulture server --min-confidence 80`
+- [x] `cd client && npm run lint`
+- [x] `cd client && npm run build`
 - [ ] Manual production smoke test on desktop and iPhone Safari: login, task CRUD, daysheet add/edit/delete, calendar load, logout, hard refresh on a nested route, and home-screen launch behavior
 
-##### Others — Falvour - Rename & Sounds - Meditask? - Batch Addition?
+##### Others — Sounds? - Batch Addition?
