@@ -300,4 +300,43 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 - [x] `cd client && npm run build`
 - [ ] Manual production smoke test on desktop and iPhone Safari: login, task CRUD, daysheet add/edit/delete, calendar load, logout, hard refresh on a nested route, and home-screen launch behavior
 
+##### Milestone 8 — Vercel + KV Deploy
+
+Replace the DigitalOcean VPS target with Vercel + Vercel KV (Upstash Redis). Vercel handles hosting, TLS, and the custom domain automatically; Redis replaces `~/.taskman/` for both data storage and sessions. The `deploy/` assets stay for reference but Vercel becomes the primary deploy target.
+
+###### Storage
+
+- [ ] `requirements.txt` — add `redis` package
+- [ ] `server/db.py` — replace JSON file read/write with Redis; `load(email)` → `GET db:<email>` (deserialise JSON, fall back to `EMPTY_DB`); `save(data, email)` → `SET db:<email>` (serialise JSON); keep function signatures unchanged so no routes change
+- [ ] `server/config.py` — store per-user config in Redis key `config:<email>`; read `SECRET_KEY` from env var instead of shared config file; remove `save()` of shared config (secret key no longer auto-generated at runtime)
+- [ ] `server/constants.py` — remove file-path constants that no longer apply (`TASKMAN_DIR`, `USERS_PATH`, `CONFIG_PATH`, `DB_PATH`, `SESSIONS_PATH`)
+
+###### Sessions
+
+- [ ] `server/api.py` — switch `flask-session` to Redis backend (`SESSION_TYPE="redis"`) using `KV_URL` env var when present; fall back to signed cookies locally when `KV_URL` is unset (avoids needing a local Redis for dev)
+
+###### Vercel config
+
+- [ ] `api/index.py` — Vercel Python serverless entrypoint: `from server import create_app; app = create_app()`
+- [ ] `vercel.json` — rewrite all requests to `api/index.py`; exclude `client/dist` from serverless (Vite build is served as static output)
+
+###### Env vars (set in Vercel dashboard)
+
+- [ ] `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — same as before
+- [ ] `TASKMAN_BASE_URL` — your Vercel project URL or custom domain (e.g. `https://taskman.website`)
+- [ ] `SECRET_KEY` — random hex string; replaces the auto-generated value previously stored in config
+- [ ] `KV_URL` — injected automatically by Vercel when a KV store is attached to the project
+
+###### Tests
+
+- [ ] `server/tests/utils.py` — replace `saved_db` / `saved_config` filesystem mocks with Redis `get`/`set` mocks
+- [ ] Verify all 138 existing tests pass with the new storage layer
+
+###### Deploy verification
+
+- [ ] `python -m pytest server/ -v`
+- [ ] `python -m vulture server --min-confidence 80`
+- [ ] `cd client && npm run lint && npm run build`
+- [ ] Manual smoke test on desktop and iPhone Safari: login, task CRUD, daysheet, calendar, logout, hard refresh on nested route, home-screen launch
+
 ##### Others — Sounds? - Batch Addition?
