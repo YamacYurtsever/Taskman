@@ -3,6 +3,9 @@ import os
 import secrets
 from datetime import date, datetime
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from cachelib.file import FileSystemCache
 from flask import Flask, jsonify, redirect, request, session
 from flask_session import Session
@@ -11,7 +14,7 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 
 from server import config, db
-from server.constants import DATE_FORMAT, SESSIONS_PATH, DaysheetEntryType
+from server.constants import DATE_FORMAT, FRONTEND_URL, SESSIONS_PATH, DaysheetEntryType
 from server.services.daysheet import add_log, continue_task
 from server.services.tasks import (
     add_task,
@@ -31,6 +34,7 @@ from server.services.utils import (
 )
 
 SCOPES = [
+    "openid",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/calendar.readonly",
 ]
@@ -76,6 +80,22 @@ def create_app(test_config=None):
 
     # ─────────────────────────── Auth ───────────────────────────
 
+    def google_client_config():
+        client_id = os.environ.get("GOOGLE_CLIENT_ID")
+        client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+
+        if not client_id or not client_secret:
+            raise ServiceError("Google OAuth is not configured")
+
+        return {"web": {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [REDIRECT_URI],
+        }}
+
+
     def require_auth(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
@@ -84,58 +104,73 @@ def create_app(test_config=None):
             return f(*args, **kwargs)
         return wrapper
 
+
     @app.get("/api/auth/status")
     def auth_status():
         return jsonify({"authenticated": bool(session.get("authenticated"))})
 
+
     @app.get("/api/oauth/start")
     def oauth_start():
-        flow = Flow.from_client_config(
-            {"web": {
-                "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
-                "client_secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [REDIRECT_URI],
-            }},
-            scopes=SCOPES,
-        )
-        flow.redirect_uri = REDIRECT_URI
-        url, state = flow.authorization_url(access_type="offline", prompt="consent")
-        session["oauth_state"] = state
-        return jsonify({"url": url})
+        try:
+            flow = Flow.from_client_config(google_client_config(), scopes=SCOPES)
+            flow.redirect_uri = REDIRECT_URI
+
+            url, state = flow.authorization_url(
+                access_type="offline",
+                prompt="consent",
+            )
+
+            session["oauth_state"] = state
+            session["code_verifier"] = flow.code_verifier
+            session["frontend_url"] = request.headers.get("Origin", FRONTEND_URL)
+            return jsonify({"url": url})
+        except ServiceError as e:
+            return fail(str(e), 500)
+
 
     @app.get("/api/oauth/callback")
     def oauth_callback():
-        flow = Flow.from_client_config(
-            {"web": {
-                "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
-                "client_secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [REDIRECT_URI],
-            }},
-            scopes=SCOPES,
-            state=session.get("oauth_state"),
-        )
-        flow.redirect_uri = REDIRECT_URI
-        flow.fetch_token(authorization_response=request.url)
+        expected_state = session.get("oauth_state")
+        received_state = request.args.get("state")
 
-        credentials = flow.credentials
-        cfg = config.load()
-        cfg["googleRefreshToken"] = credentials.refresh_token
+        if not expected_state or received_state != expected_state:
+            return fail("invalid oauth state", 400)
 
         try:
-            svc = build("oauth2", "v2", credentials=credentials)
-            user_info = svc.userinfo().get().execute()
-            cfg["googleEmail"] = user_info.get("email")
-        except Exception:
-            pass
+            flow = Flow.from_client_config(
+                google_client_config(),
+                scopes=SCOPES,
+                state=expected_state,
+                code_verifier=session.get("code_verifier"),
+            )
+            flow.redirect_uri = REDIRECT_URI
+            flow.fetch_token(authorization_response=request.url)
+            session.pop("code_verifier", None)
 
-        config.save(cfg)
-        session["authenticated"] = True
-        session.pop("oauth_state", None)
-        return redirect("/")
+            credentials = flow.credentials
+            if not credentials.refresh_token:
+                return fail("missing refresh token", 400)
+
+            cfg = config.load()
+            cfg["googleRefreshToken"] = credentials.refresh_token
+
+            try:
+                svc = build("oauth2", "v2", credentials=credentials)
+                user_info = svc.userinfo().get().execute()
+                cfg["googleEmail"] = user_info.get("email")
+            except Exception:
+                pass
+
+            config.save(cfg)
+            session["authenticated"] = True
+            frontend_url = session.pop("frontend_url", FRONTEND_URL)
+            session.pop("oauth_state", None)
+            return redirect(frontend_url)
+
+        except ServiceError as e:
+            return fail(str(e), 500)
+
 
     @app.post("/api/logout")
     def logout():
@@ -160,11 +195,6 @@ def create_app(test_config=None):
             else:
                 parts.append(f"src={calendar}")
 
-        calendar_url = (
-            f"https://calendar.google.com/calendar/embed?{'&'.join(parts)}&ctz={tz}&mode=WEEK"
-            if parts else ""
-        )
-
         user_calendars = []
         refresh_token = cfg.get("googleRefreshToken")
         if refresh_token:
@@ -184,6 +214,14 @@ def create_app(test_config=None):
                 ]
             except Exception:
                 pass
+
+        if not parts and user_calendars:
+            parts = [f"src={c['id']}" for c in user_calendars]
+
+        calendar_url = (
+            f"https://calendar.google.com/calendar/embed?{'&'.join(parts)}&ctz={tz}&mode=WEEK"
+            if parts else ""
+        )
 
         return jsonify({"calendarUrl": calendar_url, "userCalendars": user_calendars})
 
