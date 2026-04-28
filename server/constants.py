@@ -5,6 +5,7 @@ from pathlib import Path
 # ─────────────────────────── Paths ───────────────────────────
 
 FRONTEND_URL = "http://127.0.0.1:5173"
+DEV_API_BASE = "http://127.0.0.1:5050"
 
 TASKMAN_DIR = Path.home() / ".taskman"
 USERS_PATH = TASKMAN_DIR / "users"

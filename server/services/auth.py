@@ -5,7 +5,7 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 
 from server import config, db
-from server.constants import CALENDAR_PRESET_COLORS, FRONTEND_URL
+from server.constants import CALENDAR_PRESET_COLORS, DEV_API_BASE, FRONTEND_URL
 from server.services.utils import ServiceError
 
 SCOPES = [
@@ -14,11 +14,9 @@ SCOPES = [
     "https://www.googleapis.com/auth/calendar.readonly",
 ]
 
-_DEV_API_BASE = "http://127.0.0.1:5050"
-
 
 def _redirect_uri() -> str:
-    base = os.environ.get("TASKMAN_BASE_URL", _DEV_API_BASE)
+    base = os.environ.get("TASKMAN_BASE_URL", DEV_API_BASE)
     return base.rstrip("/") + "/api/oauth/callback"
 
 
