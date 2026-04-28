@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom';
+import type { CSSProperties } from 'react';
 import type { TaskFilter } from '../lib/types';
 import { MenuIcon, SignOutIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
@@ -19,6 +20,7 @@ const label = (f: TaskFilter) =>
 
 const Topbar = ({ filter, setFilter, showMenuButton, onMenuClick, onLogout }: TopbarProps) => {
   const { pathname } = useLocation();
+  const activeIndex = filters.indexOf(filter);
 
   const showFilter =
     pathname === '/tasks' || pathname.startsWith('/list/');
@@ -32,15 +34,16 @@ const Topbar = ({ filter, setFilter, showMenuButton, onMenuClick, onLogout }: To
       )}
 
       {showFilter && (
-        <div className={styles.filterPills}>
+        <div
+          className={styles.filterPills}
+          style={{ '--active-index': activeIndex } as CSSProperties}
+        >
+          <div className={styles.filterIndicator} aria-hidden="true" />
           {filters.map(f => (
             <button
               key={f}
-              className={
-                filter === f
-                  ? `${styles.filterPill} ${styles.active}`
-                  : styles.filterPill
-              }
+              className={styles.filterPill}
+              aria-pressed={filter === f}
               onClick={() => setFilter(f)}
             >
               {label(f)}

@@ -30,37 +30,57 @@
 }
 
 .filterPills {
-  display: flex;
+  --active-index: 0;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
   padding: var(--sp-sm);
   background: var(--primary);
   border: var(--border-w) solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.filterIndicator {
+  position: absolute;
+  top: var(--sp-sm);
+  bottom: var(--sp-sm);
+  left: var(--sp-sm);
+  width: calc((100% - (var(--sp-sm) * 2)) / 3);
+  border-radius: calc(var(--r-full) - var(--sp-sm));
+  background: var(--accent-bg);
+  transform: translateX(calc(100% * var(--active-index)));
+  transition: transform var(--animation-bounce);
 }
 
 .filterPill {
-  padding: var(--sp-sm) var(--sp);
+  position: relative;
+  z-index: 1;
+  padding: 7px 14px;
   border: 0;
-  border-radius: var(--r);
+  border-radius: var(--r-full);
   background: transparent;
   color: var(--text-2);
   font: inherit;
   font-size: var(--fs);
   font-weight: 500;
   cursor: pointer;
-  transition: color var(--animation-d), background var(--animation-d);
+  transition: color 220ms ease, transform 220ms ease;
 }
 
 .filterPill:hover {
   color: var(--text-1);
-  background: var(--primary-bg);
+  transform: translateY(var(--lift-sm));
 }
 
-.filterPill.active {
-  background: var(--accent-bg);
+.filterPill[aria-pressed='true'] {
   color: var(--accent);
 }
 
-.filterPill:focus-visible {
+.filterPill:focus-visible,
+.filterPill:focus-visible:hover {
+  color: var(--accent);
   outline: var(--outline-w) solid var(--accent);
   outline-offset: var(--outline-offset);
 }

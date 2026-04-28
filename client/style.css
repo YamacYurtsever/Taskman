@@ -43,6 +43,7 @@
   --r-lg:         20px;
   --r:            10px;
   --r-sm:         3px;
+  --r-full:       999px;
 
   /* Misc */
   --btn-w:             15px;
@@ -52,11 +53,13 @@
   --theme-w:           35px;
   --animation-d:       0.15s;
   --animation-d-lg:    0.3s;
+  --animation-bounce:  360ms cubic-bezier(0.22, 1.2, 0.32, 1);
   --border-w:          1px;
   --border-w-strong:   1.5px;
   --outline-w:         2px;
   --outline-offset:    2px;
   --scrollbar-w:       5px;
+  --lift-sm:           -1px;
 
   /* Default theme */
   --bg:           #f6f3ee;
