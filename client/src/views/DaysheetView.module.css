@@ -86,6 +86,16 @@
   display: flex;
   align-items: center;
   gap: var(--sp);
+  border: var(--border-w) solid transparent;
+  border-radius: var(--r);
+  padding: calc(var(--sp-sm) + 2px) var(--sp);
+  transition: background var(--animation-d-lg), border-color var(--animation-d-lg);
+}
+
+.timelineEntry:hover,
+.timelineEntry.timelineEditRow {
+  background: var(--primary);
+  border-color: var(--border);
 }
 
 .timelineTime {
