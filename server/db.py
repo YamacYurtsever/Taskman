@@ -33,10 +33,6 @@ def load(email: str | None = None) -> dict:
     if email:
         user_path = db_path(email)
 
-        if not user_path.exists() and DB_PATH.exists():
-            user_path.parent.mkdir(parents=True, exist_ok=True)
-            DB_PATH.replace(user_path)
-
         if not user_path.exists():
             data = _empty_db()
             _write(user_path, data)

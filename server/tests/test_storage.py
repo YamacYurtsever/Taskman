@@ -9,31 +9,27 @@ from server import config, db
 
 class UserDbStorageTest(unittest.TestCase):
 
-    def test_load_migrates_legacy_db_to_user_path(self):
-        legacy_db = {
+    def test_load_creates_empty_user_db_when_missing(self):
+        expected_db = {
             "groups": [],
-            "lists": [{"id": "list-1", "name": "List A", "groupId": None}],
+            "lists": [],
             "tasks": [],
             "daysheet": [],
         }
 
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            legacy_path = root / "db.json"
-            legacy_path.write_text(json.dumps(legacy_db))
 
             with (
-                patch("server.db.DB_PATH", legacy_path),
                 patch("server.db.USERS_PATH", root / "users"),
             ):
                 loaded = db.load("User@Example.com")
 
             user_path = root / "users" / "user@example.com" / "db.json"
 
-            self.assertEqual(loaded, legacy_db)
-            self.assertFalse(legacy_path.exists())
+            self.assertEqual(loaded, expected_db)
             self.assertTrue(user_path.exists())
-            self.assertEqual(json.loads(user_path.read_text()), legacy_db)
+            self.assertEqual(json.loads(user_path.read_text()), expected_db)
 
 
 class UserConfigStorageTest(unittest.TestCase):
