@@ -62,29 +62,9 @@ def load_user(email: str) -> dict:
     if path.exists():
         return _merge(USER_DEFAULTS, _read(path))
 
-    shared = load()
-    user_data, shared_data = _split_user_state(shared)
-    if any(shared.get(key) is not None for key in USER_DEFAULTS):
-        save(shared_data)
-        save(user_data, email)
-        return _merge(USER_DEFAULTS, user_data)
-
     _write(path, deepcopy(USER_DEFAULTS))
     return deepcopy(USER_DEFAULTS)
 
 
 def save(data: dict, email: str | None = None) -> None:
     _write(config_path(email), data)
-
-
-def migrate_legacy_user_state(email: str, shared_data: dict | None = None) -> dict:
-    path = config_path(email)
-    if path.exists():
-        return _merge(USER_DEFAULTS, _read(path))
-
-    shared = deepcopy(shared_data) if shared_data is not None else load()
-    user_data, shared_data = _split_user_state(shared)
-
-    save(shared_data)
-    save(user_data, email)
-    return _merge(USER_DEFAULTS, user_data)

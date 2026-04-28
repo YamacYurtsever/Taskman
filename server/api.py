@@ -164,10 +164,19 @@ def create_app(test_config=None):
             if not email:
                 return fail("missing Google email", 400)
 
-            user_cfg = config.migrate_legacy_user_state(email, config.load())
+            shared_cfg = config.load()
+            user_cfg = {
+                key: shared_cfg.get(key)
+                for key in config.USER_DEFAULTS
+            }
+            shared_only_cfg = {
+                key: shared_cfg.get(key)
+                for key in config.SERVER_DEFAULTS
+            }
             user_cfg["googleRefreshToken"] = credentials.refresh_token
             user_cfg["googleEmail"] = email
 
+            config.save(shared_only_cfg)
             config.save(user_cfg, email)
             db.load(email)
             session["authenticated"] = True

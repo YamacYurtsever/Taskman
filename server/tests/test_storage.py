@@ -38,9 +38,8 @@ class UserDbStorageTest(unittest.TestCase):
 
 class UserConfigStorageTest(unittest.TestCase):
 
-    def test_migrate_legacy_user_state_moves_user_fields(self):
-        legacy_config = {
-            "secretKey": "secret",
+    def test_save_writes_user_config_path(self):
+        data = {
             "calendars": [{"id": "calendar-id", "color": "#33B679"}],
             "calendarTimezone": "Australia/Sydney",
             "googleRefreshToken": "reftok",
@@ -49,30 +48,14 @@ class UserConfigStorageTest(unittest.TestCase):
 
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            shared_path = root / "config.json"
-            shared_path.write_text(json.dumps(legacy_config))
 
             with (
-                patch("server.config.CONFIG_PATH", shared_path),
+                patch("server.config.CONFIG_PATH", root / "config.json"),
                 patch("server.config.USERS_PATH", root / "users"),
             ):
-                migrated = config.migrate_legacy_user_state("User@Example.com")
+                config.save(data, "User@Example.com")
 
             user_path = root / "users" / "user@example.com" / "config.json"
 
-            self.assertEqual(migrated["googleRefreshToken"], "reftok")
-            self.assertEqual(migrated["googleEmail"], "user@gmail.com")
-            self.assertEqual(migrated["calendars"], legacy_config["calendars"])
-            self.assertEqual(migrated["calendarTimezone"], "Australia/Sydney")
             self.assertTrue(user_path.exists())
-            self.assertEqual(
-                json.loads(user_path.read_text()),
-                {
-                    "calendars": legacy_config["calendars"],
-                    "calendarTimezone": "Australia/Sydney",
-                    "googleRefreshToken": "reftok",
-                    "googleEmail": "user@gmail.com",
-                },
-            )
-            self.assertEqual(json.loads(shared_path.read_text()), {"secretKey": "secret"})
-
+            self.assertEqual(json.loads(user_path.read_text()), data)
