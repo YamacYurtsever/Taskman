@@ -421,7 +421,7 @@ class ApiTest(unittest.TestCase):
         self.assertNotIn("List A", list_names)
         self.assertNotIn("list-1", task_list_ids)
 
-    def test_delete_list_prunes_empty_group(self):
+    def test_delete_list_preserves_empty_group(self):
         grouped_list = {**LIST_1, "groupId": "group-1"}
 
         data = make_db(
@@ -433,7 +433,7 @@ class ApiTest(unittest.TestCase):
             res = self.post("/api/delete-list", {"list": "List A"})
 
         self.assert_ok(res)
-        self.assertEqual(saved["groups"], [])
+        self.assertEqual(saved["groups"], [GROUP_1])
 
     def test_move_list_to_group(self):
         data = make_db(groups=[GROUP_1])
@@ -463,8 +463,27 @@ class ApiTest(unittest.TestCase):
 
         lst = next(lst for lst in saved["lists"] if lst["name"] == "List A")
         self.assertIsNone(lst["groupId"])
+        self.assertEqual(saved["groups"], [GROUP_1])
 
     # ─────────────────────────── Group Routes ───────────────────────────
+
+    def test_add_group(self):
+        with (
+            saved_db(make_db()) as saved,
+            patch("server.db.new_id", return_value="group-new"),
+        ):
+            res = self.post("/api/add-group", {"group": "New Group"})
+
+        self.assert_ok(res)
+
+        groups = {group["name"]: group["id"] for group in saved["groups"]}
+        self.assertEqual(groups["New Group"], "group-new")
+
+    def test_add_group_rejects_duplicate(self):
+        with saved_db(make_db(groups=[GROUP_1])):
+            res = self.post("/api/add-group", {"group": "Group"})
+
+        self.assert_error(res, "already exists")
 
     def test_rename_group(self):
         with saved_db(make_db(groups=[GROUP_1])) as saved:

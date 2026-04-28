@@ -425,6 +425,29 @@ def create_app(test_config=None):
 
     # ─────────────────────────── Group Routes ───────────────────────────
 
+    @app.post("/api/add-group")
+    @require_auth
+    def api_add_group():
+        email = session["email"]
+        body = request.get_json(force=True) or {}
+
+        try:
+            group_name = require_name(body.get("group"))
+
+            data = db.load(email)
+            if find_group(data, group_name):
+                raise ServiceError(f"group '{group_name}' already exists")
+
+            data["groups"].append({
+                "id": db.new_id(),
+                "name": group_name,
+            })
+
+            db.save(data, email)
+            return ok()
+        except ServiceError as e:
+            return fail(str(e))
+
     @app.post("/api/rename-group")
     @require_auth
     def api_rename_group():

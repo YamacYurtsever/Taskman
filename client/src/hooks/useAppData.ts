@@ -6,6 +6,7 @@ import type { StateResponse } from '../lib/types';
 export const useAppData = () => {
   const [data, setData] = useState<StateResponse | null>(null);
   const [calendarUrl, setCalendarUrl] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setData(await api.state());
@@ -16,25 +17,30 @@ export const useAppData = () => {
 
     if (res?.ok) {
       setData(await api.state());
+      return true;
     }
+
+    return false;
   }, []);
 
   useEffect(() => {
     const syncConfig = async () => {
-      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      let config = await api.config();
-      if (!config) return;
+      try {
+        const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        let config = await api.config();
 
-      if (browserTimezone && browserTimezone !== config.calendarTimezone) {
-        const res = await api.setTimezone(browserTimezone);
-        if (res?.ok) {
-          config = await api.config();
-          if (!config) return;
+        if (config && browserTimezone && browserTimezone !== config.calendarTimezone) {
+          const res = await api.setTimezone(browserTimezone);
+          if (res?.ok) {
+            config = await api.config();
+          }
         }
-      }
 
-      setCalendarUrl(config.calendarUrl || '');
-      setData(await api.state());
+        setCalendarUrl(config?.calendarUrl || '');
+        setData(await api.state());
+      } finally {
+        setLoading(false);
+      }
     };
 
     syncConfig();
@@ -44,5 +50,5 @@ export const useAppData = () => {
     await api.logout();
   }, []);
 
-  return { data, calendarUrl, act, refresh, logout };
+  return { data, calendarUrl, loading, act, refresh, logout };
 };

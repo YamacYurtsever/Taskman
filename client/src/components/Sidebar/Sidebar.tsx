@@ -4,9 +4,9 @@ import logoUrl from '../../../logo.png';
 import type { StateResponse, TaskFilter } from '../../lib/types';
 import { MSG, cx } from '../../lib/utils';
 import styles from './Sidebar.module.css';
-import { SidebarNewListRow } from './SidebarListRow';
+import { SidebarNewItemRow } from './SidebarListRow';
 import { SidebarNav } from './SidebarNav';
-import type { Action, EditState } from './Sidebar.shared';
+import type { Action, EditState, NewItemKind } from './Sidebar.shared';
 
 type SidebarProps = {
   data: StateResponse | null;
@@ -41,8 +41,8 @@ const Sidebar = ({ data, filter, act, refresh, isMobile, isOpen, onClose }: Side
     refresh();
   };
 
-  const addList = () => setEditState({ type: 'new-list' });
-  const cancelNewList = () => setEditState(null);
+  const addItem = (kind: NewItemKind) => setEditState({ type: 'new-item', kind });
+  const cancelNewItem = () => setEditState(null);
   const closeIfMobile = () => {
     if (isMobile) {
       onClose();
@@ -102,12 +102,17 @@ const Sidebar = ({ data, filter, act, refresh, isMobile, isOpen, onClose }: Side
                 />
               )}
 
-              {editState?.type === 'new-list' ? (
-                <SidebarNewListRow act={act} cancel={cancelNewList} />
+              {editState?.type === 'new-item' ? (
+                <SidebarNewItemRow kind={editState.kind} act={act} cancel={cancelNewItem} />
               ) : (
-                <button className={styles.newListBtn} onClick={addList}>
-                  {MSG.newList}
-                </button>
+                <div className={styles.newItemSplit}>
+                  <button className={styles.newItemSplitBtn} onClick={() => addItem('group')}>
+                    {MSG.newGroup}
+                  </button>
+                  <button className={styles.newItemSplitBtn} onClick={() => addItem('list')}>
+                    {MSG.newList}
+                  </button>
+                </div>
               )}
             </div>
           </div>

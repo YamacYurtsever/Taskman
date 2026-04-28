@@ -75,28 +75,26 @@ const SidebarGroupRow = ({
     >
       {group.name}
 
-      <div className={styles.right}>
-        <div className={styles.actions}>
-          <button
-            className={cx(styles.action, styles.edt)}
-            title="Rename"
-            onClick={stop(() => setRenaming(true))}
-          >
-            <EditIcon />
-          </button>
+      <div className={cx(styles.actions, styles.groupActions)}>
+        <button
+          className={cx(styles.action, styles.edt)}
+          title="Rename"
+          onClick={stop(() => setRenaming(true))}
+        >
+          <EditIcon />
+        </button>
 
-          <button
-            className={cx(styles.action, styles.del)}
-            title="Delete group"
-            onClick={stop(() => {
-              if (confirm(`Delete group "${group.name}"? Lists will be ungrouped.`)) {
-                act(API.deleteGroup, { group: group.name });
-              }
-            })}
-          >
-            <DeleteIcon />
-          </button>
-        </div>
+        <button
+          className={cx(styles.action, styles.del)}
+          title="Delete group"
+          onClick={stop(() => {
+            if (confirm(`Delete group "${group.name}"? Lists will be ungrouped.`)) {
+              act(API.deleteGroup, { group: group.name });
+            }
+          })}
+        >
+          <DeleteIcon />
+        </button>
       </div>
     </button>
   );

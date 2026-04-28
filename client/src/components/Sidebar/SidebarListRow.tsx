@@ -4,7 +4,7 @@ import { API } from '../../lib/api';
 import { MSG, cx, sortByName, stop } from '../../lib/utils';
 import { CheckIcon, DeleteIcon, EditIcon, MoveIcon } from '../icons';
 import styles from './Sidebar.module.css';
-import type { Action, ListRowProps } from './Sidebar.shared';
+import type { Action, ListRowProps, NewItemKind } from './Sidebar.shared';
 
 const submitOnEnter =
   (save: () => void, cancel: () => void) =>
@@ -88,11 +88,13 @@ type RenameListRowProps = {
 const RenameListRow = ({ list, act, cancel }: RenameListRowProps) => {
   const [name, setName] = useState(list.name);
 
-  const save = () => {
+  const save = async () => {
     const newName = name.trim();
 
     if (newName && newName !== list.name) {
-      act(API.renameList, { list: list.name, newName });
+      if (await act(API.renameList, { list: list.name, newName })) {
+        cancel();
+      }
     } else {
       cancel();
     }
@@ -150,19 +152,27 @@ const MoveListRow = ({ list, groups, act, cancel }: MoveListRowProps) => {
   );
 };
 
-type SidebarNewListRowProps = {
+type SidebarNewItemRowProps = {
+  kind: NewItemKind;
   act: Action;
   cancel: () => void;
 };
 
-const SidebarNewListRow = ({ act, cancel }: SidebarNewListRowProps) => {
+const SidebarNewItemRow = ({ kind, act, cancel }: SidebarNewItemRowProps) => {
   const [name, setName] = useState('');
 
-  const save = () => {
+  const save = async () => {
     const trimmed = name.trim();
 
     if (trimmed) {
-      act(API.addList, { list: trimmed });
+      const ok = kind === 'group'
+        ? await act(API.addGroup, { group: trimmed })
+        : await act(API.addList, { list: trimmed });
+
+      if (ok) {
+        setName('');
+        cancel();
+      }
     } else {
       cancel();
     }
@@ -173,7 +183,7 @@ const SidebarNewListRow = ({ act, cancel }: SidebarNewListRowProps) => {
       <input
         autoFocus
         autoComplete="off"
-        placeholder={MSG.listName}
+        placeholder={kind === 'group' ? MSG.groupName : MSG.listName}
         value={name}
         onChange={e => setName(e.target.value)}
         onKeyDown={submitOnEnter(save, cancel)}
@@ -186,5 +196,5 @@ const SidebarNewListRow = ({ act, cancel }: SidebarNewListRowProps) => {
 
 export {
   SidebarListRow,
-  SidebarNewListRow,
+  SidebarNewItemRow,
 };

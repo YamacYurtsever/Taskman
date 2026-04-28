@@ -63,19 +63,17 @@ const SidebarNav = ({
 
   return (
     <>
-      {groups.map(({ group, lists }) =>
-        lists.length > 0 && (
-          <div key={group.id} className={styles.navGroup}>
-            <SidebarGroupRow
-              group={group}
-              active={selectedGroup === group.id}
-              selectGroup={() => selectGroup(group.id)}
-              act={act}
-            />
-            <div className={styles.navGroupLists}>{lists.map(renderList)}</div>
-          </div>
-        ),
-      )}
+      {groups.map(({ group, lists }) => (
+        <div key={group.id} className={styles.navGroup}>
+          <SidebarGroupRow
+            group={group}
+            active={selectedGroup === group.id}
+            selectGroup={() => selectGroup(group.id)}
+            act={act}
+          />
+          <div className={styles.navGroupLists}>{lists.map(renderList)}</div>
+        </div>
+      ))}
 
       {ungrouped.map(renderList)}
     </>

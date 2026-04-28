@@ -1,12 +1,14 @@
 import type { Group, TaskList } from '../../lib/types';
 
-type Action = (path: string, body: unknown) => Promise<void>;
+type NewItemKind = 'group' | 'list';
+
+type Action = (path: string, body: unknown) => Promise<boolean>;
 
 type EditState =
   | { type: 'list'; id: string }
   | { type: 'group'; id: string }
   | { type: 'move-list'; id: string }
-  | { type: 'new-list' }
+  | { type: 'new-item'; kind: NewItemKind }
   | null;
 
 type ListRowProps = {
@@ -28,4 +30,5 @@ export type {
   Action,
   EditState,
   ListRowProps,
+  NewItemKind,
 };

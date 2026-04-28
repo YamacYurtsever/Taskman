@@ -1,6 +1,6 @@
 import type { StateResponse, Task, TaskFilter, TaskList } from '../../lib/types';
 
-export type Action = (path: string, body: unknown) => Promise<void>;
+export type Action = (path: string, body: unknown) => Promise<boolean>;
 export type OpenDetail = (task: Task) => void;
 
 export type TaskRowProps = {

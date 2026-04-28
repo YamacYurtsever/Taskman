@@ -12,7 +12,7 @@ import type { DaysheetEntry, DaysheetResponse, StateResponse } from '../lib/type
 import { MSG, sortByName, todayStr } from '../lib/utils';
 import styles from './DaysheetView.module.css';
 
-type Action = (path: string, body: unknown) => Promise<void>;
+type Action = (path: string, body: unknown) => Promise<boolean>;
 
 type DaysheetViewProps = {
   data: StateResponse | null;
@@ -59,8 +59,9 @@ const DaysheetView = ({ data, act, refresh }: DaysheetViewProps) => {
 
   const localAct = useCallback(
     async (path: string, body: unknown) => {
-      await act(path, body);
+      const ok = await act(path, body);
       await fetchDaysheet(date);
+      return ok;
     },
     [act, fetchDaysheet, date],
   );

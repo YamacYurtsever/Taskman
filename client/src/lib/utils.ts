@@ -10,14 +10,16 @@ const MSG = {
   addTask: 'Add task...',
   entryText: 'Entry text...',
   listName: 'List name...',
+  groupName: 'Group name...',
   newList: '+ New List',
+  newGroup: '+ New Group',
   today: 'Today',
   yesterday: 'Yesterday',
   daysheet: 'Daysheet',
   tasks: 'Tasks',
   others: 'Others',
   calendar: 'Calendar',
-  noCalUrl: 'No calendars configured. Add a "calendars" array and "calendarTimezone" to ~/.taskman/config.json.',
+  noCalUrl: 'No calendars configured. Add a "calendars" array to ~/.taskman/users/<your-email>/config.json.',
 } as const;
 
 const todayStr = () =>

@@ -18,6 +18,7 @@ const API = {
 
   add: '/api/add',
   addList: '/api/add-list',
+  addGroup: '/api/add-group',
   moveTask: '/api/move-task',
   moveList: '/api/move-list',
   renameList: '/api/rename-list',

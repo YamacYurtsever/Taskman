@@ -107,7 +107,7 @@
 .navGroupHeader {
   color: var(--text-2);
   font-size: var(--fs-sm);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .navList {
@@ -146,6 +146,10 @@
 .actions {
   display: none;
   gap: var(--sp-xs);
+}
+
+.groupActions {
+  margin-left: auto;
 }
 
 .action {
@@ -205,6 +209,7 @@
 }
 
 .newListBtn,
+.newItemSplit,
 .newListInput {
   width: 100%;
   padding: var(--sp-sm);
@@ -222,10 +227,40 @@
   transition: color var(--animation-d), border-color var(--animation-d);
 }
 
+.newItemSplit {
+  padding: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.newItemSplitBtn {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-sm);
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: center;
+  cursor: pointer;
+  transition: color var(--animation-d), background var(--animation-d);
+}
+
+.newItemSplitBtn + .newItemSplitBtn {
+  border-left: var(--border-w) dashed var(--border);
+}
+
 .newListBtn:hover,
+.newItemSplit:hover,
 .newListInput:hover {
   color: var(--text-2);
   border-color: var(--text-2);
+}
+
+.newItemSplitBtn:hover {
+  color: var(--text-2);
+  background: var(--primary-bg);
 }
 
 .newListInput {

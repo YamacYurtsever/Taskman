@@ -162,10 +162,6 @@ def add_daysheet_entry(data, list_id, entry_type, text, timestamp=None):
 
 # ─────────────────────────── Deletion / Mutation Helpers ───────────────────────────
 
-def prune_empty_group(data, group_id):
-    if group_id and not any(l["groupId"] == group_id for l in data["lists"]):
-        data["groups"] = [g for g in data["groups"] if g["id"] != group_id]
-
 
 def delete_group(data, group):
     for lst in data["lists"]:
@@ -176,13 +172,9 @@ def delete_group(data, group):
 
 
 def delete_list(data, lst):
-    group_id = lst["groupId"]
-
     data["tasks"] = [t for t in data["tasks"] if t["listId"] != lst["id"]]
     data["daysheet"] = [e for e in data["daysheet"] if e["listId"] != lst["id"]]
     data["lists"] = [l for l in data["lists"] if l["id"] != lst["id"]]
-
-    prune_empty_group(data, group_id)
 
 
 def remove_daysheet_entries(data, list_id, entry_type, tz_name, text=None, entry_day=None):

@@ -64,10 +64,11 @@ class ServiceUtilsTest(unittest.TestCase):
         self.assertIsNone(data["lists"][0]["groupId"])
         self.assertIsNone(data["lists"][1]["groupId"])
 
-    def test_delete_list_removes_related_data_and_prunes_empty_group(self):
+    def test_delete_list_removes_related_data_and_preserves_group(self):
         lst = list_record(id="list-1", name="List A", group_id="group-1")
+        group = group_record(id="group-1", name="Group")
         data = db_record(
-            groups=[group_record(id="group-1", name="Group")],
+            groups=[group],
             lists=[lst],
             tasks=[
                 task_record(id="task-1", name="Task A", list_id="list-1"),
@@ -81,7 +82,7 @@ class ServiceUtilsTest(unittest.TestCase):
 
         delete_list(data, lst)
 
-        self.assertEqual(data["groups"], [])
+        self.assertEqual(data["groups"], [group])
         self.assertEqual(data["lists"], [])
         self.assertEqual([t["id"] for t in data["tasks"]], ["task-2"])
         self.assertEqual([e["id"] for e in data["daysheet"]], ["e-2"])

@@ -19,14 +19,14 @@ import { useIsMobile } from './hooks/useIsMobile';
 import { useIsNarrow } from './hooks/useIsNarrow';
 import { api, setUnauthorizedHandler } from './lib/api';
 import type { StateResponse, Task, TaskFilter } from './lib/types';
-import { cx } from './lib/utils';
+import { cx, MSG } from './lib/utils';
 import { CalendarView } from './views/CalendarView';
 import { CardsView } from './views/CardsView';
 import { DaysheetView } from './views/DaysheetView';
 import { FocusedView } from './views/FocusedView';
 import { LoginView } from './views/LoginView';
 
-type Action = (path: string, body: unknown) => Promise<void>;
+type Action = (path: string, body: unknown) => Promise<boolean>;
 
 type RouteProps = {
   data: StateResponse;
@@ -36,12 +36,14 @@ type RouteProps = {
 };
 
 type RequireDataProps = {
+  loading: boolean;
   data: StateResponse | null;
   children: (data: StateResponse) => ReactNode;
 };
 
-const RequireData = ({ data, children }: RequireDataProps) => {
-  if (!data) return <p>Loading...</p>;
+const RequireData = ({ loading, data, children }: RequireDataProps) => {
+  if (loading) return <p>Loading...</p>;
+  if (!data) return <div className="empty">{MSG.noTasks}</div>;
   return children(data);
 };
 
@@ -80,7 +82,7 @@ const AuthenticatedApp = ({ onLogout }: AuthenticatedAppProps) => {
   const [filter, setFilter] = useState<TaskFilter>('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const { data, calendarUrl, act, refresh, logout } = useAppData();
+  const { data, calendarUrl, loading, act, refresh, logout } = useAppData();
   const isMobile = useIsMobile();
   const isNarrow = useIsNarrow();
 
@@ -159,7 +161,7 @@ const AuthenticatedApp = ({ onLogout }: AuthenticatedAppProps) => {
                 <Route
                   path="/tasks"
                   element={
-                    <RequireData data={data}>
+                    <RequireData loading={loading} data={data}>
                       {data => <TasksRoute data={data} filter={filter} act={act} openDetail={openDetail} />}
                     </RequireData>
                   }
@@ -167,7 +169,7 @@ const AuthenticatedApp = ({ onLogout }: AuthenticatedAppProps) => {
                 <Route
                   path="/list/:listId"
                   element={
-                    <RequireData data={data}>
+                    <RequireData loading={loading} data={data}>
                       {data => <ListRoute data={data} filter={filter} act={act} openDetail={openDetail} />}
                     </RequireData>
                   }
