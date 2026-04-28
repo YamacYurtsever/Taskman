@@ -4,7 +4,6 @@ from server.services.utils import (
     ServiceError,
     add_daysheet_entry,
     find_task,
-    migrate_user_data,
     parse_date,
     remove_daysheet_entries,
     require_list,
@@ -23,7 +22,6 @@ def add_task(list_name: str, task_name: str, due: str | None = None, email: str 
     task_name = require_name(task_name)
 
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
 
     if find_task(data, lst["id"], task_name):
@@ -56,7 +54,6 @@ def edit_task(
     new_name = require_name(new_name)
 
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
@@ -76,7 +73,6 @@ def edit_task(
 @service
 def delete_task(list_name: str, task_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
@@ -88,7 +84,6 @@ def delete_task(list_name: str, task_name: str, email: str | None = None, tz_nam
 @service
 def move_task(list_name: str, task_name: str, new_list_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
-    migrate_user_data(data, tz_name)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
@@ -107,7 +102,6 @@ def move_task(list_name: str, task_name: str, new_list_name: str, email: str | N
 @service
 def done_task(list_name: str, task_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
-    migrate_user_data(data, tz_name)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
@@ -143,7 +137,6 @@ def done_task(list_name: str, task_name: str, email: str | None = None, tz_name:
 @service
 def set_task_description(list_name: str, task_name: str, description: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
     task["description"] = description
@@ -153,7 +146,6 @@ def set_task_description(list_name: str, task_name: str, description: str, email
 @service
 def undo_task(list_name: str, task_name: str, email: str | None = None, tz_name: str = "UTC"):
     data = db.load(email)
-    migrate_user_data(data, tz_name)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)

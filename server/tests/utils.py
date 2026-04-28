@@ -31,8 +31,8 @@ def list_record(id="list-1", name="List A", group_id=None):
     }
 
 
-def task_record(id="task-1", name="Task A", list_id="list-1", due=None, done=None, done_at=None, description=""):
-    task = {
+def task_record(id="task-1", name="Task A", list_id="list-1", due=None, done_at=None, description=""):
+    return {
         "id": id,
         "name": name,
         "listId": list_id,
@@ -40,14 +40,11 @@ def task_record(id="task-1", name="Task A", list_id="list-1", due=None, done=Non
         "doneAt": done_at,
         "description": description,
     }
-    if done is not None:
-        task["done"] = done
-    return task
 
 
 def daysheet_entry(
     id="entry-1",
-    datetime="2026-04-26T10:00:00",
+    datetime="2026-04-26T10:00:00Z",
     list_id="list-1",
     type=DaysheetEntryType.LOG,
     text="Entry",

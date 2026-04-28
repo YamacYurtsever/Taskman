@@ -98,12 +98,12 @@ class ApiTest(unittest.TestCase):
     def test_get_daysheet_returns_entries_for_date(self):
         today_entry = daysheet_entry(
             id="entry-1",
-            datetime="2026-04-26T10:30:00",
+            datetime="2026-04-26T10:30:00Z",
             text="Today entry",
         )
         yesterday_entry = daysheet_entry(
             id="entry-2",
-            datetime="2026-04-25T09:00:00",
+            datetime="2026-04-25T09:00:00Z",
             text="Yesterday entry",
         )
 

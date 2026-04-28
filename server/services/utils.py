@@ -1,4 +1,4 @@
-from datetime import datetime, time, timezone
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from server import db
@@ -33,9 +33,6 @@ def require_name(value, field="name"):
 
 UTC_SUFFIX = "Z"
 UTC_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-LEGACY_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
-
-
 def parse_date(s):
     for fmt in DATE_INPUT_FORMATS:
         try:
@@ -68,21 +65,13 @@ def parse_utc_datetime(value: str) -> datetime:
 
     parsed = datetime.fromisoformat(value)
     if parsed.tzinfo is None:
-        raise ValueError("naive datetime")
+        raise ServiceError(f"invalid UTC datetime '{value}'")
     return parsed.astimezone(timezone.utc)
-
-
-def parse_legacy_local_datetime(value: str, tz_name: str) -> datetime:
-    tz = ZoneInfo(require_timezone(tz_name))
-    return datetime.strptime(value, LEGACY_DATETIME_FORMAT).replace(tzinfo=tz)
 
 
 def local_datetime_from_storage(value: str, tz_name: str) -> datetime:
     tz = ZoneInfo(require_timezone(tz_name))
-    try:
-        return parse_utc_datetime(value).astimezone(tz)
-    except ValueError:
-        return parse_legacy_local_datetime(value, tz_name)
+    return parse_utc_datetime(value).astimezone(tz)
 
 
 def local_date_from_storage(value: str, tz_name: str) -> str:
@@ -91,47 +80,6 @@ def local_date_from_storage(value: str, tz_name: str) -> str:
 
 def local_time_from_storage(value: str, tz_name: str) -> str:
     return local_datetime_from_storage(value, tz_name).strftime("%H:%M")
-
-
-def legacy_datetime_to_utc(value: str, tz_name: str) -> str:
-    return parse_legacy_local_datetime(value, tz_name).astimezone(timezone.utc).strftime(UTC_DATETIME_FORMAT)
-
-
-def legacy_done_date_to_utc(value: str, tz_name: str) -> str:
-    tz = ZoneInfo(require_timezone(tz_name))
-    local_date = datetime.strptime(value, DATE_FORMAT).date()
-    # Legacy completion dates had no time-of-day. Anchor them at local noon so
-    # the derived local date remains stable for most timezone conversions.
-    local_dt = datetime.combine(local_date, time(hour=12), tzinfo=tz)
-    return local_dt.astimezone(timezone.utc).strftime(UTC_DATETIME_FORMAT)
-
-
-def is_legacy_local_timestamp(value: str) -> bool:
-    return len(value) == 19 and value[10] == "T" and not value.endswith(UTC_SUFFIX)
-
-
-def migrate_user_data(data: dict, tz_name: str) -> bool:
-    changed = False
-
-    for task in data["tasks"]:
-        if "description" not in task:
-            task["description"] = ""
-            changed = True
-
-        if "doneAt" not in task or (task.get("doneAt") is None and task.get("done")):
-            task["doneAt"] = legacy_done_date_to_utc(task["done"], tz_name) if task.get("done") else None
-            changed = True
-
-        if "done" in task:
-            task.pop("done", None)
-            changed = True
-
-    for entry in data["daysheet"]:
-        if is_legacy_local_timestamp(entry["datetime"]):
-            entry["datetime"] = legacy_datetime_to_utc(entry["datetime"], tz_name)
-            changed = True
-
-    return changed
 
 
 # ─────────────────────────── Find Helpers ───────────────────────────

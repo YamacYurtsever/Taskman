@@ -9,9 +9,7 @@ from server.services.utils import (
     delete_list,
     find_daysheet_entry,
     has_daysheet_entry,
-    legacy_done_date_to_utc,
     local_date_from_storage,
-    migrate_user_data,
     remove_daysheet_entries,
     service,
     today_in_timezone,
@@ -77,7 +75,7 @@ class ServiceUtilsTest(unittest.TestCase):
             ],
             daysheet=[
                 daysheet_entry(id="e-1", list_id="list-1"),
-                daysheet_entry(id="e-2", datetime="2026-04-26T11:00:00", list_id="list-2"),
+                daysheet_entry(id="e-2", datetime="2026-04-26T11:00:00Z", list_id="list-2"),
             ],
         )
 
@@ -99,7 +97,7 @@ class ServiceUtilsTest(unittest.TestCase):
                 "list-1",
                 DaysheetEntryType.CONTINUE,
                 "Task A",
-                "2026-04-26T10:00:00",
+                "2026-04-26T10:00:00Z",
             )
 
         self.assertTrue(
@@ -137,20 +135,8 @@ class ServiceUtilsTest(unittest.TestCase):
         self.assertEqual(removed, 1)
         self.assertEqual(data["daysheet"], [])
 
-    def test_migrate_user_data_converts_legacy_fields(self):
-        data = db_record(
-            tasks=[task_record(done="2026-04-26")],
-            daysheet=[daysheet_entry(datetime="2026-04-26T10:00:00")],
+    def test_local_date_from_storage_converts_utc_timestamp(self):
+        self.assertEqual(
+            local_date_from_storage("2026-04-26T14:00:00Z", "Australia/Sydney"),
+            "2026-04-27",
         )
-
-        changed = migrate_user_data(data, "Australia/Sydney")
-
-        self.assertTrue(changed)
-        self.assertNotIn("done", data["tasks"][0])
-        self.assertIn("doneAt", data["tasks"][0])
-        self.assertEqual(local_date_from_storage(data["tasks"][0]["doneAt"], "Australia/Sydney"), "2026-04-26")
-        self.assertTrue(data["daysheet"][0]["datetime"].endswith("Z"))
-
-    def test_legacy_done_date_to_utc_preserves_local_day(self):
-        done_at = legacy_done_date_to_utc("2026-04-26", "Australia/Sydney")
-        self.assertEqual(local_date_from_storage(done_at, "Australia/Sydney"), "2026-04-26")

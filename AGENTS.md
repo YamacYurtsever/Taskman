@@ -234,12 +234,12 @@ Requires a Google Cloud project with the Calendar API enabled and an OAuth 2.0 c
 
 ##### Milestone 6 — Ownership & Multi-user
 
-Each authenticated Google user sees only their own data. Currently all data is shared in a single flat JSON file, so the first implementation should migrate the existing shared records into the current single user account.
+Each authenticated Google user sees only their own data.
 
 ###### Backend
 
-- [x] `server/db.py` — scope `DB_PATH` per user (e.g. `~/.taskman/users/<email>/db.json`); derive path from the authenticated user's email passed into `db.load()` / `db.save()`, and migrate the legacy shared `db.json` into the current user's DB on first login
-- [x] `server/config.py` — keep a single shared `config.json` for server-level settings (`secretKey`, OAuth credentials); move per-user state (`googleRefreshToken`, `googleEmail`, calendars) into the per-user DB or a per-user config file, and migrate the legacy shared user state into the current user's file on first login
+- [x] `server/db.py` — scope `DB_PATH` per user (e.g. `~/.taskman/users/<email>/db.json`); derive path from the authenticated user's email passed into `db.load()` / `db.save()`
+- [x] `server/config.py` — keep a single shared `config.json` for server-level settings (`secretKey`, OAuth credentials); move per-user state (`googleRefreshToken`, `googleEmail`, calendars) into the per-user DB or a per-user config file
 - [x] `server/api.py` — pass authenticated user's email into all `db.load()` / `db.save()` calls; store `email` in session on OAuth callback
 - [x] `server/api.py` — `GET /api/config` fetches calendar list using the requesting user's own refresh token
 
@@ -270,20 +270,13 @@ Store absolute event times in UTC and treat timezone as a per-user rendering and
 
 ###### Data model
 
-- [x] `~/.taskman/users/<email>/db.json` — migrate `daysheet[].datetime` from naive local timestamps to UTC timestamps
-- [x] `~/.taskman/users/<email>/db.json` — replace task `done: YYYY-MM-DD | null` with `doneAt: <UTC timestamp> | null`
-- [x] Backward compatibility — read both legacy `done` and new `doneAt` during rollout until all existing task records are migrated
-
-###### Migration
-
-- [x] One-time migration — interpret legacy naive daysheet timestamps in the user's configured timezone, convert them to UTC, and write them back
-- [x] One-time migration — convert legacy task `done` dates into `doneAt` UTC timestamps using the user's configured timezone
-- [ ] After migration — remove fallback handling for legacy local timestamp formats once all existing records have been rewritten
+- [x] `~/.taskman/users/<email>/db.json` — store `daysheet[].datetime` as UTC timestamps
+- [x] `~/.taskman/users/<email>/db.json` — store task completion as `doneAt: <UTC timestamp> | null`
 
 ###### Backend — tests
 
 - [x] Add unit tests for UTC timestamp writes, timezone-aware "today" comparisons, and local-day grouping in daysheet reads
-- [x] Add migration tests covering legacy naive `daysheet[].datetime` and legacy task `done` values
+- [x] Add unit tests covering UTC timestamp parsing and `doneAt` behavior
 
 ###### Frontend
 

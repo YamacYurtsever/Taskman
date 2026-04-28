@@ -5,7 +5,6 @@ from server.services.utils import (
     add_daysheet_entry,
     find_daysheet_entry,
     has_daysheet_entry,
-    migrate_user_data,
     remove_daysheet_entries,
     require_list,
     require_name,
@@ -23,7 +22,6 @@ def add_log(list_name: str, text: str, email: str | None = None, tz_name: str = 
     text = require_name(text, "text")
 
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
 
     add_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, utc_now())
@@ -37,7 +35,6 @@ def edit_log(list_name: str, text: str, new_text: str, email: str | None = None,
     new_text = require_name(new_text, "new text")
 
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
 
     entry = find_daysheet_entry(
@@ -55,7 +52,6 @@ def delete_log(list_name: str, text: str, email: str | None = None, tz_name: str
     text = require_name(text, "text")
 
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
 
     deleted = remove_daysheet_entries(
@@ -80,7 +76,6 @@ def continue_task(list_name: str, task_name: str, email: str | None = None, tz_n
     task_name = require_name(task_name, "task")
 
     data = db.load(email)
-    migrate_user_data(data, tz_name)
     lst = require_list(data, list_name)
     require_task(data, lst, task_name)
 

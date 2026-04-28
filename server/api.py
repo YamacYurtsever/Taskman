@@ -1,7 +1,7 @@
 import functools
 import os
 import secrets
-from datetime import date, datetime
+from datetime import datetime
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -30,7 +30,6 @@ from server.services.utils import (
     find_list,
     local_date_from_storage,
     local_time_from_storage,
-    migrate_user_data,
     require_name,
     require_timezone,
     today_in_timezone,
@@ -89,13 +88,6 @@ def create_app(test_config=None):
         cfg = config.load(email)
         tz_name = require_timezone(cfg.get("calendarTimezone", "UTC"))
         return cfg, tz_name
-
-
-    def load_user_data(email: str, tz_name: str):
-        data = db.load(email)
-        if migrate_user_data(data, tz_name):
-            db.save(data, email)
-        return data
 
 
     @app.get("/api/auth/status")
@@ -173,10 +165,6 @@ def create_app(test_config=None):
             cfg["calendarTimezone"] = tz_name
             config.save(cfg, email)
 
-            data = db.load(email)
-            if migrate_user_data(data, tz_name):
-                db.save(data, email)
-
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -186,7 +174,7 @@ def create_app(test_config=None):
     def get_state():
         email = session["email"]
         _, tz_name = user_config_and_timezone(email)
-        data = load_user_data(email, tz_name)
+        data = db.load(email)
         tasks = [{**t, "description": t.get("description", ""), "doneAt": t.get("doneAt")} for t in data["tasks"]]
         return jsonify({
             "groups": data["groups"],
@@ -209,7 +197,7 @@ def create_app(test_config=None):
         except ValueError:
             return jsonify({"error": f"invalid date '{target}'"}), 400
 
-        data = load_user_data(email, tz_name)
+        data = db.load(email)
         lists = {lst["id"]: lst for lst in data["lists"]}
         groups = {grp["id"]: grp for grp in data["groups"]}
 
