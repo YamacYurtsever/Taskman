@@ -264,7 +264,6 @@ Assume a simple production deployment on a single HTTPS domain, with the built f
 - [ ] `server/constants.py` / `server/services/auth.py` — replace hardcoded `FRONTEND_URL` and OAuth `REDIRECT_URI` with environment-driven production URLs (for example `TASKMAN_BASE_URL`) while keeping local development defaults
 - [ ] `server/api.py` — serve the built `client/dist` bundle in production with an SPA fallback route, while preserving Vite dev mode for local development
 - [ ] `server/api.py` — tighten production session config (`SESSION_COOKIE_SECURE`, `SESSION_COOKIE_SAMESITE`, `SESSION_COOKIE_HTTPONLY`) and only enable `OAUTHLIB_INSECURE_TRANSPORT=1` in local development
-- [ ] `server/api.py` — add a lightweight health endpoint (for example `GET /api/health`) for deploy checks and uptime monitoring
 - [ ] `server/config.py` / startup path — fail clearly when required production env vars are missing instead of surfacing vague OAuth/runtime failures
 
 ###### Frontend
@@ -285,7 +284,7 @@ Assume a simple production deployment on a single HTTPS domain, with the built f
 
 - [ ] Add tests for environment-driven frontend/callback URL generation
 - [ ] Add tests for production frontend serving / SPA fallback behavior
-- [ ] Add tests for the health endpoint and production session config branches
+- [ ] Add tests for production session config branches
 
 ###### Deploy verification
 
