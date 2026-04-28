@@ -9,12 +9,10 @@ load_dotenv()
 from cachelib.file import FileSystemCache
 from flask import Flask, jsonify, redirect, request, session
 from flask_session import Session
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
 
 from server import config, db
-from server.constants import CALENDAR_PRESET_COLORS, DATE_FORMAT, FRONTEND_URL, SESSIONS_PATH, DaysheetEntryType
+from server.constants import DATE_FORMAT, FRONTEND_URL, SESSIONS_PATH, DaysheetEntryType
+from server.services import auth
 from server.services.daysheet import add_log, continue_task
 from server.services.tasks import (
     add_task,
@@ -32,13 +30,6 @@ from server.services.utils import (
     find_list,
     require_name,
 )
-
-SCOPES = [
-    "openid",
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/calendar.readonly",
-]
-REDIRECT_URI = "http://127.0.0.1:5050/api/oauth/callback"
 
 
 # ─────────────────────────── Response Helpers ───────────────────────────
@@ -80,26 +71,10 @@ def create_app(test_config=None):
 
     # ─────────────────────────── Auth ───────────────────────────
 
-    def google_client_config():
-        client_id = os.environ.get("GOOGLE_CLIENT_ID")
-        client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
-
-        if not client_id or not client_secret:
-            raise ServiceError("Google OAuth is not configured")
-
-        return {"web": {
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "redirect_uris": [REDIRECT_URI],
-        }}
-
-
     def require_auth(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            if not session.get("authenticated") or not session.get("email"):
+            if not auth.is_authenticated(session):
                 return fail("not authenticated", 401)
             return f(*args, **kwargs)
         return wrapper
@@ -107,86 +82,40 @@ def create_app(test_config=None):
 
     @app.get("/api/auth/status")
     def auth_status():
-        return jsonify({
-            "authenticated": bool(session.get("authenticated") and session.get("email")),
-        })
+        return jsonify({"authenticated": auth.is_authenticated(session)})
 
 
     @app.get("/api/oauth/start")
     def oauth_start():
         try:
-            flow = Flow.from_client_config(google_client_config(), scopes=SCOPES)
-            flow.redirect_uri = REDIRECT_URI
-
-            url, state = flow.authorization_url(
-                access_type="offline",
-                prompt="consent",
-            )
-
-            session["oauth_state"] = state
-            session["code_verifier"] = flow.code_verifier
-            session["frontend_url"] = request.headers.get("Origin", FRONTEND_URL)
-            return jsonify({"url": url})
+            result = auth.begin_oauth(request.headers.get("Origin"))
+            session["oauth_state"] = result["state"]
+            session["code_verifier"] = result["code_verifier"]
+            session["frontend_url"] = result["frontend_url"]
+            return jsonify({"url": result["url"]})
         except ServiceError as e:
             return fail(str(e), 500)
 
 
     @app.get("/api/oauth/callback")
     def oauth_callback():
-        expected_state = session.get("oauth_state")
-        received_state = request.args.get("state")
-
-        if not expected_state or received_state != expected_state:
-            return fail("invalid oauth state", 400)
-
         try:
-            flow = Flow.from_client_config(
-                google_client_config(),
-                scopes=SCOPES,
-                state=expected_state,
-                code_verifier=session.get("code_verifier"),
+            result = auth.complete_oauth(
+                request.url,
+                session.get("oauth_state"),
+                request.args.get("state"),
+                session.get("code_verifier"),
             )
-            flow.redirect_uri = REDIRECT_URI
-            flow.fetch_token(authorization_response=request.url)
             session.pop("code_verifier", None)
-
-            credentials = flow.credentials
-            if not credentials.refresh_token:
-                return fail("missing refresh token", 400)
-
-            try:
-                svc = build("oauth2", "v2", credentials=credentials)
-                user_info = svc.userinfo().get().execute()
-                email = user_info.get("email")
-            except Exception as e:
-                return fail(f"failed to fetch Google email: {e}", 500)
-
-            if not email:
-                return fail("missing Google email", 400)
-
-            shared_cfg = config.load()
-            user_cfg = {
-                key: shared_cfg.get(key)
-                for key in config.USER_DEFAULTS
-            }
-            shared_only_cfg = {
-                key: shared_cfg.get(key)
-                for key in config.SERVER_DEFAULTS
-            }
-            user_cfg["googleRefreshToken"] = credentials.refresh_token
-            user_cfg["googleEmail"] = email
-
-            config.save(shared_only_cfg)
-            config.save(user_cfg, email)
-            db.load(email)
+            auth.persist_user_auth(result["email"], result["refresh_token"])
             session["authenticated"] = True
-            session["email"] = email
+            session["email"] = result["email"]
             frontend_url = session.pop("frontend_url", FRONTEND_URL)
             session.pop("oauth_state", None)
             return redirect(frontend_url)
 
         except ServiceError as e:
-            return fail(str(e), 500)
+            return fail(str(e), 400)
 
 
     @app.post("/api/logout")
@@ -201,46 +130,11 @@ def create_app(test_config=None):
     def get_config():
         email = session["email"]
         cfg = config.load(email)
-        calendars = cfg.get("calendars", [])
-        tz = cfg.get("calendarTimezone", "UTC")
-
-        parts = []
-        for calendar in calendars:
-            if isinstance(calendar, dict):
-                parts.append(f"src={calendar['id']}")
-                if calendar.get("color"):
-                    parts.append(f"color={calendar['color'].replace('#', '%23')}")
-            else:
-                parts.append(f"src={calendar}")
-
-        user_calendars = []
-        refresh_token = cfg.get("googleRefreshToken")
-        if refresh_token:
-            try:
-                creds = Credentials(
-                    token=None,
-                    refresh_token=refresh_token,
-                    token_uri="https://oauth2.googleapis.com/token",
-                    client_id=os.environ.get("GOOGLE_CLIENT_ID", ""),
-                    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET", ""),
-                )
-                svc = build("calendar", "v3", credentials=creds)
-                result = svc.calendarList().list().execute()
-                user_calendars = [
-                    {"id": c["id"], "summary": c.get("summary", "")}
-                    for c in result.get("items", [])
-                ]
-            except Exception:
-                pass
-
-        if not parts and user_calendars:
-            for i, cal in enumerate(user_calendars[:5]):
-                parts.append(f"src={cal['id']}")
-                parts.append(f"color={CALENDAR_PRESET_COLORS[i].replace('#', '%23')}")
-
-        calendar_url = (
-            f"https://calendar.google.com/calendar/embed?{'&'.join(parts)}&ctz={tz}&mode=WEEK"
-            if parts else ""
+        user_calendars = auth.fetch_user_calendars(cfg.get("googleRefreshToken"))
+        calendar_url = auth.build_calendar_url(
+            cfg.get("calendars", []),
+            cfg.get("calendarTimezone", "UTC"),
+            user_calendars,
         )
 
         return jsonify({"calendarUrl": calendar_url, "userCalendars": user_calendars})

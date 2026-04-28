@@ -75,7 +75,7 @@ class OAuthStartTest(unittest.TestCase):
                 "GOOGLE_CLIENT_ID": "cid",
                 "GOOGLE_CLIENT_SECRET": "csec",
             }),
-            patch("server.api.Flow") as MockFlow,
+            patch("server.services.auth.Flow") as MockFlow,
         ):
             MockFlow.from_client_config.return_value = self._mock_start_flow()
             res = self.client.get("/api/oauth/start")
@@ -89,7 +89,7 @@ class OAuthStartTest(unittest.TestCase):
                 "GOOGLE_CLIENT_ID": "cid",
                 "GOOGLE_CLIENT_SECRET": "csec",
             }),
-            patch("server.api.Flow") as MockFlow,
+            patch("server.services.auth.Flow") as MockFlow,
         ):
             MockFlow.from_client_config.return_value = self._mock_start_flow(state="state-xyz")
             self.client.get("/api/oauth/start")
@@ -105,7 +105,7 @@ class OAuthStartTest(unittest.TestCase):
                 "GOOGLE_CLIENT_ID": "cid",
                 "GOOGLE_CLIENT_SECRET": "csec",
             }),
-            patch("server.api.Flow") as MockFlow,
+            patch("server.services.auth.Flow") as MockFlow,
         ):
             MockFlow.from_client_config.return_value = mock_flow
             self.client.get("/api/oauth/start")
@@ -163,8 +163,8 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
                 patch("server.db.load", return_value=make_db()),
-                patch("server.api.Flow") as MockFlow,
-                patch("server.api.build", return_value=self._mock_userinfo_service()),
+                patch("server.services.auth.Flow") as MockFlow,
+                patch("server.services.auth.build", return_value=self._mock_userinfo_service()),
             ):
                 MockFlow.from_client_config.return_value = mock_flow
                 self.client.get("/api/oauth/callback?code=authcode&state=state-abc")
@@ -185,7 +185,7 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
                 patch("server.db.load", return_value=make_db()),
-                patch("server.api.Flow") as MockFlow,
+                patch("server.services.auth.Flow") as MockFlow,
             ):
                 MockFlow.from_client_config.return_value = self._mock_flow(refresh_token=None)
                 res = self.client.get("/api/oauth/callback?code=authcode&state=state-abc")
@@ -204,8 +204,8 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
                 patch("server.db.load", return_value=make_db()),
-                patch("server.api.Flow") as MockFlow,
-                patch("server.api.build", return_value=self._mock_userinfo_service()),
+                patch("server.services.auth.Flow") as MockFlow,
+                patch("server.services.auth.build", return_value=self._mock_userinfo_service()),
             ):
                 MockFlow.from_client_config.return_value = self._mock_flow()
                 self.client.get("/api/oauth/callback?code=authcode&state=state-abc")
@@ -225,8 +225,8 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
                 patch("server.db.load", return_value=make_db()),
-                patch("server.api.Flow") as MockFlow,
-                patch("server.api.build", return_value=self._mock_userinfo_service()),
+                patch("server.services.auth.Flow") as MockFlow,
+                patch("server.services.auth.build", return_value=self._mock_userinfo_service()),
             ):
                 MockFlow.from_client_config.return_value = self._mock_flow()
                 res = self.client.get("/api/oauth/callback?code=authcode&state=state-abc")
@@ -245,8 +245,8 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
                 patch("server.db.load", return_value=make_db()),
-                patch("server.api.Flow") as MockFlow,
-                patch("server.api.build", return_value=self._mock_userinfo_service()),
+                patch("server.services.auth.Flow") as MockFlow,
+                patch("server.services.auth.build", return_value=self._mock_userinfo_service()),
             ):
                 MockFlow.from_client_config.return_value = self._mock_flow()
                 self.client.get("/api/oauth/callback?code=authcode&state=state-abc")
@@ -301,8 +301,8 @@ class ConfigCalendarFetchTest(unittest.TestCase):
                 "GOOGLE_CLIENT_SECRET": "csec",
             }),
             patch("server.config.load", return_value=cfg),
-            patch("server.api.Credentials") as MockCredentials,
-            patch("server.api.build", return_value=mock_svc),
+            patch("server.services.auth.Credentials") as MockCredentials,
+            patch("server.services.auth.build", return_value=mock_svc),
         ):
             res = self.client.get("/api/config")
 
@@ -338,8 +338,8 @@ class ConfigCalendarFetchTest(unittest.TestCase):
                 "GOOGLE_CLIENT_SECRET": "csec",
             }),
             patch("server.config.load", return_value=cfg),
-            patch("server.api.Credentials"),
-            patch("server.api.build", return_value=mock_svc),
+            patch("server.services.auth.Credentials"),
+            patch("server.services.auth.build", return_value=mock_svc),
         ):
             res = self.client.get("/api/config")
 
