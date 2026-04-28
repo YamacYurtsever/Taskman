@@ -257,7 +257,7 @@ Each authenticated Google user sees only their own data.
 
 ##### Milestone 7 — Deploy
 
-Assume a simple production deployment on a single HTTPS domain, with the built frontend and Flask API served together behind a reverse proxy. The goal is to use Taskman across devices, including opening it in Safari on iPhone and saving it to the home screen. The main goals are: no hardcoded localhost URLs, secure session cookies in production, reliable same-origin auth across devices, and a documented repeatable deploy flow.
+Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Serve the built frontend and Flask API on a single HTTPS domain behind `nginx`, run Flask with `gunicorn` under `systemd`, and keep per-user data on the VPS filesystem under `~/.taskman/`. The goal is to use Taskman across devices, including opening it in Safari on iPhone and saving it to the home screen. The main goals are: no hardcoded localhost URLs, secure session cookies in production, reliable same-origin auth across devices, and a documented repeatable deploy flow.
 
 ###### Backend
 
@@ -274,11 +274,12 @@ Assume a simple production deployment on a single HTTPS domain, with the built f
 
 ###### Ops / deploy assets
 
-- [ ] Add a production WSGI entrypoint and document the Gunicorn command used to run the Flask app
-- [ ] Add deploy assets under a repo-owned location (for example `deploy/`) for a `systemd` service and an `nginx` site config that proxies to Gunicorn and serves HTTPS
+- [ ] Add a production WSGI entrypoint and document the DigitalOcean Ubuntu `gunicorn` command used to run the Flask app
+- [ ] Add deploy assets under a repo-owned location (for example `deploy/`) for a `systemd` service and an `nginx` site config that proxies to Gunicorn and serves HTTPS on the VPS
 - [ ] Document required production environment variables (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TASKMAN_BASE_URL`, and any Flask environment settings) and where they are loaded from
-- [ ] Document Google OAuth production setup: authorised origin(s), authorised redirect URI, and the need to update them when the public domain changes
-- [ ] Document persistence and backup expectations for `~/.taskman/` so deploys do not overwrite user DB/config/session data
+- [ ] Document Google OAuth production setup for the public DigitalOcean-hosted domain: authorised origin(s), authorised redirect URI, and the need to update them when the public domain changes
+- [ ] Document Let’s Encrypt setup and HTTPS renewal on the VPS
+- [ ] Document persistence and backup expectations for `~/.taskman/` on the VPS so deploys do not overwrite user DB/config/session data
 
 ###### Backend — tests
 
