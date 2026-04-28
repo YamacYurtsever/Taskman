@@ -287,6 +287,10 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 - [ ] Add tests for production frontend serving / SPA fallback behavior
 - [ ] Add tests for production session config branches
 
+###### CI
+
+- [ ] Update `.github/workflows/ci.yml` to keep deployment-critical checks in CI, including backend tests, Vulture, frontend lint/build, and any new production-serving tests added for Milestone 7
+
 ###### Deploy verification
 
 - [ ] `python -m pytest server/ -v`
