@@ -88,7 +88,7 @@ On wide screens the panel slides in alongside the task list. On mobile it replac
 
 ## Calendar
 
-After signing in, your Google calendars are auto-discovered and shown in the embedded calendar view. The first five calendars are assigned preset colors automatically.
+After signing in, your Google calendars are auto-discovered and shown in the embedded calendar view. The first three calendars are assigned preset colors automatically.
 
 To override colors or restrict which calendars appear, add a `calendars` key to `~/.taskman/config.json`:
 
