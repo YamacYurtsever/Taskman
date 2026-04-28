@@ -2,6 +2,10 @@
 
 A minimal web-based task manager for personal daily use. Tasks live in lists, lists can be grouped, and each authenticated user has their own JSON data under `~/.taskman/users/<email>/`.
 
+Live deployment: [https://taskman.website](https://taskman.website)
+
+Production deployment notes live in [deploy/README.md](deploy/README.md).
+
 ---
 
 ## Setup
@@ -20,6 +24,8 @@ Create a `.env` file in the project root with your Google OAuth credentials:
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 ```
+
+For production, also set `TASKMAN_BASE_URL=https://taskman.website` and register `https://taskman.website/api/oauth/callback` in your Google OAuth client.
 
 ---
 

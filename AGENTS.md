@@ -259,6 +259,13 @@ Each authenticated Google user sees only their own data.
 
 Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Serve the built frontend and Flask API on a single HTTPS domain behind `nginx`, run Flask with `gunicorn` under `systemd`, and keep per-user data on the VPS filesystem under `~/.taskman/`. The goal is to use Taskman across devices, including opening it in Safari on iPhone and saving it to the home screen. The main goals are: no hardcoded localhost URLs, secure session cookies in production, reliable same-origin auth across devices, and a documented repeatable deploy flow.
 
+Production deployment:
+
+- Live URL: `https://taskman.website`
+- VPS stack: DigitalOcean Ubuntu, Gunicorn, nginx, systemd, Let’s Encrypt
+- Production deploy guide: `deploy/README.md`
+- Production OAuth callback: `https://taskman.website/api/oauth/callback`
+
 ###### Backend
 
 - [x] `server/constants.py` / `server/services/auth.py` — replace hardcoded `FRONTEND_URL` and OAuth `REDIRECT_URI` with environment-driven production URLs (for example `TASKMAN_BASE_URL`) while keeping local development defaults
@@ -300,4 +307,7 @@ Target a small Ubuntu VPS on DigitalOcean as the first production deployment. Se
 - [x] `cd client && npm run build`
 - [ ] Manual production smoke test on desktop and iPhone Safari: login, task CRUD, daysheet add/edit/delete, calendar load, logout, hard refresh on a nested route, and home-screen launch behavior
 
-##### Others — Sounds? - Batch Addition?
+##### Future
+
+- Sounds
+- Batch Addition
