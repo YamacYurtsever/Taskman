@@ -18,23 +18,23 @@ from server.services.utils import (
 # ─────────────────────────── Logs ───────────────────────────
 
 @service
-def add_log(list_name: str, text: str):
+def add_log(list_name: str, text: str, email: str | None = None):
     text = require_name(text, "text")
 
-    data = db.load()
+    data = db.load(email)
     lst = require_list(data, list_name)
 
     add_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, now())
 
-    db.save(data)
+    db.save(data, email)
 
 
 @service
-def edit_log(list_name: str, text: str, new_text: str):
+def edit_log(list_name: str, text: str, new_text: str, email: str | None = None):
     text = require_name(text, "text")
     new_text = require_name(new_text, "new text")
 
-    data = db.load()
+    data = db.load(email)
     lst = require_list(data, list_name)
 
     entry = find_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, today())
@@ -42,14 +42,14 @@ def edit_log(list_name: str, text: str, new_text: str):
         raise ServiceError(f"log entry '{text}' not found")
 
     entry["text"] = new_text
-    db.save(data)
+    db.save(data, email)
 
 
 @service
-def delete_log(list_name: str, text: str):
+def delete_log(list_name: str, text: str, email: str | None = None):
     text = require_name(text, "text")
 
-    data = db.load()
+    data = db.load(email)
     lst = require_list(data, list_name)
 
     deleted = remove_daysheet_entries(
@@ -63,16 +63,16 @@ def delete_log(list_name: str, text: str):
     if not deleted:
         raise ServiceError(f"log entry '{text}' not found")
 
-    db.save(data)
+    db.save(data, email)
 
 
 # ─────────────────────────── Continue Entries ───────────────────────────
 
 @service
-def continue_task(list_name: str, task_name: str):
+def continue_task(list_name: str, task_name: str, email: str | None = None):
     task_name = require_name(task_name, "task")
 
-    data = db.load()
+    data = db.load(email)
     lst = require_list(data, list_name)
     require_task(data, lst, task_name)
 
@@ -84,4 +84,4 @@ def continue_task(list_name: str, task_name: str):
 
     add_daysheet_entry(data, lst["id"], DaysheetEntryType.CONTINUE, task_name, now())
 
-    db.save(data)
+    db.save(data, email)

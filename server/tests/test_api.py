@@ -27,6 +27,7 @@ class ApiTest(unittest.TestCase):
         self.client = self.app.test_client()
         with self.client.session_transaction() as sess:
             sess["authenticated"] = True
+            sess["email"] = "user@gmail.com"
 
     # ─────────────────────────── Helpers ───────────────────────────
 

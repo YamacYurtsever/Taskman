@@ -122,7 +122,7 @@ def assert_error(result, contains=None):
 def saved_db(initial_data):
     saved = {}
 
-    def save(next_data):
+    def save(next_data, *args, **kwargs):
         saved.clear()
         saved.update(copy.deepcopy(next_data))
 
@@ -137,7 +137,7 @@ def saved_db(initial_data):
 def saved_config(initial_data):
     saved = {}
 
-    def save(next_data):
+    def save(next_data, *args, **kwargs):
         saved.clear()
         saved.update(copy.deepcopy(next_data))
 

@@ -234,22 +234,22 @@ Requires a Google Cloud project with the Calendar API enabled and an OAuth 2.0 c
 
 ##### Milestone 6 — Ownership & Multi-user
 
-Each authenticated Google user sees only their own data. Currently all data is shared in a single flat JSON file.
+Each authenticated Google user sees only their own data. Currently all data is shared in a single flat JSON file, so the first implementation should migrate the existing shared records into the current single user account.
 
 ###### Backend
 
-- [ ] `server/db.py` — scope `DB_PATH` per user (e.g. `~/.taskman/users/<email>/db.json`); derive path from `session["email"]` passed into `db.load()` / `db.save()`
-- [ ] `server/config.py` — keep a single shared `config.json` for server-level settings (`secretKey`, OAuth credentials); move per-user state (`googleRefreshToken`, `googleEmail`, calendars) into the per-user DB or a per-user config file
-- [ ] `server/api.py` — pass authenticated user's email into all `db.load()` / `db.save()` calls; store `email` in session on OAuth callback
-- [ ] `server/api.py` — `GET /api/config` fetches calendar list using the requesting user's own refresh token
+- [x] `server/db.py` — scope `DB_PATH` per user (e.g. `~/.taskman/users/<email>/db.json`); derive path from the authenticated user's email passed into `db.load()` / `db.save()`, and migrate the legacy shared `db.json` into the current user's DB on first login
+- [x] `server/config.py` — keep a single shared `config.json` for server-level settings (`secretKey`, OAuth credentials); move per-user state (`googleRefreshToken`, `googleEmail`, calendars) into the per-user DB or a per-user config file, and migrate the legacy shared user state into the current user's file on first login
+- [x] `server/api.py` — pass authenticated user's email into all `db.load()` / `db.save()` calls; store `email` in session on OAuth callback
+- [x] `server/api.py` — `GET /api/config` fetches calendar list using the requesting user's own refresh token
 
 ###### Backend — tests
 
-- [ ] Update `saved_db` / `saved_config` fixtures and all route tests to account for per-user DB paths
-- [ ] Add multi-user isolation tests (two users cannot read each other's data)
+- [x] Update `saved_db` / `saved_config` fixtures and all route tests to account for per-user DB paths
+- [x] Add multi-user isolation tests (two users cannot read each other's data)
 
 ###### Frontend
 
-- [ ] No frontend changes required — API contract is unchanged
+- [x] No frontend changes required — API contract is unchanged
 
 ##### Milestone 7 — Deploy

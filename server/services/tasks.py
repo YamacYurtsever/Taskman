@@ -18,10 +18,10 @@ from server.services.utils import (
 # ─────────────────────────── Create / Edit ───────────────────────────
 
 @service
-def add_task(list_name: str, task_name: str, due: str | None = None):
+def add_task(list_name: str, task_name: str, due: str | None = None, email: str | None = None):
     task_name = require_name(task_name)
 
-    data = db.load()
+    data = db.load(email)
     lst = require_list(data, list_name)
 
     if find_task(data, lst["id"], task_name):
@@ -36,7 +36,7 @@ def add_task(list_name: str, task_name: str, due: str | None = None):
         "description": "",
     })
 
-    db.save(data)
+    db.save(data, email)
 
 
 @service
@@ -46,12 +46,13 @@ def edit_task(
     new_name: str | None = None,
     due: str | None = None,
     update_due: bool = False,
+    email: str | None = None,
 ):
     if new_name is None:
         new_name = task_name
     new_name = require_name(new_name)
 
-    data = db.load()
+    data = db.load(email)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
@@ -63,25 +64,25 @@ def edit_task(
     if update_due:
         task["due"] = parse_date(due) if due else None
 
-    db.save(data)
+    db.save(data, email)
 
 
 # ─────────────────────────── Delete / Move ───────────────────────────
 
 @service
-def delete_task(list_name: str, task_name: str):
-    data = db.load()
+def delete_task(list_name: str, task_name: str, email: str | None = None):
+    data = db.load(email)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
 
     data["tasks"] = [t for t in data["tasks"] if t["id"] != task["id"]]
 
-    db.save(data)
+    db.save(data, email)
 
 
 @service
-def move_task(list_name: str, task_name: str, new_list_name: str):
-    data = db.load()
+def move_task(list_name: str, task_name: str, new_list_name: str, email: str | None = None):
+    data = db.load(email)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
@@ -92,14 +93,14 @@ def move_task(list_name: str, task_name: str, new_list_name: str):
 
     task["listId"] = new_lst["id"]
 
-    db.save(data)
+    db.save(data, email)
 
 
 # ─────────────────────────── Completion State ───────────────────────────
 
 @service
-def done_task(list_name: str, task_name: str):
-    data = db.load()
+def done_task(list_name: str, task_name: str, email: str | None = None):
+    data = db.load(email)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
@@ -125,21 +126,21 @@ def done_task(list_name: str, task_name: str):
 
     task["done"] = today()
 
-    db.save(data)
+    db.save(data, email)
 
 
 @service
-def set_task_description(list_name: str, task_name: str, description: str):
-    data = db.load()
+def set_task_description(list_name: str, task_name: str, description: str, email: str | None = None):
+    data = db.load(email)
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
     task["description"] = description
-    db.save(data)
+    db.save(data, email)
 
 
 @service
-def undo_task(list_name: str, task_name: str):
-    data = db.load()
+def undo_task(list_name: str, task_name: str, email: str | None = None):
+    data = db.load(email)
 
     lst = require_list(data, list_name)
     task = require_task(data, lst, task_name)
@@ -149,4 +150,4 @@ def undo_task(list_name: str, task_name: str):
 
     task["done"] = None
 
-    db.save(data)
+    db.save(data, email)

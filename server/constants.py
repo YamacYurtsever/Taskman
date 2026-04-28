@@ -7,6 +7,7 @@ from pathlib import Path
 FRONTEND_URL = "http://127.0.0.1:5173"
 
 TASKMAN_DIR = Path.home() / ".taskman"
+USERS_PATH = TASKMAN_DIR / "users"
 CONFIG_PATH = TASKMAN_DIR / "config.json"
 DB_PATH = TASKMAN_DIR / "db.json"
 SESSIONS_PATH = TASKMAN_DIR / "sessions"

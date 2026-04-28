@@ -23,6 +23,7 @@ class AuthStatusTest(unittest.TestCase):
     def test_returns_true_when_authenticated(self):
         with self.client.session_transaction() as sess:
             sess["authenticated"] = True
+            sess["email"] = "user@gmail.com"
 
         res = self.client.get("/api/auth/status")
 
@@ -45,6 +46,7 @@ class RequireAuthTest(unittest.TestCase):
     def test_protected_route_allows_authenticated(self):
         with self.client.session_transaction() as sess:
             sess["authenticated"] = True
+            sess["email"] = "user@gmail.com"
 
         with patch("server.db.load", return_value=make_db()):
             res = self.client.get("/api/state")
@@ -160,6 +162,7 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_ID": "cid",
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
+                patch("server.db.load", return_value=make_db()),
                 patch("server.api.Flow") as MockFlow,
                 patch("server.api.build", return_value=self._mock_userinfo_service()),
             ):
@@ -181,6 +184,7 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_ID": "cid",
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
+                patch("server.db.load", return_value=make_db()),
                 patch("server.api.Flow") as MockFlow,
             ):
                 MockFlow.from_client_config.return_value = self._mock_flow(refresh_token=None)
@@ -199,6 +203,7 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_ID": "cid",
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
+                patch("server.db.load", return_value=make_db()),
                 patch("server.api.Flow") as MockFlow,
                 patch("server.api.build", return_value=self._mock_userinfo_service()),
             ):
@@ -219,6 +224,7 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_ID": "cid",
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
+                patch("server.db.load", return_value=make_db()),
                 patch("server.api.Flow") as MockFlow,
                 patch("server.api.build", return_value=self._mock_userinfo_service()),
             ):
@@ -238,6 +244,7 @@ class OAuthCallbackTest(unittest.TestCase):
                     "GOOGLE_CLIENT_ID": "cid",
                     "GOOGLE_CLIENT_SECRET": "csec",
                 }),
+                patch("server.db.load", return_value=make_db()),
                 patch("server.api.Flow") as MockFlow,
                 patch("server.api.build", return_value=self._mock_userinfo_service()),
             ):
@@ -247,6 +254,9 @@ class OAuthCallbackTest(unittest.TestCase):
         res = self.client.get("/api/auth/status")
 
         self.assertTrue(res.get_json()["authenticated"])
+
+        with self.client.session_transaction() as sess:
+            self.assertEqual(sess.get("email"), "user@gmail.com")
 
 
 class LogoutTest(unittest.TestCase):
@@ -275,6 +285,7 @@ class ConfigCalendarFetchTest(unittest.TestCase):
 
         with self.client.session_transaction() as sess:
             sess["authenticated"] = True
+            sess["email"] = "user@gmail.com"
 
     def test_fetches_user_calendars_when_refresh_token_present(self):
         cfg = {**DEFAULTS, "googleRefreshToken": "reftok"}

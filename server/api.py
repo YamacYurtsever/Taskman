@@ -99,7 +99,7 @@ def create_app(test_config=None):
     def require_auth(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            if not session.get("authenticated"):
+            if not session.get("authenticated") or not session.get("email"):
                 return fail("not authenticated", 401)
             return f(*args, **kwargs)
         return wrapper
@@ -107,7 +107,9 @@ def create_app(test_config=None):
 
     @app.get("/api/auth/status")
     def auth_status():
-        return jsonify({"authenticated": bool(session.get("authenticated"))})
+        return jsonify({
+            "authenticated": bool(session.get("authenticated") and session.get("email")),
+        })
 
 
     @app.get("/api/oauth/start")
@@ -152,18 +154,24 @@ def create_app(test_config=None):
             if not credentials.refresh_token:
                 return fail("missing refresh token", 400)
 
-            cfg = config.load()
-            cfg["googleRefreshToken"] = credentials.refresh_token
-
             try:
                 svc = build("oauth2", "v2", credentials=credentials)
                 user_info = svc.userinfo().get().execute()
-                cfg["googleEmail"] = user_info.get("email")
-            except Exception:
-                pass
+                email = user_info.get("email")
+            except Exception as e:
+                return fail(f"failed to fetch Google email: {e}", 500)
 
-            config.save(cfg)
+            if not email:
+                return fail("missing Google email", 400)
+
+            user_cfg = config.migrate_legacy_user_state(email, config.load())
+            user_cfg["googleRefreshToken"] = credentials.refresh_token
+            user_cfg["googleEmail"] = email
+
+            config.save(user_cfg, email)
+            db.load(email)
             session["authenticated"] = True
+            session["email"] = email
             frontend_url = session.pop("frontend_url", FRONTEND_URL)
             session.pop("oauth_state", None)
             return redirect(frontend_url)
@@ -182,7 +190,8 @@ def create_app(test_config=None):
     @app.get("/api/config")
     @require_auth
     def get_config():
-        cfg = config.load()
+        email = session["email"]
+        cfg = config.load(email)
         calendars = cfg.get("calendars", [])
         tz = cfg.get("calendarTimezone", "UTC")
 
@@ -230,7 +239,8 @@ def create_app(test_config=None):
     @app.get("/api/state")
     @require_auth
     def get_state():
-        data = db.load()
+        email = session["email"]
+        data = db.load(email)
         tasks = [{**t, "description": t.get("description", "")} for t in data["tasks"]]
         return jsonify({
             "groups": data["groups"],
@@ -244,6 +254,7 @@ def create_app(test_config=None):
     @app.get("/api/daysheet")
     @require_auth
     def get_daysheet():
+        email = session["email"]
         target = request.args.get("date") or date.today().isoformat()
 
         try:
@@ -251,7 +262,7 @@ def create_app(test_config=None):
         except ValueError:
             return jsonify({"error": f"invalid date '{target}'"}), 400
 
-        data = db.load()
+        data = db.load(email)
         lists = {lst["id"]: lst for lst in data["lists"]}
         groups = {grp["id"]: grp for grp in data["groups"]}
 
@@ -280,16 +291,19 @@ def create_app(test_config=None):
     @app.post("/api/add")
     @require_auth
     def api_add():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(add_task(
             body.get("list", ""),
             body.get("name", ""),
             body.get("due"),
+            email=email,
         ))
 
     @app.post("/api/edit")
     @require_auth
     def api_edit():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(edit_task(
             body.get("list", ""),
@@ -297,53 +311,64 @@ def create_app(test_config=None):
             body.get("newName"),
             body.get("due"),
             "due" in body,
+            email=email,
         ))
 
     @app.post("/api/delete")
     @require_auth
     def api_delete():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(delete_task(
             body.get("list", ""),
             body.get("name", ""),
+            email=email,
         ))
 
     @app.post("/api/move-task")
     @require_auth
     def api_move_task():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(move_task(
             body.get("list", ""),
             body.get("name", ""),
             body.get("newList", ""),
+            email=email,
         ))
 
     @app.post("/api/done")
     @require_auth
     def api_done():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(done_task(
             body.get("list", ""),
             body.get("name", ""),
+            email=email,
         ))
 
     @app.post("/api/undo")
     @require_auth
     def api_undo():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(undo_task(
             body.get("list", ""),
             body.get("name", ""),
+            email=email,
         ))
 
     @app.post("/api/task-description")
     @require_auth
     def api_task_description():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(set_task_description(
             body.get("list", ""),
             body.get("name", ""),
             body.get("description", ""),
+            email=email,
         ))
 
     # ─────────────────────────── List Routes ───────────────────────────
@@ -351,12 +376,13 @@ def create_app(test_config=None):
     @app.post("/api/add-list")
     @require_auth
     def api_add_list():
+        email = session["email"]
         body = request.get_json(force=True) or {}
 
         try:
             list_name = require_name(body.get("list"))
 
-            data = db.load()
+            data = db.load(email)
             if find_list(data, list_name):
                 raise ServiceError(f"list '{list_name}' already exists")
 
@@ -366,7 +392,7 @@ def create_app(test_config=None):
                 "groupId": None,
             })
 
-            db.save(data)
+            db.save(data, email)
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -374,13 +400,14 @@ def create_app(test_config=None):
     @app.post("/api/rename-list")
     @require_auth
     def api_rename_list():
+        email = session["email"]
         body = request.get_json(force=True) or {}
 
         try:
             list_name = body.get("list", "")
             new_name = require_name(body.get("newName"))
 
-            data = db.load()
+            data = db.load(email)
 
             lst = find_list(data, list_name)
             if not lst:
@@ -391,7 +418,7 @@ def create_app(test_config=None):
                 raise ServiceError(f"list '{new_name}' already exists")
 
             lst["name"] = new_name
-            db.save(data)
+            db.save(data, email)
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -399,19 +426,20 @@ def create_app(test_config=None):
     @app.post("/api/delete-list")
     @require_auth
     def api_delete_list():
+        email = session["email"]
         body = request.get_json(force=True) or {}
 
         try:
             list_name = body.get("list", "")
 
-            data = db.load()
+            data = db.load(email)
             lst = find_list(data, list_name)
             if not lst:
                 raise ServiceError(f"list '{list_name}' not found")
 
             delete_list(data, lst)
 
-            db.save(data)
+            db.save(data, email)
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -419,13 +447,14 @@ def create_app(test_config=None):
     @app.post("/api/move-list")
     @require_auth
     def api_move_list():
+        email = session["email"]
         body = request.get_json(force=True) or {}
 
         try:
             list_name = body.get("list", "")
             group_name = body.get("group", None)
 
-            data = db.load()
+            data = db.load(email)
 
             lst = find_list(data, list_name)
             if not lst:
@@ -439,7 +468,7 @@ def create_app(test_config=None):
                     raise ServiceError(f"group '{group_name}' not found")
                 lst["groupId"] = group["id"]
 
-            db.save(data)
+            db.save(data, email)
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -449,13 +478,14 @@ def create_app(test_config=None):
     @app.post("/api/rename-group")
     @require_auth
     def api_rename_group():
+        email = session["email"]
         body = request.get_json(force=True) or {}
 
         try:
             group_name = body.get("group", "")
             new_name = require_name(body.get("newName"))
 
-            data = db.load()
+            data = db.load(email)
 
             group = find_group(data, group_name)
             if not group:
@@ -466,7 +496,7 @@ def create_app(test_config=None):
                 raise ServiceError(f"group '{new_name}' already exists")
 
             group["name"] = new_name
-            db.save(data)
+            db.save(data, email)
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -474,12 +504,13 @@ def create_app(test_config=None):
     @app.post("/api/delete-group")
     @require_auth
     def api_delete_group():
+        email = session["email"]
         body = request.get_json(force=True) or {}
 
         try:
             group_name = body.get("group", "")
 
-            data = db.load()
+            data = db.load(email)
 
             group = find_group(data, group_name)
             if not group:
@@ -491,7 +522,7 @@ def create_app(test_config=None):
 
             data["groups"] = [g for g in data["groups"] if g["id"] != group["id"]]
 
-            db.save(data)
+            db.save(data, email)
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -501,31 +532,36 @@ def create_app(test_config=None):
     @app.post("/api/log")
     @require_auth
     def api_log():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(add_log(
             body.get("list", ""),
             body.get("text", ""),
+            email=email,
         ))
 
     @app.post("/api/continue")
     @require_auth
     def api_continue():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         return respond(continue_task(
             body.get("list", ""),
             body.get("task", ""),
+            email=email,
         ))
 
     @app.post("/api/daysheet/edit")
     @require_auth
     def api_daysheet_edit():
+        email = session["email"]
         body = request.get_json(force=True) or {}
 
         try:
             entry_id = body.get("id", "")
             new_text = require_name(body.get("text"), "text")
 
-            data = db.load()
+            data = db.load(email)
 
             entry = next((e for e in data["daysheet"] if e["id"] == entry_id), None)
             if not entry:
@@ -536,7 +572,7 @@ def create_app(test_config=None):
 
             entry["text"] = new_text
 
-            db.save(data)
+            db.save(data, email)
             return ok()
         except ServiceError as e:
             return fail(str(e))
@@ -544,10 +580,11 @@ def create_app(test_config=None):
     @app.post("/api/daysheet/delete")
     @require_auth
     def api_daysheet_delete():
+        email = session["email"]
         body = request.get_json(force=True) or {}
         entry_id = body.get("id", "")
 
-        data = db.load()
+        data = db.load(email)
 
         before = len(data["daysheet"])
         data["daysheet"] = [e for e in data["daysheet"] if e["id"] != entry_id]
@@ -555,7 +592,7 @@ def create_app(test_config=None):
         if len(data["daysheet"]) == before:
             return fail("entry not found")
 
-        db.save(data)
+        db.save(data, email)
         return ok()
 
     return app
