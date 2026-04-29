@@ -68,12 +68,13 @@ export const CardsView = ({
     if (cards.length) {
       sections.push(
         <div key={group.id} className={styles.cardsSection}>
-          <div
+          <button
+            type="button"
             className={cx(styles.sectionLabel, styles.sectionLabelLink)}
             onClick={() => selectGroup(group.id)}
           >
             {group.name}
-          </div>
+          </button>
           <div className={styles.cardsGrid}>
             {cards}
           </div>

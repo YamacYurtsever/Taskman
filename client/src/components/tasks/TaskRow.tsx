@@ -92,7 +92,8 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
   return (
     <div className={cx(styles.taskRow, task.doneAt && styles.done)}>
       <div className={styles.taskLeft}>
-        <div
+        <button
+          type="button"
           className={styles.taskCheck}
           title={task.doneAt ? 'Mark pending' : 'Mark done'}
           onClick={() =>
@@ -114,7 +115,7 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
           >
             <path d="M3 8.5l3 3L13 5" />
           </svg>
-        </div>
+        </button>
         {!task.doneAt && (
           <button
             className="action-btn cnt"
@@ -126,7 +127,7 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
         )}
       </div>
 
-      <div className={styles.taskBody} onClick={() => openDetail(task)}>
+      <button type="button" className={styles.taskBody} onClick={() => openDetail(task)}>
         <div className={styles.taskNameRow}>
           <span className={styles.taskName}>{task.name}</span>
           {task.description && <NoteIcon className={styles.noteIcon} />}
@@ -136,7 +137,7 @@ export const TaskRow = ({ data, task, listName, act, openDetail }: TaskRowProps)
             {dueInfo.label}
           </span>
         )}
-      </div>
+      </button>
 
       <div className={styles.taskRight}>
         <div className={styles.taskEditActions}>

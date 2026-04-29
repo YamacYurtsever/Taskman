@@ -176,10 +176,6 @@
   transform: scale(1);
 }
 
-.signInBtn:focus-visible {
-  outline: var(--outline-w) solid var(--accent);
-}
-
 @keyframes loginFloatIn {
   from {
     opacity: 0;

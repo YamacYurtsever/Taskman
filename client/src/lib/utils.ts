@@ -15,6 +15,7 @@ const MSG = {
   newGroup: '+ New Group',
   today: 'Today',
   yesterday: 'Yesterday',
+  tomorrow: 'Tomorrow',
   daysheet: 'Daysheet',
   tasks: 'Tasks',
   others: 'Others',

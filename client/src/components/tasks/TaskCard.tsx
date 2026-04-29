@@ -24,10 +24,10 @@ export const TaskCard = ({
 
   return (
     <div className={styles.card}>
-      <div className={styles.cardHeader} onClick={openList}>
+      <button type="button" className={styles.cardHeader} onClick={openList}>
         <span className={styles.cardTitle}>{list.name}</span>
         <span className={styles.cardCount}>{pending.length}</span>
-      </div>
+      </button>
 
       <div className={styles.cardBody}>
         {visible.map(task => (

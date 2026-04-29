@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from server.constants import DaysheetEntryType
+from server.services.daysheet import add_log
 from server.services.tasks import (
     add_task,
     delete_task,
@@ -22,6 +23,43 @@ from server.tests.utils import (
     saved_db,
     task_record,
 )
+
+
+class DaysheetLogTest(unittest.TestCase):
+
+    def test_add_log_uses_current_time_for_today(self):
+        with (
+            saved_db(make_db(TASK_1)) as saved,
+            patch("server.services.daysheet.today_in_timezone", return_value=TODAY),
+            patch("server.services.daysheet.utc_now", return_value=NOW_DT),
+            patch("server.db.new_id", return_value="entry-1"),
+        ):
+            result = add_log("List A", "Talked with team", TODAY)
+
+        assert_ok(result)
+        self.assertEqual(saved["daysheet"][0]["datetime"], NOW_DT)
+
+    def test_add_log_uses_end_of_selected_day_for_past_days(self):
+        with (
+            saved_db(make_db(TASK_1)) as saved,
+            patch("server.services.daysheet.today_in_timezone", return_value=TODAY),
+            patch("server.db.new_id", return_value="entry-1"),
+        ):
+            result = add_log("List A", "Wrapped up", "2026-04-25")
+
+        assert_ok(result)
+        self.assertEqual(saved["daysheet"][0]["datetime"], "2026-04-25T23:59:00Z")
+
+    def test_add_log_uses_start_of_selected_day_for_future_days(self):
+        with (
+            saved_db(make_db(TASK_1)) as saved,
+            patch("server.services.daysheet.today_in_timezone", return_value=TODAY),
+            patch("server.db.new_id", return_value="entry-1"),
+        ):
+            result = add_log("List A", "Planned ahead", "2026-04-30")
+
+        assert_ok(result)
+        self.assertEqual(saved["daysheet"][0]["datetime"], "2026-04-30T00:00:00Z")
 
 
 class TaskCreateTest(unittest.TestCase):

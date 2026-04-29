@@ -230,7 +230,7 @@
 .newItemSplit {
   padding: 0;
   display: flex;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .newItemSplitBtn {

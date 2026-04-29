@@ -5,6 +5,7 @@ from server.services.utils import (
     add_daysheet_entry,
     find_daysheet_entry,
     has_daysheet_entry,
+    parse_date,
     remove_daysheet_entries,
     require_list,
     require_name,
@@ -31,8 +32,14 @@ def add_log(
     data = db.load(email)
     lst = require_list(data, list_name)
 
-    target_day = entry_day or today_in_timezone(tz_name)
-    timestamp = storage_datetime_for_local_date(target_day, tz_name)
+    today = today_in_timezone(tz_name)
+    target_day = parse_date(entry_day) if entry_day else today
+    if target_day == today:
+        timestamp = utc_now()
+    elif target_day > today:
+        timestamp = storage_datetime_for_local_date(target_day, tz_name, hour=0, minute=0)
+    else:
+        timestamp = storage_datetime_for_local_date(target_day, tz_name)
     add_daysheet_entry(data, lst["id"], DaysheetEntryType.LOG, text, timestamp)
 
     db.save(data, email)

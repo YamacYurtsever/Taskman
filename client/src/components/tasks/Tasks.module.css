@@ -16,10 +16,19 @@
   font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--text-2);
+  border-radius: var(--r);
+  outline-offset: var(--sp-sm);
 }
 
 .sectionLabelLink {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
 }
 
 .sectionLabelLink:hover {
@@ -48,11 +57,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   padding: var(--sp-sm);
   cursor: pointer;
   transition: background var(--animation-d);
   background: var(--primary);
+  border: none;
   border-radius: var(--r);
+  color: inherit;
+  font: inherit;
 }
 
 .cardHeader:hover {
@@ -117,7 +130,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
+  background: none;
+  border: none;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  border-radius: var(--r);
+  outline-offset: var(--sp-sm);
 }
 
 .taskNameRow {
@@ -143,11 +165,14 @@
 .taskCheck {
   width: var(--btn-w);
   height: var(--btn-w);
+  background: none;
+  color: inherit;
   border: var(--border-w-strong) solid var(--text-3);
   border-radius: var(--r-sm);
   flex-shrink: 0;
   cursor: pointer;
   display: flex;
+  padding: 0;
   align-items: center;
   justify-content: center;
   transition: border-color var(--animation-d), background var(--animation-d);

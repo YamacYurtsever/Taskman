@@ -148,3 +148,9 @@ class ServiceUtilsTest(unittest.TestCase):
             storage_datetime_for_local_date("2026-04-26", "Australia/Sydney"),
             "2026-04-26T13:59:00Z",
         )
+
+    def test_storage_datetime_for_local_date_supports_start_of_day(self):
+        self.assertEqual(
+            storage_datetime_for_local_date("2026-04-26", "UTC", hour=0, minute=0),
+            "2026-04-26T00:00:00Z",
+        )

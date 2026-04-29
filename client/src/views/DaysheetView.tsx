@@ -285,6 +285,10 @@ const dateLabel = (date: string) => {
   yesterday.setDate(yesterday.getDate() - 1);
   if (date === dateString(yesterday)) return MSG.yesterday;
 
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (date === dateString(tomorrow)) return MSG.tomorrow;
+
   return parseLocalDate(date).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',

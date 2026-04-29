@@ -78,13 +78,6 @@
   color: var(--accent);
 }
 
-.filterPill:focus-visible,
-.filterPill:focus-visible:hover {
-  color: var(--accent);
-  outline: var(--outline-w) solid var(--accent);
-  outline-offset: var(--outline-offset);
-}
-
 .rightControls {
   position: absolute;
   right: var(--sp);
