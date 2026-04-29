@@ -76,10 +76,27 @@ const doneFor = (data: StateResponse, listId: string) =>
     .filter(t => t.listId === listId && t.doneAt)
     .sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''));
 
+const weekdayName = (date: Date) =>
+  date.toLocaleDateString(undefined, { weekday: 'long' });
+
 const formatDue = (due: string, today: string) => {
   const dueDate = new Date(due);
   const todayDate = new Date(today);
   const days = Math.round((dueDate.getTime() - todayDate.getTime()) / MS_PER_DAY);
+
+  if (days === -1) {
+    return {
+      label: 'Yesterday',
+      cls: 'overdue',
+    };
+  }
+
+  if (days > -7 && days < 0) {
+    return {
+      label: `Last ${weekdayName(dueDate)}`,
+      cls: 'overdue',
+    };
+  }
 
   if (days < 0) {
     return {
@@ -88,12 +105,12 @@ const formatDue = (due: string, today: string) => {
     };
   }
 
-  if (days === 0) return { label: 'today', cls: 'today-due' };
-  if (days === 1) return { label: 'tomorrow', cls: 'soon' };
+  if (days === 0) return { label: 'Today', cls: 'today-due' };
+  if (days === 1) return { label: 'Tomorrow', cls: 'soon' };
 
   if (days < 7) {
     return {
-      label: dueDate.toLocaleDateString(undefined, { weekday: 'short' }).toLowerCase(),
+      label: `Next ${weekdayName(dueDate)}`,
       cls: '',
     };
   }
