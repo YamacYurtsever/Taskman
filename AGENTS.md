@@ -309,7 +309,9 @@ Production deployment:
 
 ##### Future
 
+- Daily Lists
 - Sound Effects
 - Batch Addition
 - Daysheet analytics
 - Turn a task description into an actionable checklist (AI)
+
